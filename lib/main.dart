@@ -5,6 +5,7 @@ import 'package:admin_dashboard/provider/semester_templates_provider.dart';
 import 'package:admin_dashboard/provider/semesters_provider.dart';
 import 'package:admin_dashboard/provider/student_provider.dart';
 import 'package:admin_dashboard/provider/subject_provider.dart';
+import 'package:admin_dashboard/provider/quiz_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +18,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => StudentsProvider()),
         ChangeNotifierProvider(create: (_) => SemestersTemplatesProvider()),
         ChangeNotifierProvider(create: (_) => LessonProvider()),
+        ChangeNotifierProvider(create: (_) => QuizProvider()),
       ],
       child: MyApp(),
     ),
@@ -41,6 +43,7 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
+          iconTheme: IconThemeData(color: Colors.white),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: AppTheme.primaryButtonStyle,

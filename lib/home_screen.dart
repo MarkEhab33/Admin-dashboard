@@ -7,6 +7,7 @@ import 'Semesters/Content-management_tab.dart';
 import 'Students/students_tab_screen.dart';
 import 'Students/student_requests_tab.dart';
 import 'provider/dashboard_provider.dart';
+import 'Quizzes/quizzes_tab.dart';
 
 class DashboardScreen extends StatelessWidget {
   final List<Widget> _pages = [
@@ -174,13 +175,4 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-// Content Management Tab
 
-
-// Quizzes Tab
-class QuizzesTab extends StatelessWidget {
-@override
-Widget build(BuildContext context) {
-  return Center(child: Text("Quizzes Tab"));
-}
-}
