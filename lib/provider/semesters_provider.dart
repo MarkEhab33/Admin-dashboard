@@ -349,7 +349,50 @@ class SemestersProvider with ChangeNotifier {
       throw Exception('Error removing quiz from week: $e');
     }
   }
+  Future<Week> updateWeek({
+    required int weekId,
+    required int weekNo,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/semester/week/$weekId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'weekNo': weekNo,
+          'startDate': startDate.toUtc().toIso8601String(),
+          'endDate': endDate.toUtc().toIso8601String(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        final updatedWeek = Week.fromJson(jsonResponse['data']);
+
+        // Update the week in the local state
+        for (var semester in _semesters) {
+          final weekIndex = semester.weeks.indexWhere((w) => w.id == weekId);
+          if (weekIndex != -1) {
+            semester.weeks[weekIndex] = updatedWeek;
+            semester.weeks.sort((a, b) => a.weekNo.compareTo(b.weekNo));
+            notifyListeners();
+            break;
+          }
+        }
+
+        return updatedWeek;
+      } else {
+        throw Exception('Failed to update week: ${response.body}');
+      }
+    } catch (e) {
+      print('Error updating week: $e');
+      throw Exception('Error updating week: $e');
+    }
+  }
 }
+
+
 
 
 
