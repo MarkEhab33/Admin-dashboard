@@ -5,6 +5,10 @@ import '../Theme.dart';
 import '../provider/quiz_provider.dart';
 
 class CreateQuizScreen extends StatefulWidget {
+  final QuizDetails? quizToEdit;
+
+  const CreateQuizScreen({this.quizToEdit});
+
   @override
   _CreateQuizScreenState createState() => _CreateQuizScreenState();
 }
@@ -19,6 +23,33 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   final _typeController = TextEditingController();
   final _attemptsController = TextEditingController();
   final _timeLimitController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.quizToEdit != null) {
+      // Populate the form with existing quiz data
+      final quiz = widget.quizToEdit!;
+      _nameController.text = quiz.name;
+      _subjectIdController.text = quiz.subject['id'].toString();
+      _semesterIdController.text = quiz.semester['id'].toString();
+      _typeController.text = quiz.type;
+      _attemptsController.text = quiz.numberOfAttempts.toString();
+      _timeLimitController.text = quiz.timeLimit.toString();
+      _questions.addAll(quiz.content);
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _subjectIdController.dispose();
+    _semesterIdController.dispose();
+    _typeController.dispose();
+    _attemptsController.dispose();
+    _timeLimitController.dispose();
+    super.dispose();
+  }
 
   double _calculateTotalGrade() {
     return _questions.fold(0.0, (sum, question) => sum + question.grade);
@@ -51,15 +82,23 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
           content: _questions,
         );
 
-        await Provider.of<QuizProvider>(context, listen: false).createQuiz(quiz);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Quiz created successfully')),
-        );
+        if (widget.quizToEdit != null) {
+          await Provider.of<QuizProvider>(context, listen: false)
+              .updateQuiz(widget.quizToEdit!.id, quiz);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Quiz updated successfully')),
+          );
+        } else {
+          await Provider.of<QuizProvider>(context, listen: false).createQuiz(quiz);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Quiz created successfully')),
+          );
+        }
+
         Navigator.pop(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating quiz: $e')),
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
       }
     }
@@ -67,9 +106,11 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isEditing = widget.quizToEdit != null;
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create New Quiz'),
+        title: Text(isEditing ? 'Edit Quiz' : 'Create New Quiz'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -187,7 +228,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                 child: ElevatedButton(
                   onPressed: _submitQuiz,
                   style: AppTheme.primaryButtonStyle,
-                  child: Text('Create Quiz'),
+                  child: Text(isEditing ? 'Update Quiz' : 'Create Quiz'),
                 ),
               ),
             ],
@@ -344,6 +385,8 @@ class _QuestionDialogState extends State<QuestionDialog> {
     }
   }
 }
+
+
 
 
 
