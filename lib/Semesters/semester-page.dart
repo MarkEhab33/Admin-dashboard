@@ -5,18 +5,39 @@ import 'package:intl/intl.dart';
 import '../Models/semester.dart';
 import '../Models/week.dart';
 import '../Theme.dart';
+import 'package:provider/provider.dart';
+import 'week_content_page.dart';
+
+import '../provider/semesters_provider.dart';
 
 
-class SemesterDetailPage extends StatelessWidget {
+class SemesterDetailPage extends StatefulWidget {
   final Semester semester;
 
   SemesterDetailPage({required this.semester});
 
   @override
+  State<SemesterDetailPage> createState() => _SemesterDetailPageState();
+}
+
+class _SemesterDetailPageState extends State<SemesterDetailPage> {
+  final TextEditingController _weekNoController = TextEditingController();
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
+
+  @override
+  void dispose() {
+    _weekNoController.dispose();
+    _startDateController.dispose();
+    _endDateController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(semester.name),
+        title: Text(widget.semester.name),
         backgroundColor: AppTheme.primaryColor,
       ),
       body: SingleChildScrollView(
@@ -36,14 +57,25 @@ class SemesterDetailPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Weeks',
-                          style: AppTheme.headingMedium,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Weeks',
+                              style: AppTheme.headingMedium,
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => _showAddWeekDialog(context),
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('Add Week'),
+                              style: AppTheme.primaryButtonStyle,
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         Container(
                           decoration: AppTheme.cardDecoration,
-                          child: semester.weeks.isEmpty
+                          child: widget.semester.weeks.isEmpty
                               ? Center(
                                   child: Padding(
                                     padding: const EdgeInsets.all(24.0),
@@ -95,9 +127,7 @@ class SemesterDetailPage extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Logic to add a new week
-        },
+        onPressed: () => _showAddWeekDialog(context),
         child: Icon(Icons.add),
         backgroundColor: AppTheme.secondaryColor,
       ),
@@ -130,25 +160,25 @@ class SemesterDetailPage extends StatelessWidget {
             children: [
               _buildInfoCard(
                 'Subjects',
-                '${semester.semesterTemplate.subjects.length}',
+                '${widget.semester.semesterTemplate.subjects.length}',
                 Icons.book,
               ),
               SizedBox(width: 16),
               _buildInfoCard(
                 'Students',
-                '${semester.students.length}',
+                '${widget.semester.students.length}',
                 Icons.people,
               ),
               SizedBox(width: 16),
               _buildInfoCard(
                 'Start Date',
-                _formatDate(semester.startDate),
+                _formatDate(widget.semester.startDate),
                 Icons.calendar_today,
               ),
               SizedBox(width: 16),
               _buildInfoCard(
                 'End Date',
-                _formatDate(semester.endDate),
+                _formatDate(widget.semester.endDate),
                 Icons.event,
               ),
             ],
@@ -197,10 +227,12 @@ class SemesterDetailPage extends StatelessWidget {
 
   Widget _buildWeeksList() {
     return ListView.builder(
+      shrinkWrap: true, // Add this
+      physics: NeverScrollableScrollPhysics(), // Add this
       padding: EdgeInsets.all(16),
-      itemCount: semester.weeks.length,
+      itemCount: widget.semester.weeks.length,
       itemBuilder: (context, index) {
-        final week = semester.weeks[index];
+        final week = widget.semester.weeks[index];
         return Card(
           margin: EdgeInsets.only(bottom: 12),
           elevation: 2,
@@ -239,7 +271,7 @@ class SemesterDetailPage extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => WeekContentPage(week: week),
+                builder: (context) => WeekContentPage(week: week),
               ),
             ),
           ),
@@ -257,7 +289,7 @@ class SemesterDetailPage extends StatelessWidget {
   }
 
   Widget _buildStudentsList() {
-    if (semester.students.isEmpty) {
+    if (widget.semester.students.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(24.0),
         child: Center(
@@ -273,10 +305,10 @@ class SemesterDetailPage extends StatelessWidget {
     return ListView.separated(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      itemCount: semester.students.length,
+      itemCount: widget.semester.students.length,
       separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
-        final student = semester.students[index];
+        final student = widget.semester.students[index];
         // Safe way to get initials
         final initials = student.user.name.isNotEmpty 
             ? student.user.name.characters.first.toUpperCase()
@@ -381,23 +413,180 @@ class SemesterDetailPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class WeekContentPage extends StatelessWidget {
-  final Week week;
+  void _showAddWeekDialog(BuildContext context) {
+    DateTime? startDate;
+    DateTime? endDate;
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year);
+    final lastDate = DateTime(now.year + 1, 12, 31);
+  
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add New Week', style: AppTheme.headingMedium),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _weekNoController,
+              decoration: AppTheme.inputDecoration('Week Number'),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _startDateController,
+              decoration: AppTheme.inputDecoration('Start Date').copyWith(
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: now,
+                  firstDate: firstDate,
+                  lastDate: lastDate,
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppTheme.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: Colors.black,
+                        ),
+                        dialogBackgroundColor: Colors.white,
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (date != null) {
+                  setState(() {
+                    startDate = date;
+                    _startDateController.text = DateFormat('MMM d, y').format(date);
+                    // Clear end date if it's before new start date
+                    if (endDate != null && endDate!.isBefore(date)) {
+                      endDate = null;
+                      _endDateController.text = '';
+                    }
+                  });
+                }
+              },
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _endDateController,
+              decoration: AppTheme.inputDecoration('End Date').copyWith(
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () async {
+                if (startDate == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please select start date first')),
+                  );
+                  return;
+                }
 
-  WeekContentPage({required this.week});
+                final suggestedEndDate = startDate!.add(Duration(days: 7));
+                final initialEndDate = suggestedEndDate.isBefore(lastDate) 
+                    ? suggestedEndDate 
+                    : lastDate;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Manage Content for Week ${week.weekNo}'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-      body: Center(
-        child: Text('Week content management goes here'),
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: initialEndDate,
+                  firstDate: startDate!,
+                  lastDate: lastDate,
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppTheme.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: Colors.black,
+                        ),
+                        dialogBackgroundColor: Colors.white,
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (date != null) {
+                  setState(() {
+                    endDate = date;
+                    _endDateController.text = DateFormat('MMM d, y').format(date);
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _clearControllers();
+              Navigator.pop(context);
+            },
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_weekNoController.text.isNotEmpty &&
+                  startDate != null &&
+                  endDate != null) {
+                try {
+                  final semestersProvider = Provider.of<SemestersProvider>(context, listen: false);
+                  
+                  await semestersProvider.addWeek(
+                    widget.semester.id,
+                    int.parse(_weekNoController.text),
+                    startDate!,
+                    endDate!,
+                  );
+                  
+                  // Refresh semester data after adding a week
+                  final updatedSemester = await semestersProvider.fetchSemesterById(widget.semester.id);
+                  
+                  // Update the state with the new semester data
+                  setState(() {
+                    widget.semester.weeks.clear();
+                    widget.semester.weeks.addAll(updatedSemester.weeks);
+                  });
+                  
+                  _clearControllers();
+                  Navigator.pop(context);
+                  
+                  // Show success message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Week added successfully')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to add week: $e')),
+                  );
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Please fill all fields')),
+                );
+              }
+            },
+            style: AppTheme.primaryButtonStyle,
+            child: Text('Add Week'),
+          ),
+        ],
       ),
     );
   }
+
+  void _clearControllers() {
+    _weekNoController.text = '';
+    _startDateController.text = '';
+    _endDateController.text = '';
+  }
 }
+
+
