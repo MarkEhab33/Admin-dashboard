@@ -1,7 +1,7 @@
 class User {
   final int id;
-  final String email;
   final String name;
+  final String email;
   final DateTime birthday;
   final String nationality;
   final String address;
@@ -9,8 +9,8 @@ class User {
 
   User({
     required this.id,
-    required this.email,
     required this.name,
+    required this.email,
     required this.birthday,
     required this.nationality,
     required this.address,
@@ -18,14 +18,18 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    print('Processing user JSON: $json'); // Debug print
+
     return User(
-      id: json['id'],
-      email: json['email'],
-      name: json['name'],
-      birthday: DateTime.parse(json['birthday']),
-      nationality: json['nationality'],
-      address: json['Address'],
-      gender: json['gender'],
+      id: json['id'] ?? 0,
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      birthday: json['birthday'] != null
+          ? DateTime.parse(json['birthday'].toString())
+          : DateTime.now(),
+      nationality: json['nationality']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      gender: json['gender']?.toString() ?? '',
     );
   }
 }

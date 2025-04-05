@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../Models/student.dart';
 
+
 class StudentsProvider with ChangeNotifier {
   List<Student> _students = [];
   bool _isLoading = false;
@@ -84,6 +85,57 @@ class StudentsProvider with ChangeNotifier {
       }
     } catch (e) {
       throw Exception('Error ${action}ing student: $e');
+    }
+  }
+
+  Future<void> fetchStudentsSummary() async {
+    _isLoading = true;
+    _error = '';
+    notifyListeners();
+
+    try {
+      final response = await http.get(
+        Uri.parse('${Globals.baseUrl}/user/students/summary'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('Response status code: ${response.statusCode}');
+      print('Raw response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        print('Decoded response data: $responseData');
+
+        if (responseData['data'] != null) {
+          final List<dynamic> studentsData = responseData['data'] as List;
+          
+          if (studentsData.isNotEmpty) {
+            print('First student data: ${studentsData.first}');
+          }
+
+          _students = studentsData.map((studentJson) {
+            try {
+              return Student.fromSummaryJson(studentJson as Map<String, dynamic>);
+            } catch (e) {
+              print('Error parsing student JSON: $e');
+              print('Problematic student data: $studentJson');
+              return null;
+            }
+          }).whereType<Student>().toList();
+        } else {
+          _students = [];
+        }
+      } else {
+        _error = 'Failed to fetch students summary: ${response.statusCode}';
+      }
+    } catch (e) {
+      print('Error details: $e');
+      _error = 'Error fetching students summary: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }

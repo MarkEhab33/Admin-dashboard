@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'week_content_page.dart';
 
 import '../provider/semesters_provider.dart';
-
+import '../provider/student_provider.dart';
 
 class SemesterDetailPage extends StatefulWidget {
   final Semester semester;
@@ -66,8 +66,8 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                             ),
                             ElevatedButton.icon(
                               onPressed: () => _showAddWeekDialog(context),
-                              icon: const Icon(Icons.add, size: 18),
-                              label: const Text('Add Week'),
+                              icon: const Icon(Icons.add, size: 18,color: Colors.white,),
+                              label: const Text('Add Week',),
                               style: AppTheme.primaryButtonStyle,
                             ),
                           ],
@@ -106,7 +106,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                             ),
                             ElevatedButton.icon(
                               onPressed: () => _showAddStudentDialog(context),
-                              icon: const Icon(Icons.add, size: 18),
+                              icon: const Icon(Icons.add, size: 18,color: Colors.white,),
                               label: const Text('Add Student'),
                               style: AppTheme.primaryButtonStyle,
                             ),
@@ -126,11 +126,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddWeekDialog(context),
-        child: Icon(Icons.add),
-        backgroundColor: AppTheme.secondaryColor,
-      ),
+
     );
   }
 
@@ -226,55 +222,65 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
   }
 
   Widget _buildWeeksList() {
+    // Sort weeks by weekNo before building the list
+    final sortedWeeks = List<Week>.from(widget.semester.weeks)
+      ..sort((a, b) => a.weekNo.compareTo(b.weekNo));
+
     return ListView.builder(
-      shrinkWrap: true, // Add this
-      physics: NeverScrollableScrollPhysics(), // Add this
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
       padding: EdgeInsets.all(16),
-      itemCount: widget.semester.weeks.length,
+      itemCount: sortedWeeks.length,
       itemBuilder: (context, index) {
-        final week = widget.semester.weeks[index];
-        return Card(
-          margin: EdgeInsets.only(bottom: 12),
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            contentPadding: EdgeInsets.all(16),
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  '${week.weekNo}',
-                  style: AppTheme.headingMedium.copyWith(
-                    color: AppTheme.primaryColor,
+        final week = sortedWeeks[index];
+        return InkWell(
+          child: Card(
+            margin: EdgeInsets.only(bottom: 12),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ListTile(
+              contentPadding: EdgeInsets.all(16),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: Text(
+                    '${week.weekNo}',
+                    style: AppTheme.headingMedium.copyWith(
+                      color: AppTheme.primaryColor,
+                    ),
                   ),
                 ),
               ),
-            ),
-            title: Text(
-              'Week ${week.weekNo}',
-              style: AppTheme.headingMedium,
-            ),
-            subtitle: Text(
-              '${_formatDate(week.startDate)} - ${_formatDate(week.endDate)}',
-              style: AppTheme.bodyMedium.copyWith(
-                color: AppTheme.textSecondaryColor,
+              title: Text(
+                'Week ${week.weekNo}',
+                style: AppTheme.headingMedium,
               ),
-            ),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => WeekContentPage(week: week),
+              subtitle: Text(
+                '${_formatDate(week.startDate)} - ${_formatDate(week.endDate)}',
+                style: AppTheme.bodyMedium.copyWith(
+                  color: AppTheme.textSecondaryColor,
+                ),
+              ),
+              trailing: IconButton(
+                icon: Icon(Icons.edit),
+                onPressed: () => _showEditWeekDialog(week),
               ),
             ),
           ),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WeekContentPage(week: week),
+            ),
+          ),
+
         );
       },
     );
@@ -334,6 +340,12 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
   }
 
   void _showAddStudentDialog(BuildContext context) {
+    final studentsProvider = Provider.of<StudentsProvider>(context, listen: false);
+    final searchController = TextEditingController();
+
+    // Fetch students summary when dialog opens
+    studentsProvider.fetchStudentsSummary();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -344,13 +356,14 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                controller: searchController,
                 decoration: InputDecoration(
                   labelText: 'Search students',
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder(),
                 ),
                 onChanged: (value) {
-                  // Implement search functionality
+                  studentsProvider.updateSearchQuery(value);
                 },
               ),
               const SizedBox(height: 16),
@@ -360,14 +373,75 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                   border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: ListView.builder(
-                  itemCount: 0, // Replace with filtered students list
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      // Build student item
-                      onTap: () {
-                        // Add student to semester
-                        Navigator.pop(context);
+                child: Consumer<StudentsProvider>(
+                  builder: (context, provider, _) {
+                    if (provider.isLoading) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    if (provider.error.isNotEmpty) {
+                      return Center(
+                        child: Text(
+                          provider.error,
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      );
+                    }
+
+                    final students = provider.filteredStudents;
+                    
+                    if (students.isEmpty) {
+                      return Center(
+                        child: Text('No students found'),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: students.length,
+                      itemBuilder: (context, index) {
+                        final student = students[index];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: AppTheme.primaryColor,
+                            child: Text(
+                              student.user.name.isNotEmpty 
+                                  ? student.user.name[0].toUpperCase()
+                                  : '?',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          title: Text(student.user.name),
+                          subtitle: Text(student.studentCode),
+                          onTap: () async {
+                            try {
+                              final semestersProvider = Provider.of<SemestersProvider>(
+                                context, 
+                                listen: false
+                              );
+                              
+                              await semestersProvider.addStudentToSemester(
+                                widget.semester.id.toString(),
+                                student.id.toString(),
+                              );
+
+                              Navigator.pop(context);
+                              
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Student added successfully'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to add student: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                        );
                       },
                     );
                   },
@@ -400,9 +474,34 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
             child: Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              // Implement remove student logic
-              Navigator.pop(context);
+            onPressed: () async {
+              try {
+                final semestersProvider = Provider.of<SemestersProvider>(
+                  context, 
+                  listen: false
+                );
+                
+                await semestersProvider.removeStudentFromSemester(
+                  widget.semester.id.toString(),
+                  student.id.toString(),
+                );
+
+                Navigator.pop(context);
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Student removed successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to remove student: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             child: Text(
               'Remove',
@@ -554,6 +653,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                   setState(() {
                     widget.semester.weeks.clear();
                     widget.semester.weeks.addAll(updatedSemester.weeks);
+                    widget.semester.weeks.sort((a, b) => a.weekNo.compareTo(b.weekNo));
                   });
                   
                   _clearControllers();
@@ -586,6 +686,169 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
     _weekNoController.text = '';
     _startDateController.text = '';
     _endDateController.text = '';
+  }
+
+  void _showEditWeekDialog(Week week) {
+    final _weekNoController = TextEditingController(text: week.weekNo.toString());
+    final _startDateController = TextEditingController(
+      text: DateFormat('MMM d, y').format(week.startDate),
+    );
+    final _endDateController = TextEditingController(
+      text: DateFormat('MMM d, y').format(week.endDate),
+    );
+    DateTime? startDate = week.startDate;
+    DateTime? endDate = week.endDate;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit Week', style: AppTheme.headingMedium),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _weekNoController,
+              decoration: AppTheme.inputDecoration('Week Number'),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _startDateController,
+              decoration: AppTheme.inputDecoration('Start Date').copyWith(
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: startDate!,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2030),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppTheme.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: Colors.black,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (date != null) {
+                  setState(() {
+                    startDate = date;
+                    _startDateController.text = DateFormat('MMM d, y').format(date);
+                    if (endDate != null && endDate!.isBefore(date)) {
+                      endDate = null;
+                      _endDateController.text = '';
+                    }
+                  });
+                }
+              },
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _endDateController,
+              decoration: AppTheme.inputDecoration('End Date').copyWith(
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () async {
+                if (startDate == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please select start date first')),
+                  );
+                  return;
+                }
+
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: endDate ?? startDate!.add(Duration(days: 1)),
+                  firstDate: startDate!.add(Duration(days: 1)),
+                  lastDate: DateTime(2030),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: AppTheme.primaryColor,
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: Colors.black,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (date != null) {
+                  setState(() {
+                    endDate = date;
+                    _endDateController.text = DateFormat('MMM d, y').format(date);
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_weekNoController.text.isEmpty ||
+                  startDate == null ||
+                  endDate == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Please fill all fields')),
+                );
+                return;
+              }
+
+              try {
+                final semestersProvider = Provider.of<SemestersProvider>(
+                  context,
+                  listen: false,
+                );
+
+                await semestersProvider.updateWeek(
+                  weekId: week.id,
+                  weekNo: int.parse(_weekNoController.text),
+                  startDate: startDate!,
+                  endDate: endDate!,
+                );
+
+                // Refresh the semester data after updating the week
+                final updatedSemester = await semestersProvider.fetchSemesterById(widget.semester.id);
+                
+                // Update the state with the new semester data
+                setState(() {
+                  widget.semester.weeks.clear();
+                  widget.semester.weeks.addAll(updatedSemester.weeks);
+                  widget.semester.weeks.sort((a, b) => a.weekNo.compareTo(b.weekNo));
+                });
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Week updated successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to update week: $e')),
+                );
+              }
+            },
+            style: AppTheme.primaryButtonStyle,
+            child: Text('Update'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
