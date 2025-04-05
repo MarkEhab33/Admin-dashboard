@@ -60,21 +60,51 @@ class SemestersProvider with ChangeNotifier {
 
   Future<void> addStudentToSemester(String semesterId, String studentId) async {
     try {
-      // Implement API call to add student to semester
-      // Update the local semester data
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/semester/add-user'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'userId': int.parse(studentId),
+          'semesterId': int.parse(semesterId),
+          'role': 'student'
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to add student: ${response.body}');
+      }
+
+      // Refresh the semester data to get the updated student list
+      await fetchSemesters();
       notifyListeners();
     } catch (e) {
-      // Handle error
+      print('Error adding student to semester: $e');
+      throw Exception('Failed to add student: $e');
     }
   }
 
   Future<void> removeStudentFromSemester(String semesterId, String studentId) async {
     try {
-      // Implement API call to remove student from semester
-      // Update the local semester data
+      final response = await http.delete(
+        Uri.parse('${Globals.baseUrl}/semester/remove-user'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'userId': int.parse(studentId),
+          'semesterId': int.parse(semesterId),
+          'role': 'student'
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to remove student: ${response.body}');
+      }
+
+      // Refresh the semester data to get the updated student list
+      await fetchSemesters();
       notifyListeners();
     } catch (e) {
-      // Handle error
+      print('Error removing student from semester: $e');
+      throw Exception('Failed to remove student: $e');
     }
   }
 
@@ -131,19 +161,11 @@ class SemestersProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        final updatedSemester = Semester.fromJson(jsonResponse['data']);
-        
-        // Update the semester in the local list
-        final index = _semesters.indexWhere((s) => s.id == semesterId);
-        if (index != -1) {
-          _semesters[index] = updatedSemester;
-          notifyListeners();
-        }
-        
-        return updatedSemester;
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final semesterData = jsonResponse['data'];
+        return Semester.fromJson(semesterData);
       } else {
-        throw Exception('Failed to fetch semester: ${response.body}');
+        throw Exception('Failed to fetch semester: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching semester: $e');
@@ -328,7 +350,6 @@ class SemestersProvider with ChangeNotifier {
     }
   }
 }
-
 
 
 
