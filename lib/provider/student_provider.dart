@@ -72,7 +72,7 @@ class StudentsProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
+    
         
         // Remove the student from the list
         _students.removeWhere((student) => student.id == studentId);

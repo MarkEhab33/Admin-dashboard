@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../provider/semesters_provider.dart';
 import '../Theme.dart';
-import 'package:intl/intl.dart';
+import 'semester-page.dart';
 
 class ContentManagementTab extends StatefulWidget {
   @override
@@ -195,93 +196,108 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
   }
 
   Widget _buildSemesterRow(dynamic semester) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 16,
-        horizontal: 24,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Row(
-              children: [
-                Text(
-                  semester.name,
-                  style: AppTheme.bodyLarge,
-                ),
-                if (semester.isCurrent)
-                  Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Current',
-                      style: AppTheme.bodyMedium.copyWith(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
+    return InkWell(  // Added InkWell for tap effect
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SemesterDetailPage(semester: semester),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 24,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  Text(
+                    semester.name,
+                    style: AppTheme.bodyLarge,
+                  ),
+                  if (semester.isCurrent)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Current',
+                        style: AppTheme.bodyMedium.copyWith(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Text(
-              semester.year.toString(),
-              style: AppTheme.bodyLarge,
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              DateFormat('MMM d, y').format(semester.startDate),
-              style: AppTheme.bodyLarge,
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              DateFormat('MMM d, y').format(semester.endDate),
-              style: AppTheme.bodyLarge,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              semester.semesterTemplate.subjects.length.toString(),
-              style: AppTheme.bodyLarge,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              semester.students.length.toString(),
-              style: AppTheme.bodyLarge,
-            ),
-          ),
-          SizedBox(
-            width: 60,
-            child: IconButton(
-              icon: Icon(
-                Icons.arrow_forward_ios,
-                size: 18,
-                color: AppTheme.primaryColor,
-              ),
-              onPressed: () {
-                // Navigate to semester detail
-              },
-              style: IconButton.styleFrom(
-                backgroundColor: AppTheme.surfaceColor,
-                padding: const EdgeInsets.all(8),
+                ],
               ),
             ),
-          ),
-        ],
+            Expanded(
+              child: Text(
+                semester.year.toString(),
+                style: AppTheme.bodyLarge,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                DateFormat('MMM d, y').format(semester.startDate),
+                style: AppTheme.bodyLarge,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                DateFormat('MMM d, y').format(semester.endDate),
+                style: AppTheme.bodyLarge,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                semester.semesterTemplate.subjects.length.toString(),
+                style: AppTheme.bodyLarge,
+              ),
+            ),
+            Expanded(
+              child: Text(
+                semester.students.length.toString(),
+                style: AppTheme.bodyLarge,
+              ),
+            ),
+            SizedBox(
+              width: 60,
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 18,
+                  color: AppTheme.primaryColor,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SemesterDetailPage(semester: semester),
+                    ),
+                  );
+                },
+                style: IconButton.styleFrom(
+                  backgroundColor: AppTheme.surfaceColor,
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
