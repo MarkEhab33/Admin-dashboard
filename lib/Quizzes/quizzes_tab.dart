@@ -11,6 +11,24 @@ class QuizzesTab extends StatefulWidget {
   _QuizzesTabState createState() => _QuizzesTabState();
 }
 
+class _UniqueItem {
+  final int id;
+  final String name;
+
+  _UniqueItem(this.id, this.name);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _UniqueItem &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name;
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode;
+}
+
 class _QuizzesTabState extends State<QuizzesTab> {
   int? selectedSemesterId;
   int? selectedSubjectId;
@@ -64,50 +82,82 @@ class _QuizzesTabState extends State<QuizzesTab> {
   }
 
   Widget _buildFilters() {
-    return Row(
-      children: [
-        Expanded(
-          child: DropdownButtonFormField<int>(
-            decoration: AppTheme.inputDecoration('Select Semester'),
-            value: selectedSemesterId,
-            items: [
-              DropdownMenuItem<int>(
-                value: null,
-                child: Text('All Semesters'),
+    return Consumer<QuizProvider>(
+      builder: (context, provider, _) {
+        final uniqueSemesters = provider.quizzes
+            .map((quiz) => _UniqueItem(
+                  quiz.semester['id'] as int,
+                  quiz.semester['name'] as String,
+                ))
+            .toSet()
+            .toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
+
+        final uniqueSubjects = provider.quizzes
+            .map((quiz) => _UniqueItem(
+                  quiz.subject['id'] as int,
+                  quiz.subject['name'] as String,
+                ))
+            .toSet()
+            .toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
+
+        return Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<int>(
+                decoration: AppTheme.inputDecoration('Select Semester'),
+                value: selectedSemesterId,
+                items: [
+                  const DropdownMenuItem<int>(
+                    value: null,
+                    child: Text('All Semesters'),
+                  ),
+                  ...uniqueSemesters.map((semester) => DropdownMenuItem<int>(
+                        value: semester.id,
+                        child: Text(semester.name),
+                      )),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedSemesterId = value;
+                  });
+                  provider.fetchQuizzes(
+                    semesterId: value,
+                    subjectId: selectedSubjectId,
+                  );
+                },
               ),
-              // Add your semester items here
-            ],
-            onChanged: (value) {
-              setState(() {
-                selectedSemesterId = value;
-              });
-              Provider.of<QuizProvider>(context, listen: false)
-                  .fetchQuizzes(semesterId: value, subjectId: selectedSubjectId);
-            },
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: DropdownButtonFormField<int>(
-            decoration: AppTheme.inputDecoration('Select Subject'),
-            value: selectedSubjectId,
-            items: [
-              DropdownMenuItem<int>(
-                value: null,
-                child: Text('All Subjects'),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: DropdownButtonFormField<int>(
+                decoration: AppTheme.inputDecoration('Select Subject'),
+                value: selectedSubjectId,
+                items: [
+                  const DropdownMenuItem<int>(
+                    value: null,
+                    child: Text('All Subjects'),
+                  ),
+                  ...uniqueSubjects.map((subject) => DropdownMenuItem<int>(
+                        value: subject.id,
+                        child: Text(subject.name),
+                      )),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedSubjectId = value;
+                  });
+                  provider.fetchQuizzes(
+                    semesterId: selectedSemesterId,
+                    subjectId: value,
+                  );
+                },
               ),
-              // Add your subject items here
-            ],
-            onChanged: (value) {
-              setState(() {
-                selectedSubjectId = value;
-              });
-              Provider.of<QuizProvider>(context, listen: false)
-                  .fetchQuizzes(semesterId: selectedSemesterId, subjectId: value);
-            },
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -338,6 +388,10 @@ class _QuizzesTabState extends State<QuizzesTab> {
     );
   }
 }
+
+
+
+
 
 
 
