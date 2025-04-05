@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:admin_dashboard/Models/student.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../Constants/globals.dart';
@@ -53,6 +54,38 @@ class SemestersProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> addStudentToSemester(String semesterId, String studentId) async {
+    try {
+      // Implement API call to add student to semester
+      // Update the local semester data
+      notifyListeners();
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<void> removeStudentFromSemester(String semesterId, String studentId) async {
+    try {
+      // Implement API call to remove student from semester
+      // Update the local semester data
+      notifyListeners();
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  Future<List<Student>> searchAvailableStudents(String semesterId, String query) async {
+    try {
+      // Implement API call to search for students not in the semester
+      // Return filtered list of students
+      return [];
+    } catch (e) {
+      // Handle error
+      return [];
+    }
+  }
 }
+
 
 

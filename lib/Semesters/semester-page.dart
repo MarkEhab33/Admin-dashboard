@@ -1,10 +1,11 @@
 // Assuming navigation is set up in your app:
+import 'package:admin_dashboard/Models/student.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../Models/semester.dart';
 import '../Models/week.dart';
 import '../Theme.dart';
-import 'Content-management_tab.dart';
+
 
 class SemesterDetailPage extends StatelessWidget {
   final Semester semester;
@@ -18,20 +19,80 @@ class SemesterDetailPage extends StatelessWidget {
         title: Text(semester.name),
         backgroundColor: AppTheme.primaryColor,
       ),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: semester.weeks.isEmpty
-                ? Center(
-                    child: Text(
-                      'No weeks available for this semester',
-                      style: AppTheme.bodyLarge,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 24),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Weeks Section (70% of width)
+                  Expanded(
+                    flex: 7,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Weeks',
+                          style: AppTheme.headingMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          decoration: AppTheme.cardDecoration,
+                          child: semester.weeks.isEmpty
+                              ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Text(
+                                      'No weeks available for this semester',
+                                      style: AppTheme.bodyLarge,
+                                    ),
+                                  ),
+                                )
+                              : _buildWeeksList(),
+                        ),
+                      ],
                     ),
-                  )
-                : _buildWeeksList(),
+                  ),
+                  const SizedBox(width: 24),
+                  // Students Section (30% of width)
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Students',
+                              style: AppTheme.headingMedium,
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => _showAddStudentDialog(context),
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('Add Student'),
+                              style: AppTheme.primaryButtonStyle,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          decoration: AppTheme.cardDecoration,
+                          child: _buildStudentsList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -193,6 +254,132 @@ class SemesterDetailPage extends StatelessWidget {
     } catch (e) {
       return 'Invalid date';
     }
+  }
+
+  Widget _buildStudentsList() {
+    if (semester.students.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Center(
+          child: Text(
+            'No students enrolled in this semester',
+            style: AppTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: semester.students.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final student = semester.students[index];
+        // Safe way to get initials
+        final initials = student.user.name.isNotEmpty 
+            ? student.user.name.characters.first.toUpperCase()
+            : '?';
+            
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: AppTheme.primaryColor,
+            child: Text(
+              initials,
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          title: Text(student.user.name),
+          subtitle: Text(student.studentCode),
+          trailing: IconButton(
+            icon: Icon(Icons.remove_circle_outline, color: Colors.red),
+            onPressed: () => _showRemoveStudentDialog(context, student),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddStudentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add Student to Semester'),
+        content: Container(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Search students',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  // Implement search functionality
+                },
+              ),
+              const SizedBox(height: 16),
+              Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: ListView.builder(
+                  itemCount: 0, // Replace with filtered students list
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      // Build student item
+                      onTap: () {
+                        // Add student to semester
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemoveStudentDialog(BuildContext context, Student student) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove Student'),
+        content: Text(
+          'Are you sure you want to remove ${student.user.name} from this semester?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Implement remove student logic
+              Navigator.pop(context);
+            },
+            child: Text(
+              'Remove',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

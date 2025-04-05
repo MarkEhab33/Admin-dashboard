@@ -33,7 +33,7 @@ class DashboardScreen extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                _buildAppBar(context, isWideScreen),
+
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(24),
@@ -79,37 +79,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, bool isWideScreen) {
-    final provider = Provider.of<DashboardProvider>(context, listen: false);
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.1),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          if (!isWideScreen)
-            IconButton(
-              icon: Icon(Icons.menu, color: AppTheme.primaryColor),
-              onPressed: () {
-                provider.scaffoldKey.currentState?.openDrawer();
-              },
-            ),
-          Text(
-            'Aripsalin Dashboard',
-            style: AppTheme.headingMedium,
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildDrawerItem(BuildContext context, IconData icon, String title, int index) {
     final provider = Provider.of<DashboardProvider>(context);
@@ -142,37 +112,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildExpandableDrawerItem(BuildContext context) {
-    final provider = Provider.of<DashboardProvider>(context, listen: false);
-    return ExpansionTile(
-      leading: Icon(Icons.folder),
-      title: Text("Semesters"),
-      children: <Widget>[
-        ListTile(
-          leading: Icon(Icons.book),
-          title: Text("Semester 1"),
-          onTap: () {
-            provider.setIndex(1);
-            // Close drawer if on small screen
-            if (MediaQuery.of(context).size.width <= 1200) {
-              Navigator.pop(context);
-            }
-          },
-        ),
-        ListTile(
-          leading: Icon(Icons.book),
-          title: Text("Semester 2"),
-          onTap: () {
-            provider.setIndex(1);
-            // Close drawer if on small screen
-            if (MediaQuery.of(context).size.width <= 1200) {
-              Navigator.pop(context);
-            }
-          },
-        ),
-      ],
-    );
-  }
+ 
 }
 
 

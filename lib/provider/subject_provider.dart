@@ -1,20 +1,32 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:html' as html;
 import 'package:admin_dashboard/Constants/globals.dart';
+import 'package:admin_dashboard/utils/string_extensions.dart';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../Models/subject.dart';
 import '../Models/lesson_item.dart';
+import '../services/cloudinary_service.dart';
 
 class LessonProvider with ChangeNotifier {
   List<Lesson> _lessons = [];
   Lesson? _selectedLesson;
   bool _isLoading = false;
+  bool _isUploading = false;
+  bool _isDeleting = false;
+  double _uploadProgress = 0.0;
   List<LessonItem> _items = [];
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
   List<Lesson> get lessons => _lessons;
   Lesson? get selectedLesson => _selectedLesson;
   bool get isLoading => _isLoading;
+  bool get isUploading => _isUploading;
+  bool get isDeleting => _isDeleting;
+  double get uploadProgress => _uploadProgress;
   List<LessonItem> get items => _items;
 
   Future<void> fetchLessons(int subjectId) async {
@@ -126,6 +138,212 @@ class LessonProvider with ChangeNotifier {
       notifyListeners();
     } else {
       print('Error: Lesson ID is null');
+    }
+  }
+
+  Future<void> uploadPdfItem({
+    required int lessonId,
+    required String title,
+    required html.File file,
+  }) async {
+    try {
+      // Validate file type
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        throw Exception('Invalid file type. Only PDF files are allowed.');
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw Exception('File size exceeds 10MB limit');
+      }
+
+      _isUploading = true;
+      _uploadProgress = 0.1;
+      notifyListeners();
+
+      // Upload file to Cloudinary
+      _uploadProgress = 0.3;
+      notifyListeners();
+      
+      final fileUrl = await _cloudinaryService.uploadWebFile(file);
+      
+      _uploadProgress = 0.7;
+      notifyListeners();
+
+      // Create lesson item with PDF URL
+      await uploadLessonItem(
+        lessonId: lessonId,
+        title: title.trim(),
+        itemType: 'pdf',
+        itemContent: fileUrl,
+      );
+
+      _uploadProgress = 1.0;
+      notifyListeners();
+
+      // Refresh lesson items
+      await fetchLessonItems(lessonId);
+    } catch (error) {
+      print('Error in uploadPdfItem: $error');
+      throw Exception('Error uploading PDF: $error');
+    } finally {
+      _isUploading = false;
+      _uploadProgress = 0.0;
+      notifyListeners();
+    }
+  }
+
+  Future<void> uploadAudioItem({
+    required int lessonId,
+    required String title,
+    required html.File file,
+  }) async {
+    try {
+      // Validate file type
+      final validAudioTypes = ['.mp3', '.wav', '.m4a'];
+      if (!validAudioTypes.any((type) => file.name.toLowerCase().endsWith(type))) {
+        throw Exception('Invalid file type. Allowed types: ${validAudioTypes.join(", ")}');
+      }
+
+      // Validate file size (max 20MB)
+      if (file.size > 20 * 1024 * 1024) {
+        throw Exception('File size exceeds 20MB limit');
+      }
+
+      _isUploading = true;
+      _uploadProgress = 0.1;
+      notifyListeners();
+
+      // Upload file to Cloudinary
+      _uploadProgress = 0.3;
+      notifyListeners();
+      
+      final fileUrl = await _cloudinaryService.uploadWebFile(file);
+      
+      _uploadProgress = 0.6;
+      notifyListeners();
+      
+      // Get optimized audio URL
+      final optimizedUrl = _cloudinaryService.getOptimizedAudioUrl(fileUrl);
+
+      _uploadProgress = 0.8;
+      notifyListeners();
+
+      // Create lesson item with optimized audio URL
+      await uploadLessonItem(
+        lessonId: lessonId,
+        title: title.trim(),
+        itemType: 'audio',
+        itemContent: optimizedUrl,
+      );
+
+      _uploadProgress = 1.0;
+      notifyListeners();
+
+      // Refresh lesson items
+      await fetchLessonItems(lessonId);
+    } catch (error) {
+      print('Error in uploadAudioItem: $error');
+      throw Exception('Error uploading audio: $error');
+    } finally {
+      _isUploading = false;
+      _uploadProgress = 0.0;
+      notifyListeners();
+    }
+  }
+
+  Future<void> uploadLessonItem({
+    required int lessonId,
+    required String title,
+    required String itemType,
+    required String itemContent,
+  }) async {
+    try {
+      // Validate inputs
+      if (title.isEmpty) {
+        throw Exception('Title cannot be empty');
+      }
+      if (itemContent.isEmpty) {
+        throw Exception('Item content cannot be empty');
+      }
+      if (!['pdf', 'audio', 'video'].contains(itemType.toLowerCase())) {
+        throw Exception('Invalid item type');
+      }
+
+      // Log request data for debugging
+      print('Uploading lesson item:');
+      print('LessonId: $lessonId');
+      print('Title: $title');
+      print('Type: $itemType');
+      print('Content URL: $itemContent');
+
+      final response = await http.post(
+        Uri.parse('${Globals.baseUrl}/subject/lesson/item'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'lessonId': lessonId,
+          'title': title.trim(),
+          'itemType': itemType.toLowerCase(),
+          'itemContent': itemContent,
+        }),
+      );
+
+      // Log response for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to create item');
+      }
+    } catch (error) {
+      print('Error in uploadLessonItem: $error');
+      throw Exception('Error creating item: $error');
+    }
+  }
+
+  Future<void> deleteLessonItem(LessonItem item) async {
+    try {
+      _isDeleting = true;
+      notifyListeners();
+
+      // Delete from database
+      final response = await http.delete(
+        Uri.parse('${Globals.baseUrl}/subject/lesson/item/${item.id}'),
+      );
+
+      final responseData = json.decode(response.body);
+
+      switch (response.statusCode) {
+        case 200:
+          // Delete from Cloudinary if it's a file (not a video URL)
+          if (!item.itemContent.contains('youtube.com') && 
+              !item.itemContent.contains('vimeo.com')) {
+            await _cloudinaryService.deleteFile(item.itemContent);
+          }
+
+          // Refresh items list
+          if (_selectedLesson != null) {
+            await fetchLessonItems(_selectedLesson!.id);
+          }
+          break;
+
+        case 404:
+          throw Exception(responseData['message'] ?? 'Item not found');
+
+        case 500:
+          throw Exception(responseData['message'] ?? 'Server error occurred');
+
+        default:
+          throw Exception('Failed to delete item: ${responseData['message'] ?? 'Unknown error'}');
+      }
+    } catch (error) {
+      throw Exception('Error deleting item: $error');
+    } finally {
+      _isDeleting = false;
+      notifyListeners();
     }
   }
 }
