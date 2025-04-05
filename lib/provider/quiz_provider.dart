@@ -47,7 +47,11 @@ class QuizProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String get error => _error;
 
-   Future<void> createQuiz(Quiz quiz) async {
+  List<Map<String, dynamic>> _semestersList = [];
+  
+  List<Map<String, dynamic>> get semestersList => _semestersList;
+
+  Future<void> createQuiz(Quiz quiz) async {
     try {
       final requestBody = json.encode(quiz.toJson());
       print('Request body: $requestBody'); // Add this line to debug
@@ -159,9 +163,24 @@ class QuizProvider with ChangeNotifier {
       throw Exception('Error deleting quiz: $e');
     }
   }
+
+  Future<void> fetchSemestersList() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Globals.baseUrl}/semester/list'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _semestersList = List<Map<String, dynamic>>.from(data['data']);
+        notifyListeners();
+      } else {
+        throw Exception('Failed to load semesters list');
+      }
+    } catch (e) {
+      throw Exception('Error fetching semesters list: $e');
+    }
+  }
 }
-
-
-
-
 

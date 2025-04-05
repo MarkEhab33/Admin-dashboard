@@ -18,21 +18,23 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   final List<Question> _questions = [];
   
   final _nameController = TextEditingController();
-  final _subjectIdController = TextEditingController();
-  final _semesterIdController = TextEditingController();
   final _typeController = TextEditingController();
   final _attemptsController = TextEditingController();
   final _timeLimitController = TextEditingController();
 
+  int? selectedSemesterId;
+  int? selectedSubjectId;
+  List<Map<String, dynamic>> availableSubjects = [];
+
   @override
   void initState() {
     super.initState();
+    _loadSemestersList();
     if (widget.quizToEdit != null) {
-      // Populate the form with existing quiz data
       final quiz = widget.quizToEdit!;
       _nameController.text = quiz.name;
-      _subjectIdController.text = quiz.subject['id'].toString();
-      _semesterIdController.text = quiz.semester['id'].toString();
+      selectedSemesterId = quiz.semester['id'];
+      selectedSubjectId = quiz.subject['id'];
       _typeController.text = quiz.type;
       _attemptsController.text = quiz.numberOfAttempts.toString();
       _timeLimitController.text = quiz.timeLimit.toString();
@@ -40,11 +42,20 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
     }
   }
 
+  Future<void> _loadSemestersList() async {
+    await Provider.of<QuizProvider>(context, listen: false).fetchSemestersList();
+  }
+
+  void _updateAvailableSubjects(List<Map<String, dynamic>> subjects) {
+    setState(() {
+      availableSubjects = subjects;
+      selectedSubjectId = null; // Reset subject selection when semester changes
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
-    _subjectIdController.dispose();
-    _semesterIdController.dispose();
     _typeController.dispose();
     _attemptsController.dispose();
     _timeLimitController.dispose();
@@ -73,8 +84,8 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
       try {
         final quiz = Quiz(
           name: _nameController.text,
-          subjectId: int.parse(_subjectIdController.text),
-          semesterId: int.parse(_semesterIdController.text),
+          subjectId: selectedSubjectId!,
+          semesterId: selectedSemesterId!,
           grade: _calculateTotalGrade().toInt(),
           type: _typeController.text,
           numberOfAttempts: int.parse(_attemptsController.text),
@@ -125,26 +136,71 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _subjectIdController,
-                      decoration: AppTheme.inputDecoration('Subject ID'),
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _semesterIdController,
-                      decoration: AppTheme.inputDecoration('Semester ID'),
-                      keyboardType: TextInputType.number,
-                      validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-                    ),
-                  ),
-                ],
+              Consumer<QuizProvider>(
+                builder: (context, quizProvider, child) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          value: selectedSemesterId,
+                          decoration: AppTheme.inputDecoration('Select Semester'),
+                          items: [
+                            const DropdownMenuItem<int>(
+                              value: null,
+                              child: Text('Select Semester'),
+                            ),
+                            ...quizProvider.semestersList.map((semester) {
+                              return DropdownMenuItem<int>(
+                                value: semester['id'] as int,
+                                child: Text(semester['name'] as String),
+                              );
+                            }).toList(),
+                          ],
+                          validator: (value) => value == null ? 'Required' : null,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedSemesterId = value;
+                              // Find and update available subjects for selected semester
+                              if (value != null) {
+                                final semester = quizProvider.semestersList
+                                    .firstWhere((s) => s['id'] == value);
+                                _updateAvailableSubjects(
+                                    List<Map<String, dynamic>>.from(semester['subjects']));
+                              } else {
+                                _updateAvailableSubjects([]);
+                              }
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          value: selectedSubjectId,
+                          decoration: AppTheme.inputDecoration('Select Subject'),
+                          items: [
+                            const DropdownMenuItem<int>(
+                              value: null,
+                              child: Text('Select Subject'),
+                            ),
+                            ...availableSubjects.map((subject) {
+                              return DropdownMenuItem<int>(
+                                value: subject['id'] as int,
+                                child: Text(subject['name'] as String),
+                              );
+                            }).toList(),
+                          ],
+                          validator: (value) => value == null ? 'Required' : null,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedSubjectId = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 16),
               Row(
@@ -385,6 +441,7 @@ class _QuestionDialogState extends State<QuestionDialog> {
     }
   }
 }
+
 
 
 
