@@ -315,7 +315,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                         ),
                         ElevatedButton.icon(
                           onPressed: () => _showAddSemesterDialog(),
-                          icon: const Icon(Icons.add),
+                          icon: const Icon(Icons.add, size: 18, color: Colors.white),
                           label: const Text('Add New Semester'),
                           style: AppTheme.primaryButtonStyle,
                         ),

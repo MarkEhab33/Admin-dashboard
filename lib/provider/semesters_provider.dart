@@ -278,6 +278,55 @@ class SemestersProvider with ChangeNotifier {
       throw Exception('Error creating semester: $e');
     }
   }
+
+  Future<List<Map<String, dynamic>>> fetchWeekQuizzes(int weekId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Globals.baseUrl}/quiz/week/$weekId/simple'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return List<Map<String, dynamic>>.from(data['data']);
+      } else {
+        throw Exception('Failed to fetch quizzes');
+      }
+    } catch (e) {
+      throw Exception('Error fetching quizzes: $e');
+    }
+  }
+
+  Future<void> addQuizToWeek({required int weekId, required int quizId}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Globals.baseUrl}/quiz/week/$weekId/quiz'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'quizId': quizId,
+        }),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Failed to add quiz to week: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error adding quiz to week: $e');
+    }
+  }
+
+  Future<void> removeQuizFromWeek(int weekId, int quizId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${Globals.baseUrl}/quiz/week/$weekId/quiz/$quizId'),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to remove quiz from week');
+      }
+    } catch (e) {
+      throw Exception('Error removing quiz from week: $e');
+    }
+  }
 }
 
 

@@ -25,20 +25,38 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   int? selectedSemesterId;
   int? selectedSubjectId;
   List<Map<String, dynamic>> availableSubjects = [];
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _loadSemestersList();
-    if (widget.quizToEdit != null) {
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    await _loadSemestersList();
+    
+    if (widget.quizToEdit != null && !_isInitialized) {
       final quiz = widget.quizToEdit!;
       _nameController.text = quiz.name;
-      selectedSemesterId = quiz.semester['id'];
-      selectedSubjectId = quiz.subject['id'];
       _typeController.text = quiz.type;
       _attemptsController.text = quiz.numberOfAttempts.toString();
       _timeLimitController.text = quiz.timeLimit.toString();
       _questions.addAll(quiz.content);
+
+      // Wait for semesters list to be loaded
+      final quizProvider = Provider.of<QuizProvider>(context, listen: false);
+      if (quizProvider.semestersList.isNotEmpty) {
+        setState(() {
+          selectedSemesterId = quiz.semester['id'];
+          // Find and update available subjects for selected semester
+          final semester = quizProvider.semestersList
+              .firstWhere((s) => s['id'] == selectedSemesterId);
+          availableSubjects = List<Map<String, dynamic>>.from(semester['subjects']);
+          selectedSubjectId = quiz.subject['id'];
+          _isInitialized = true;
+        });
+      }
     }
   }
 
@@ -49,7 +67,10 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   void _updateAvailableSubjects(List<Map<String, dynamic>> subjects) {
     setState(() {
       availableSubjects = subjects;
-      selectedSubjectId = null; // Reset subject selection when semester changes
+      // Only reset subject selection if not editing or if semester changed
+      if (!_isInitialized || widget.quizToEdit?.semester['id'] != selectedSemesterId) {
+        selectedSubjectId = null;
+      }
     });
   }
 
@@ -138,6 +159,11 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
               const SizedBox(height: 16),
               Consumer<QuizProvider>(
                 builder: (context, quizProvider, child) {
+                  // Ensure lists are not empty before building dropdowns
+                  if (quizProvider.semestersList.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
                   return Row(
                     children: [
                       Expanded(
@@ -160,7 +186,6 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                           onChanged: (value) {
                             setState(() {
                               selectedSemesterId = value;
-                              // Find and update available subjects for selected semester
                               if (value != null) {
                                 final semester = quizProvider.semestersList
                                     .firstWhere((s) => s['id'] == value);
@@ -441,6 +466,7 @@ class _QuestionDialogState extends State<QuestionDialog> {
     }
   }
 }
+
 
 
 

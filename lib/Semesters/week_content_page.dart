@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../Models/Subject_Template.dart';
 import '../Models/week.dart';
 
+import '../provider/quiz_provider.dart';
 import '../provider/semesters_provider.dart';
 import '../Theme.dart';
 
@@ -18,13 +19,22 @@ class WeekContentPage extends StatefulWidget {
 
 class _WeekContentPageState extends State<WeekContentPage> {
   Map<String, List<Lesson>> _groupedLessons = {};
+  List<dynamic> _weekQuizzes = [];
   bool _isLoading = true;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _fetchLessons();
+    _fetchData();
+    _fetchWeekQuizzes();
+  }
+
+  Future<void> _fetchData() async {
+    await Future.wait([
+      _fetchLessons(),
+      _fetchQuizzes(),
+    ]);
   }
 
   Future<void> _fetchLessons() async {
@@ -61,6 +71,20 @@ class _WeekContentPageState extends State<WeekContentPage> {
       setState(() {
         _error = e.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchQuizzes() async {
+    try {
+      final provider = Provider.of<SemestersProvider>(context, listen: false);
+      final quizzes = await provider.fetchWeekQuizzes(widget.week.id);
+      setState(() {
+        _weekQuizzes = quizzes;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
       });
     }
   }
@@ -344,45 +368,340 @@ class _WeekContentPageState extends State<WeekContentPage> {
     );
   }
 
+  Widget _buildQuizzesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 32),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Week Quizzes',
+              style: AppTheme.headingMedium,
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add, size: 20, color: Colors.white),
+              label: const Text('Add Quiz'),
+              style: AppTheme.primaryButtonStyle,
+              onPressed: () => _showAddQuizDialog(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_weekQuizzes.isEmpty)
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.quiz_outlined, 
+                    size: 48, 
+                    color: Colors.grey.shade400
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No quizzes assigned to this week',
+                    style: AppTheme.bodyLarge.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _weekQuizzes.length,
+            itemBuilder: (context, index) {
+              final quiz = _weekQuizzes[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    // Optional: Navigate to quiz details
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            _getQuizTypeIcon(quiz['type']),
+                            color: AppTheme.primaryColor,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                quiz['name'] ?? 'Untitled Quiz',
+                                style: AppTheme.bodyLarge.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                quiz['subjectName'] ?? 'No Subject',
+                                style: AppTheme.bodyMedium.copyWith(
+                                  color: AppTheme.textSecondaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getQuizTypeColor(quiz['type']).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _formatQuizType(quiz['type']),
+                            style: AppTheme.bodyMedium.copyWith(
+                              color: _getQuizTypeColor(quiz['type']),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          color: Colors.red.shade400,
+                          onPressed: () => _showDeleteQuizDialog(context, quiz['id']),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  IconData _getQuizTypeIcon(String? type) {
+    switch (type?.toUpperCase()) {
+      case 'MULTIPLE_CHOICE':
+        return Icons.check_circle_outline;
+      case 'TRUE_FALSE':
+        return Icons.rule;
+      case 'ESSAY':
+        return Icons.edit_note;
+      default:
+        return Icons.quiz;
+    }
+  }
+
+  Color _getQuizTypeColor(String? type) {
+    switch (type?.toUpperCase()) {
+      case 'MULTIPLE_CHOICE':
+        return Colors.green;
+      case 'TRUE_FALSE':
+        return Colors.blue;
+      case 'ESSAY':
+        return Colors.purple;
+      default:
+        return AppTheme.primaryColor;
+    }
+  }
+
+  String _formatQuizType(String? type) {
+    if (type == null) return 'Unknown';
+    return type.split('_').map((word) => 
+      word[0].toUpperCase() + word.substring(1).toLowerCase()
+    ).join(' ');
+  }
+
+  void _showAddQuizDialog(BuildContext context) {
+    // Fetch quizzes before showing the dialog
+    Provider.of<QuizProvider>(context, listen: false)
+        .fetchQuizzes(semesterId: widget.week.semesterId);
+        
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Add Quiz to Week', style: AppTheme.headingMedium),
+              const SizedBox(height: 16),
+              Consumer<QuizProvider>(
+                builder: (context, provider, _) {
+                  // Remove the direct fetch call from here
+                  if (provider.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (provider.error.isNotEmpty) {
+                    return Center(
+                      child: Text(
+                        provider.error,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+
+                  final availableQuizzes = provider.quizzes.where(
+                    (quiz) => !_weekQuizzes.any((wq) => wq['id'] == quiz.id)
+                  ).toList();
+
+                  if (availableQuizzes.isEmpty) {
+                    return const Center(
+                      child: Text('No available quizzes for this semester'),
+                    );
+                  }
+
+                  return Container(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.6,
+                    ),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: availableQuizzes.length,
+                      itemBuilder: (context, index) {
+                        final quiz = availableQuizzes[index];
+                        return ListTile(
+                          title: Text(quiz.name),
+                          subtitle: Text('${quiz.subject['name']} • ${quiz.type}'),
+                          trailing: ElevatedButton(
+                            child: const Text('Add'),
+                            onPressed: () async {
+                              try {
+                                final provider = Provider.of<SemestersProvider>(
+                                  context, 
+                                  listen: false
+                                );
+                                await provider.addQuizToWeek(
+                                  weekId: widget.week.id,
+                                  quizId: quiz.id,
+                                );
+                                Navigator.pop(context);
+                                _fetchWeekQuizzes();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Quiz added successfully'),
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(e.toString()),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteQuizDialog(BuildContext context, int quizId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Quiz'),
+        content: const Text('Are you sure you want to remove this quiz from the week?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                final provider = Provider.of<SemestersProvider>(context, listen: false);
+                await provider.removeQuizFromWeek(widget.week.id, quizId);
+                Navigator.pop(context);
+                _fetchWeekQuizzes();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Quiz removed successfully')),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _fetchWeekQuizzes() async {
+    try {
+      final provider = Provider.of<SemestersProvider>(context, listen: false);
+      final quizzes = await provider.fetchWeekQuizzes(widget.week.id);
+      setState(() {
+        _weekQuizzes = quizzes;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Week ${widget.week.weekNo} Content',
-          style: AppTheme.headingMedium.copyWith(color: Colors.white),
-        ),
-        actions: [
-          ElevatedButton.icon(
-            onPressed: () => _showAddLessonDialog(context),
-            icon: const Icon(Icons.add, size: 20),
-            label: const Text('Add Lesson'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppTheme.primaryColor,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-          ),
-          const SizedBox(width: 24),
-        ],
+        title: Text('Week ${widget.week.weekNo} Content'),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.primaryColor.withOpacity(0.05),
-              Colors.white,
-            ],
-          ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Existing lessons section
+            _buildLessonsSection(),
+            
+            // Add the new quizzes section here
+            _buildQuizzesSection(),
+          ],
         ),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-                ? _buildErrorState()
-                : _buildContent(),
       ),
     );
   }
@@ -426,72 +745,47 @@ class _WeekContentPageState extends State<WeekContentPage> {
     );
   }
 
-  Widget _buildContent() {
-    if (_groupedLessons.isEmpty) {
-      return Center(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.school_outlined,
-                size: 72,
-                color: AppTheme.primaryColor.withOpacity(0.5),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'No Content Yet',
-                style: AppTheme.headingLarge.copyWith(
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Start by adding lessons to this week',
-                style: AppTheme.bodyLarge.copyWith(
-                  color: AppTheme.textSecondaryColor,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => _showAddLessonDialog(context),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Your First Lesson'),
-                style: AppTheme.primaryButtonStyle,
-              ),
-            ],
-          ),
+  Widget _buildLessonsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Week Lessons',
+              style: AppTheme.headingMedium,
+            ),
+            ElevatedButton.icon(
+              onPressed: () => _showAddLessonDialog(context),
+              icon: const Icon(Icons.add, size: 18, color: Colors.white),
+              label: const Text('Add Lesson'),
+              style: AppTheme.primaryButtonStyle,
+            ),
+          ],
         ),
-      );
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildWeekHeader(),
-          const SizedBox(height: 32),
-          ..._groupedLessons.entries.map((entry) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: _buildSubjectSection(entry.key, entry.value),
-            );
-          }),
-        ],
-      ),
+        const SizedBox(height: 16),
+        if (_groupedLessons.isEmpty)
+          Center(
+            child: Text(
+              'No lessons assigned to this week',
+              style: AppTheme.bodyLarge.copyWith(
+                color: AppTheme.textSecondaryColor,
+              ),
+            ),
+          )
+        else
+          Column(
+            children: _groupedLessons.entries.map((entry) {
+              return Column(
+                children: [
+                  _buildSubjectSection(entry.key, entry.value),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }).toList(),
+          ),
+      ],
     );
   }
 

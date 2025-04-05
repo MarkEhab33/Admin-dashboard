@@ -66,7 +66,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                             ),
                             ElevatedButton.icon(
                               onPressed: () => _showAddWeekDialog(context),
-                              icon: const Icon(Icons.add, size: 18),
+                              icon: const Icon(Icons.add, size: 18, color: Colors.white),
                               label: const Text('Add Week'),
                               style: AppTheme.primaryButtonStyle,
                             ),
@@ -106,7 +106,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                             ),
                             ElevatedButton.icon(
                               onPressed: () => _showAddStudentDialog(context),
-                              icon: const Icon(Icons.add, size: 18),
+                              icon: const Icon(Icons.add, size: 18 ,color: Colors.white),
                               label: const Text('Add Student'),
                               style: AppTheme.primaryButtonStyle,
                             ),

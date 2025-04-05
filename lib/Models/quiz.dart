@@ -143,3 +143,39 @@ class QuizDetails {
   }
 }
 
+class QuizGet {
+  final int id;
+  final String name;
+  final String type;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final Map<String, dynamic> semester;
+  final Map<String, dynamic> subject;
+  final List<Map<String, dynamic>> weeks;
+
+  QuizGet({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.semester,
+    required this.subject,
+    required this.weeks,
+  });
+
+  factory QuizGet.fromJson(Map<String, dynamic> json) {
+    return QuizGet(
+      id: json['id'],
+      name: json['name'],
+      type: json['type'],
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      semester: json['semester'],
+      subject: json['subject'],
+      weeks: List<Map<String, dynamic>>.from(json['weeks']),
+    );
+  }
+}
+
+
