@@ -95,6 +95,7 @@ class Student {
           nationality: '',
           address: '',
           gender: '',
+          phone:'',
         ),
         semesters: [],
         completedSemesters: [],
@@ -124,6 +125,7 @@ class Student {
               nationality: '',
               address: '',
               gender: '',
+              phone: ''
             ),
       semesters: (json['semesters'] as List<dynamic>?)?.map((e) => 
           Semester.fromJson(e as Map<String, dynamic>)).toList() ?? [],

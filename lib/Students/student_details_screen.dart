@@ -2,6 +2,7 @@ import 'package:admin_dashboard/Models/student.dart';
 import 'package:flutter/material.dart';
 import '../Theme.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import '../provider/student_provider.dart';
 
@@ -313,11 +314,80 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               SizedBox(height: 30),
               buildSectionTitle('Personal Information'),
               buildInfoGrid([
-                {'title': 'Date of Birth', 'value':  'N/A'},
+                {'title': 'Date of Birth', 'value': DateFormat('MMM d, y').format(widget.student.user.birthday)},
                 {'title': 'Email', 'value': widget.student.user.email},
-                {'title': 'Phone', 'value':  'N/A'},
+                {'title': 'Phone', 'value': widget.student.user.phone},
                 {'title': 'Address', 'value': widget.student.city},
               ], crossAxisCount),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            child: InteractiveViewer(
+                              child: Image.network(
+                                widget.student.tazkia ?? 'https://picsum.photos/200/300',
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 200,
+                                    height: 300,
+                                    color: Colors.grey.shade200,
+                                    child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: Text(
+                      'View Tazkia',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.primaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 20),
+                  TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            child: InteractiveViewer(
+                              child: Image.network(
+                                widget.student.personalIDBack ?? 'https://picsum.photos/200/300',
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 200,
+                                    height: 300,
+                                    color: Colors.grey.shade200,
+                                    child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: Text(
+                      'View ID Back',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.primaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               if (widget.student.qualifications.isNotEmpty) ...[
                 SizedBox(height: 30),
                 buildSectionTitle('Additional Information'),

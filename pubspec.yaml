@@ -45,6 +45,13 @@ dependencies:
   just_audio: ^0.9.46
   flutter_pdfview: ^1.4.0
   path_provider: ^2.1.5
+  flutter_animate: ^4.5.0
+  cached_network_image: ^3.3.1
+  image_picker: ^1.0.7
+  url_launcher: ^6.2.5
+  lottie: ^3.1.0
+  flutter_staggered_animations: ^1.1.1
+  # timeago removed due to dependency conflict with intl
 
 
 dev_dependencies:

@@ -8,14 +8,18 @@ import 'Students/students_tab_screen.dart';
 import 'Students/student_requests_tab.dart';
 import 'provider/dashboard_provider.dart';
 import 'Quizzes/quizzes_tab.dart';
+import 'Announcements/announcements_tab.dart';
 
 class DashboardScreen extends StatelessWidget {
+  DashboardScreen({Key? key}) : super(key: key);
+
   final List<Widget> _pages = [
     StudentsSemesterTab(),
     ContentManagementTab(),
     QuizzesTab(),
     SemestersContentTab(),
     StudentRequestsTab(),
+    AnnouncementsTab(),
   ];
 
   @override
@@ -37,7 +41,9 @@ class DashboardScreen extends StatelessWidget {
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(24),
-                    child: _pages[provider.selectedIndex],
+                    child: _pages[provider.selectedIndex >= 0 && provider.selectedIndex < _pages.length
+                        ? provider.selectedIndex
+                        : 0],
                   ),
                 ),
               ],
@@ -55,7 +61,7 @@ class DashboardScreen extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.1),
+            color: AppTheme.primaryColor.withAlpha(25),
             blurRadius: 10,
           ),
         ],
@@ -71,9 +77,10 @@ class DashboardScreen extends StatelessWidget {
           ),
           _buildDrawerItem(context, Icons.people, 'Students & Semesters', 0),
           _buildDrawerItem(context, Icons.pending_actions, 'Student Requests', 4),
-          _buildDrawerItem(context,Icons.import_contacts_sharp,'Semesters',1),
+          _buildDrawerItem(context, Icons.import_contacts_sharp, 'Semesters', 1),
           _buildDrawerItem(context, Icons.quiz, 'Quizzes', 2),
           _buildDrawerItem(context, Icons.subject_outlined, 'Content', 3),
+          _buildDrawerItem(context, Icons.campaign_rounded, 'Announcements', 5),
         ],
       ),
     );
@@ -92,7 +99,7 @@ class DashboardScreen extends StatelessWidget {
         color: isSelected ? AppTheme.secondaryColor : Colors.transparent,
       ),
       child: ListTile(
-        leading: Icon(icon, 
+        leading: Icon(icon,
           color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondaryColor),
         title: Text(
           title,
@@ -112,7 +119,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
- 
+
 }
 
 

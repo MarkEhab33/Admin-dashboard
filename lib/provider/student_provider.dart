@@ -35,7 +35,7 @@ class StudentsProvider with ChangeNotifier {
 
     try {
       final response = await http.get(
-        Uri.parse('https://aripsalin-api-production.up.railway.app/user/students?isVerified=${isVerified ?? false}'),
+        Uri.parse('${Globals.baseUrl}/user/students?isVerified=${isVerified ?? false}'),
         headers: {
           'Content-Type': 'application/json',
           // Add any required authentication headers here
