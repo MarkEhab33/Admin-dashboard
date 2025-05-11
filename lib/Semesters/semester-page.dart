@@ -7,30 +7,67 @@ import '../Models/week.dart';
 import '../Theme.dart';
 import 'package:provider/provider.dart';
 import 'week_content_page.dart';
+import '../Quizzes/create_quiz_screen.dart';
+import '../Quizzes/quiz_details_screen.dart';
 
 import '../provider/semesters_provider.dart';
 import '../provider/student_provider.dart';
+import '../provider/quiz_provider.dart' as quiz_provider;
 
 class SemesterDetailPage extends StatefulWidget {
   final Semester semester;
 
-  SemesterDetailPage({required this.semester});
+  const SemesterDetailPage({Key? key, required this.semester}) : super(key: key);
 
   @override
   State<SemesterDetailPage> createState() => _SemesterDetailPageState();
 }
 
-class _SemesterDetailPageState extends State<SemesterDetailPage> {
+class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTickerProviderStateMixin {
   final TextEditingController _weekNoController = TextEditingController();
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
+  late TabController _tabController;
+  List<quiz_provider.QuizGet> _semesterQuizzes = [];
+  bool _isLoadingQuizzes = false;
+  String _quizError = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _fetchSemesterQuizzes();
+  }
 
   @override
   void dispose() {
     _weekNoController.dispose();
     _startDateController.dispose();
     _endDateController.dispose();
+    _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchSemesterQuizzes() async {
+    setState(() {
+      _isLoadingQuizzes = true;
+      _quizError = '';
+    });
+
+    try {
+      final provider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
+      await provider.fetchQuizzes(semesterId: widget.semester.id);
+
+      setState(() {
+        _semesterQuizzes = provider.quizzes;
+        _isLoadingQuizzes = false;
+      });
+    } catch (e) {
+      setState(() {
+        _quizError = e.toString();
+        _isLoadingQuizzes = false;
+      });
+    }
   }
 
   @override
@@ -39,94 +76,290 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
       appBar: AppBar(
         title: Text(widget.semester.name),
         backgroundColor: AppTheme.primaryColor,
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Weeks'),
+            Tab(text: 'Students'),
+            Tab(text: 'Quizzes'),
+          ],
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+        ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 24),
-              Row(
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // Weeks Tab
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Weeks Section (70% of width)
-                  Expanded(
-                    flex: 7,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Weeks',
-                              style: AppTheme.headingMedium,
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: () => _showAddWeekDialog(context),
-                              icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                              label: const Text('Add Week'),
-                              style: AppTheme.primaryButtonStyle,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          decoration: AppTheme.cardDecoration,
-                          child: widget.semester.weeks.isEmpty
-                              ? Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24.0),
-                                    child: Text(
-                                      'No weeks available for this semester',
-                                      style: AppTheme.bodyLarge,
-                                    ),
-                                  ),
-                                )
-                              : _buildWeeksList(),
-                        ),
-                      ],
-                    ),
+                  _buildHeader(),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Weeks',
+                        style: AppTheme.headingMedium,
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddWeekDialog(context),
+                        icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                        label: const Text('Add Week'),
+                        style: AppTheme.primaryButtonStyle,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 24),
-                  // Students Section (30% of width)
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Students',
-                              style: AppTheme.headingMedium,
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: AppTheme.cardDecoration,
+                    child: widget.semester.weeks.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Text(
+                                'No weeks available for this semester',
+                                style: AppTheme.bodyLarge,
+                              ),
                             ),
-                            ElevatedButton.icon(
-                              onPressed: () => _showAddStudentDialog(context),
-                              icon: const Icon(Icons.add, size: 18 ,color: Colors.white),
-                              label: const Text('Add Student'),
-                              style: AppTheme.primaryButtonStyle,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          decoration: AppTheme.cardDecoration,
-                          child: _buildStudentsList(),
-                        ),
-                      ],
-                    ),
+                          )
+                        : _buildWeeksList(),
                   ),
                 ],
               ),
-            ],
+            ),
+          ),
+
+          // Students Tab
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Students',
+                        style: AppTheme.headingMedium,
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddStudentDialog(context),
+                        icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                        label: const Text('Add Student'),
+                        style: AppTheme.primaryButtonStyle,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: AppTheme.cardDecoration,
+                    child: _buildStudentsList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Quizzes Tab
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 24),
+                  _buildQuizzesSection(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuizzesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Quizzes',
+              style: AppTheme.headingMedium,
+            ),
+            ElevatedButton.icon(
+              onPressed: () => _navigateToCreateQuiz(),
+              icon: const Icon(Icons.add, size: 18, color: Colors.white),
+              label: const Text('Create New Quiz'),
+              style: AppTheme.primaryButtonStyle,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: AppTheme.cardDecoration,
+          child: _buildQuizzesList(),
+        ),
+      ],
+    );
+  }
+
+  void _navigateToCreateQuiz() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateQuizScreen(),
+      ),
+    ).then((_) => _fetchSemesterQuizzes());
+  }
+
+  Widget _buildQuizzesList() {
+    if (_isLoadingQuizzes) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_quizError.isNotEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Text(
+            'Error loading quizzes: $_quizError',
+            style: TextStyle(color: Colors.red),
           ),
         ),
-      ),
+      );
+    }
 
+    if (_semesterQuizzes.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Text(
+            'No quizzes available for this semester',
+            style: AppTheme.bodyLarge,
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _semesterQuizzes.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final quiz = _semesterQuizzes[index];
+        return ListTile(
+          title: Text(quiz.name, style: AppTheme.bodyLarge),
+          subtitle: Text('Subject: ${quiz.subject['name']} • Type: ${quiz.type}'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.blue),
+                onPressed: () => _editQuiz(quiz),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _showDeleteQuizDialog(quiz),
+              ),
+            ],
+          ),
+          onTap: () => _viewQuizDetails(quiz),
+        );
+      },
+    );
+  }
+
+  void _editQuiz(quiz_provider.QuizGet quiz) async {
+    final provider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
+    await provider.fetchQuizById(quiz.id);
+
+    if (!mounted) return;
+
+    final quizDetails = provider.currentQuiz;
+    if (quizDetails != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreateQuizScreen(quizToEdit: quizDetails),
+        ),
+      ).then((_) => _fetchSemesterQuizzes());
+    }
+  }
+
+  void _viewQuizDetails(quiz_provider.QuizGet quiz) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QuizDetailsScreen(quizId: quiz.id),
+      ),
+    );
+  }
+
+  void _showDeleteQuizDialog(quiz_provider.QuizGet quiz) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Quiz'),
+        content: Text('Are you sure you want to delete "${quiz.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await Provider.of<quiz_provider.QuizProvider>(context, listen: false)
+                    .deleteQuiz(quiz.id);
+
+                if (!mounted) return;
+
+                Navigator.pop(context);
+                _fetchSemesterQuizzes();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Quiz deleted successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete quiz: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -316,10 +549,10 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
       itemBuilder: (context, index) {
         final student = widget.semester.students[index];
         // Safe way to get initials
-        final initials = student.user.name.isNotEmpty 
+        final initials = student.user.name.isNotEmpty
             ? student.user.name.characters.first.toUpperCase()
             : '?';
-            
+
         return ListTile(
           leading: CircleAvatar(
             backgroundColor: AppTheme.primaryColor,
@@ -389,7 +622,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                     }
 
                     final students = provider.filteredStudents;
-                    
+
                     if (students.isEmpty) {
                       return Center(
                         child: Text('No students found'),
@@ -404,7 +637,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                           leading: CircleAvatar(
                             backgroundColor: AppTheme.primaryColor,
                             child: Text(
-                              student.user.name.isNotEmpty 
+                              student.user.name.isNotEmpty
                                   ? student.user.name[0].toUpperCase()
                                   : '?',
                               style: TextStyle(color: Colors.white),
@@ -415,17 +648,17 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                           onTap: () async {
                             try {
                               final semestersProvider = Provider.of<SemestersProvider>(
-                                context, 
+                                context,
                                 listen: false
                               );
-                              
+
                               await semestersProvider.addStudentToSemester(
                                 widget.semester.id.toString(),
                                 student.id.toString(),
                               );
 
                               Navigator.pop(context);
-                              
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Student added successfully'),
@@ -477,17 +710,17 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
             onPressed: () async {
               try {
                 final semestersProvider = Provider.of<SemestersProvider>(
-                  context, 
+                  context,
                   listen: false
                 );
-                
+
                 await semestersProvider.removeStudentFromSemester(
                   widget.semester.id.toString(),
                   student.id.toString(),
                 );
 
                 Navigator.pop(context);
-                
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Student removed successfully'),
@@ -519,7 +752,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
     final now = DateTime.now();
     final firstDate = DateTime(now.year);
     final lastDate = DateTime(now.year + 1, 12, 31);
-  
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -589,8 +822,8 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                 }
 
                 final suggestedEndDate = startDate!.add(Duration(days: 7));
-                final initialEndDate = suggestedEndDate.isBefore(lastDate) 
-                    ? suggestedEndDate 
+                final initialEndDate = suggestedEndDate.isBefore(lastDate)
+                    ? suggestedEndDate
                     : lastDate;
 
                 final date = await showDatePicker(
@@ -638,27 +871,27 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                   endDate != null) {
                 try {
                   final semestersProvider = Provider.of<SemestersProvider>(context, listen: false);
-                  
+
                   await semestersProvider.addWeek(
                     widget.semester.id,
                     int.parse(_weekNoController.text),
                     startDate!,
                     endDate!,
                   );
-                  
+
                   // Refresh semester data after adding a week
                   final updatedSemester = await semestersProvider.fetchSemesterById(widget.semester.id);
-                  
+
                   // Update the state with the new semester data
                   setState(() {
                     widget.semester.weeks.clear();
                     widget.semester.weeks.addAll(updatedSemester.weeks);
                     widget.semester.weeks.sort((a, b) => a.weekNo.compareTo(b.weekNo));
                   });
-                  
+
                   _clearControllers();
                   Navigator.pop(context);
-                  
+
                   // Show success message
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Week added successfully')),
@@ -689,11 +922,11 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
   }
 
   void _showEditWeekDialog(Week week) {
-    final _weekNoController = TextEditingController(text: week.weekNo.toString());
-    final _startDateController = TextEditingController(
+    final weekNoController = TextEditingController(text: week.weekNo.toString());
+    final startDateController = TextEditingController(
       text: DateFormat('MMM d, y').format(week.startDate),
     );
-    final _endDateController = TextEditingController(
+    final endDateController = TextEditingController(
       text: DateFormat('MMM d, y').format(week.endDate),
     );
     DateTime? startDate = week.startDate;
@@ -707,13 +940,13 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: _weekNoController,
+              controller: weekNoController,
               decoration: AppTheme.inputDecoration('Week Number'),
               keyboardType: TextInputType.number,
             ),
             SizedBox(height: 16),
             TextFormField(
-              controller: _startDateController,
+              controller: startDateController,
               decoration: AppTheme.inputDecoration('Start Date').copyWith(
                 suffixIcon: Icon(Icons.calendar_today),
               ),
@@ -741,10 +974,10 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                 if (date != null) {
                   setState(() {
                     startDate = date;
-                    _startDateController.text = DateFormat('MMM d, y').format(date);
+                    startDateController.text = DateFormat('MMM d, y').format(date);
                     if (endDate != null && endDate!.isBefore(date)) {
                       endDate = null;
-                      _endDateController.text = '';
+                      endDateController.text = '';
                     }
                   });
                 }
@@ -752,7 +985,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
             ),
             SizedBox(height: 16),
             TextFormField(
-              controller: _endDateController,
+              controller: endDateController,
               decoration: AppTheme.inputDecoration('End Date').copyWith(
                 suffixIcon: Icon(Icons.calendar_today),
               ),
@@ -787,7 +1020,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
                 if (date != null) {
                   setState(() {
                     endDate = date;
-                    _endDateController.text = DateFormat('MMM d, y').format(date);
+                    endDateController.text = DateFormat('MMM d, y').format(date);
                   });
                 }
               },
@@ -801,7 +1034,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (_weekNoController.text.isEmpty ||
+              if (weekNoController.text.isEmpty ||
                   startDate == null ||
                   endDate == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -818,14 +1051,14 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> {
 
                 await semestersProvider.updateWeek(
                   weekId: week.id,
-                  weekNo: int.parse(_weekNoController.text),
+                  weekNo: int.parse(weekNoController.text),
                   startDate: startDate!,
                   endDate: endDate!,
                 );
 
                 // Refresh the semester data after updating the week
                 final updatedSemester = await semestersProvider.fetchSemesterById(widget.semester.id);
-                
+
                 // Update the state with the new semester data
                 setState(() {
                   widget.semester.weeks.clear();

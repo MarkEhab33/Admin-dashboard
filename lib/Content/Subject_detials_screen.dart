@@ -8,11 +8,14 @@ import 'package:provider/provider.dart';
 import '../Models/Subject_Template.dart';
 import '../Models/lesson_item.dart';
 import '../provider/subject_provider.dart';
+import '../provider/quiz_provider.dart' as quiz_provider;
 import '../Theme.dart';
 import '../services/cloudinary_service.dart';
 import '../widgets/audio_player.dart';
 import '../widgets/pdf_viewer.dart';
 import '../widgets/video_viewer.dart';
+import '../Quizzes/create_quiz_screen.dart';
+import '../Quizzes/quiz_details_screen.dart';
 
 class SubjectDetailsScreen extends StatelessWidget {
   final Subject subject;
@@ -279,12 +282,341 @@ class SubjectDetailsScreen extends StatelessWidget {
                 lessonProvider.selectedLesson!.name,
                 style: AppTheme.headingLarge,
               ),
-              const SizedBox(height: 24),
-              _buildMediaGrid(context, lessonProvider),
+              const SizedBox(height: 16),
+              _buildContentTabs(context, lessonProvider),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildContentTabs(BuildContext context, LessonProvider lessonProvider) {
+    return Expanded(
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TabBar(
+              tabs: const [
+                Tab(text: 'Media Content'),
+                Tab(text: 'Quizzes'),
+              ],
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: AppTheme.textSecondaryColor,
+              indicatorColor: AppTheme.primaryColor,
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // Media Content Tab
+                  _buildMediaGrid(context, lessonProvider),
+
+                  // Quizzes Tab
+                  _buildQuizzesTab(context, lessonProvider),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuizzesTab(BuildContext context, LessonProvider lessonProvider) {
+    // Fetch quizzes for this lesson when the tab is shown
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<quiz_provider.QuizProvider>(context, listen: false)
+          .fetchQuizzes(lessonId: lessonProvider.selectedLesson!.id);
+    });
+
+    return Consumer<quiz_provider.QuizProvider>(
+      builder: (context, quizProvider, _) {
+        if (quizProvider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (quizProvider.error.isNotEmpty) {
+          return Center(
+            child: Text(
+              'Error loading quizzes: ${quizProvider.error}',
+              style: TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        final lessonQuizzes = quizProvider.quizzes;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Quizzes',
+                  style: AppTheme.headingMedium,
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _navigateToCreateQuiz(context, lessonProvider),
+                  icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                  label: const Text('Create Quiz'),
+                  style: AppTheme.primaryButtonStyle,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: lessonQuizzes.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.quiz_outlined,
+                            size: 64,
+                            color: AppTheme.primaryColor.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No quizzes for this lesson',
+                            style: AppTheme.headingMedium.copyWith(
+                              color: AppTheme.textSecondaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Create a quiz to test student knowledge',
+                            style: AppTheme.bodyMedium.copyWith(
+                              color: AppTheme.textSecondaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: lessonQuizzes.length,
+                      itemBuilder: (context, index) {
+                        final quiz = lessonQuizzes[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(16),
+                            leading: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.quiz,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                            title: Text(
+                              quiz.name,
+                              style: AppTheme.bodyLarge.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Type: ${quiz.type} • Grade: ${quiz.semester['grade']}',
+                                  style: AppTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Created: ${_formatDate(quiz.createdAt)}',
+                                  style: AppTheme.bodyMedium.copyWith(
+                                    color: AppTheme.textSecondaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: () => _editQuiz(context, quiz, lessonProvider),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _showDeleteQuizDialog(context, quiz),
+                                ),
+                              ],
+                            ),
+                            onTap: () => _viewQuizDetails(context, quiz),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _navigateToCreateQuiz(BuildContext context, LessonProvider lessonProvider) {
+    final lesson = lessonProvider.selectedLesson!;
+    // Get the semester ID from the current context
+    final quizProvider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
+    int? semesterId;
+    String? semesterName;
+    String? subjectName;
+
+    // Try to get the semester ID and name from the quiz provider's semester list
+    if (quizProvider.semestersList.isNotEmpty) {
+      // For simplicity, we'll use the first semester in the list
+      final semester = quizProvider.semestersList.first;
+      semesterId = semester['id'];
+      semesterName = semester['name'];
+
+      // Try to find the subject name
+      if (semester['subjects'] != null) {
+        final subjects = List<Map<String, dynamic>>.from(semester['subjects']);
+        final subject = subjects.firstWhere(
+          (s) => s['id'] == lesson.subjectId,
+          orElse: () => {},
+        );
+        if (subject.isNotEmpty) {
+          subjectName = subject['name'];
+        }
+      }
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateQuizScreen(
+          initialSemesterId: semesterId,
+          initialSubjectId: lesson.subjectId,
+          initialLessonId: lesson.id,
+          semesterName: semesterName,
+          subjectName: subjectName ?? 'Subject ${lesson.subjectId}',
+          lessonName: lesson.name,
+        ),
+      ),
+    ).then((_) {
+      if (context.mounted) {
+        Provider.of<quiz_provider.QuizProvider>(context, listen: false)
+            .fetchQuizzes(lessonId: lesson.id);
+      }
+    });
+  }
+
+  void _editQuiz(BuildContext context, quiz_provider.QuizGet quiz, LessonProvider lessonProvider) async {
+    final provider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
+    await provider.fetchQuizById(quiz.id);
+
+    if (!context.mounted) return;
+
+    final quizDetails = provider.currentQuiz;
+    if (quizDetails != null) {
+      // Get the semester and subject names from the quiz
+      String? semesterName = quiz.semester['name'] as String?;
+      String? subjectName = quiz.subject['name'] as String?;
+      String? lessonName;
+
+      // Get the lesson name
+      if (quiz.lesson != null) {
+        lessonName = quiz.lesson!['name'] as String?;
+      } else if (lessonProvider.selectedLesson != null) {
+        lessonName = lessonProvider.selectedLesson!.name;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreateQuizScreen(
+            quizToEdit: quizDetails,
+            semesterName: semesterName,
+            subjectName: subjectName,
+            lessonName: lessonName,
+          ),
+        ),
+      ).then((_) {
+        if (context.mounted) {
+          provider.fetchQuizzes(lessonId: lessonProvider.selectedLesson!.id);
+        }
+      });
+    }
+  }
+
+  void _viewQuizDetails(BuildContext context, quiz_provider.QuizGet quiz) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QuizDetailsScreen(quizId: quiz.id),
+      ),
+    );
+  }
+
+  void _showDeleteQuizDialog(BuildContext context, quiz_provider.QuizGet quiz) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Quiz'),
+        content: Text('Are you sure you want to delete "${quiz.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await Provider.of<quiz_provider.QuizProvider>(context, listen: false)
+                    .deleteQuiz(quiz.id);
+
+                if (!context.mounted) return;
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Quiz deleted successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+
+                if (context.mounted) {
+                  final lessonProvider = Provider.of<LessonProvider>(context, listen: false);
+                  Provider.of<quiz_provider.QuizProvider>(context, listen: false)
+                      .fetchQuizzes(lessonId: lessonProvider.selectedLesson!.id);
+                }
+              } catch (e) {
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete quiz: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -297,7 +629,7 @@ class SubjectDetailsScreen extends StatelessWidget {
             Icon(
               Icons.add_to_photos_outlined,
               size: 64,
-              color: AppTheme.primaryColor.withOpacity(0.5),
+              color: AppTheme.primaryColor.withAlpha(128),
             ),
             const SizedBox(height: 16),
             Text(
@@ -318,21 +650,20 @@ class SubjectDetailsScreen extends StatelessWidget {
       );
     }
 
-    return Expanded(
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 3.2, // Makes cards more horizontal/compact
-        ),
-        padding: const EdgeInsets.all(12),
-        itemCount: lessonProvider.items.length,
-        itemBuilder: (context, index) {
-          final item = lessonProvider.items[index];
-          return _buildMediaCard(context, item);
-        },
+    // Removed the Expanded widget since it's already inside an Expanded in the TabBarView
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 3.2, // Makes cards more horizontal/compact
       ),
+      padding: const EdgeInsets.all(12),
+      itemCount: lessonProvider.items.length,
+      itemBuilder: (context, index) {
+        final item = lessonProvider.items[index];
+        return _buildMediaCard(context, item);
+      },
     );
   }
 
@@ -376,7 +707,7 @@ class SubjectDetailsScreen extends StatelessWidget {
             ),
           );
           break;
-        
+
         case 'pdf':
           print("conteeent a ged3an ${item.itemContent}");
           Navigator.push(
@@ -389,7 +720,7 @@ class SubjectDetailsScreen extends StatelessWidget {
             ),
           );
           break;
-        
+
         case 'audio':
           Navigator.push(
             context,
@@ -423,7 +754,7 @@ class SubjectDetailsScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: getTypeColor().withOpacity(0.1),
+                      color: getTypeColor().withAlpha(25),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(
@@ -453,7 +784,7 @@ class SubjectDetailsScreen extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: getTypeColor().withOpacity(0.1),
+                            color: getTypeColor().withAlpha(25),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -470,7 +801,7 @@ class SubjectDetailsScreen extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 20),
-                    color: Colors.red.withOpacity(0.8),
+                    color: Colors.red.withAlpha(204),
                     onPressed: () => _showDeleteConfirmation(context, item),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -488,7 +819,7 @@ class SubjectDetailsScreen extends StatelessWidget {
     return Consumer<LessonProvider>(
       builder: (context, lessonProvider, _) {
         if (lessonProvider.selectedLesson == null) return Container();
-        
+
         return FloatingActionButton.extended(
           onPressed: () => _showAddMediaDialog(context),
           backgroundColor: AppTheme.primaryColor,
@@ -823,7 +1154,7 @@ class SubjectDetailsScreen extends StatelessWidget {
   void _showVideoUrlDialog(BuildContext context) {
     String videoUrl = '';
     final titleController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -907,8 +1238,8 @@ class SubjectDetailsScreen extends StatelessWidget {
           ),
           Consumer<LessonProvider>(
             builder: (context, provider, _) => ElevatedButton(
-              onPressed: provider.isDeleting 
-                ? null 
+              onPressed: provider.isDeleting
+                ? null
                 : () async {
                     try {
                       await provider.deleteLessonItem(item);
@@ -936,7 +1267,7 @@ class SubjectDetailsScreen extends StatelessWidget {
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
               ),
-              child: provider.isDeleting 
+              child: provider.isDeleting
                 ? SizedBox(
                     width: 20,
                     height: 20,

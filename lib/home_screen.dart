@@ -6,16 +6,16 @@ import 'Content/semesters_content_tab.dart';
 import 'Semesters/Content-management_tab.dart';
 import 'Students/students_tab_screen.dart';
 import 'Students/student_requests_tab.dart';
+import 'Quizzes/quizzes_main_screen.dart';
 import 'provider/dashboard_provider.dart';
-import 'Quizzes/quizzes_tab.dart';
 
 class DashboardScreen extends StatelessWidget {
   final List<Widget> _pages = [
     StudentsSemesterTab(),
     ContentManagementTab(),
-    QuizzesTab(),
     SemestersContentTab(),
     StudentRequestsTab(),
+    QuizzesMainScreen(),
   ];
 
   @override
@@ -70,10 +70,10 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
           _buildDrawerItem(context, Icons.people, 'Students & Semesters', 0),
-          _buildDrawerItem(context, Icons.pending_actions, 'Student Requests', 4),
-          _buildDrawerItem(context,Icons.import_contacts_sharp,'Semesters',1),
-          _buildDrawerItem(context, Icons.quiz, 'Quizzes', 2),
-          _buildDrawerItem(context, Icons.subject_outlined, 'Content', 3),
+          _buildDrawerItem(context, Icons.pending_actions, 'Student Requests', 3),
+          _buildDrawerItem(context, Icons.import_contacts_sharp, 'Semesters', 1),
+          _buildDrawerItem(context, Icons.subject_outlined, 'Content', 2),
+          _buildDrawerItem(context, Icons.quiz, 'Quizzes', 4),
         ],
       ),
     );
@@ -92,7 +92,7 @@ class DashboardScreen extends StatelessWidget {
         color: isSelected ? AppTheme.secondaryColor : Colors.transparent,
       ),
       child: ListTile(
-        leading: Icon(icon, 
+        leading: Icon(icon,
           color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondaryColor),
         title: Text(
           title,
@@ -112,7 +112,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
- 
+
 }
 
 

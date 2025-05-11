@@ -68,6 +68,7 @@ class Quiz {
   final String name;
   final int subjectId;
   final int semesterId;
+  final int? lessonId;
   final int grade;
   final String type;
   final int numberOfAttempts;
@@ -78,6 +79,7 @@ class Quiz {
     required this.name,
     required this.subjectId,
     required this.semesterId,
+    this.lessonId,
     required this.grade,
     required this.type,
     required this.numberOfAttempts,
@@ -89,6 +91,7 @@ class Quiz {
     'name': name,
     'subjectId': subjectId,
     'semesterId': semesterId,
+    if (lessonId != null) 'lessonId': lessonId,
     'grade': grade,
     'type': type,
     'numberOfAttempts': numberOfAttempts,
@@ -106,6 +109,7 @@ class QuizDetails {
   final int timeLimit;
   final Map<String, dynamic> semester;
   final Map<String, dynamic> subject;
+  final Map<String, dynamic>? lesson;
   final List<Question> content;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -119,6 +123,7 @@ class QuizDetails {
     required this.timeLimit,
     required this.semester,
     required this.subject,
+    this.lesson,
     required this.content,
     required this.createdAt,
     required this.updatedAt,
@@ -134,6 +139,7 @@ class QuizDetails {
       timeLimit: json['timeLimit'],
       semester: json['semester'],
       subject: json['subject'],
+      lesson: json['lesson'],
       content: (json['content'] as List<dynamic>)
           .map((q) => Question.fromJson(q))
           .toList(),
@@ -151,6 +157,7 @@ class QuizGet {
   final DateTime updatedAt;
   final Map<String, dynamic> semester;
   final Map<String, dynamic> subject;
+  final Map<String, dynamic>? lesson;
   final List<Map<String, dynamic>> weeks;
 
   QuizGet({
@@ -161,6 +168,7 @@ class QuizGet {
     required this.updatedAt,
     required this.semester,
     required this.subject,
+    this.lesson,
     required this.weeks,
   });
 
@@ -173,6 +181,7 @@ class QuizGet {
       updatedAt: DateTime.parse(json['updatedAt']),
       semester: json['semester'],
       subject: json['subject'],
+      lesson: json['lesson'],
       weeks: List<Map<String, dynamic>>.from(json['weeks']),
     );
   }

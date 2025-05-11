@@ -12,6 +12,7 @@ class QuizGet {
   final DateTime updatedAt;
   final Map<String, dynamic> semester;
   final Map<String, dynamic> subject;
+  final Map<String, dynamic>? lesson;
 
   QuizGet({
     required this.id,
@@ -21,6 +22,7 @@ class QuizGet {
     required this.updatedAt,
     required this.semester,
     required this.subject,
+    this.lesson,
   });
 
   factory QuizGet.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class QuizGet {
       updatedAt: DateTime.parse(json['updatedAt']),
       semester: json['semester'],
       subject: json['subject'],
+      lesson: json['lesson'],
     );
   }
 }
@@ -42,13 +45,13 @@ class QuizProvider with ChangeNotifier {
   String _error = '';
   QuizDetails? _currentQuiz;
   QuizDetails? get currentQuiz => _currentQuiz;
-  
+
   List<QuizGet> get quizzes => _quizzes;
   bool get isLoading => _isLoading;
   String get error => _error;
 
   List<Map<String, dynamic>> _semestersList = [];
-  
+
   List<Map<String, dynamic>> get semestersList => _semestersList;
 
   Future<void> createQuiz(Quiz quiz) async {
@@ -73,20 +76,21 @@ class QuizProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchQuizzes({int? semesterId, int? subjectId}) async {
+  Future<void> fetchQuizzes({int? semesterId, int? subjectId, int? lessonId}) async {
     try {
       _isLoading = true;
       notifyListeners();
 
       String url = '${Globals.baseUrl}/quiz';
-      if (semesterId != null || subjectId != null) {
+      if (semesterId != null || subjectId != null || lessonId != null) {
         url += '?';
         if (semesterId != null) url += 'semesterId=$semesterId&';
-        if (subjectId != null) url += 'subjectId=$subjectId';
+        if (subjectId != null) url += 'subjectId=$subjectId&';
+        if (lessonId != null) url += 'lessonId=$lessonId';
       }
 
       final response = await http.get(Uri.parse(url));
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         _quizzes = (data['data'] as List)
@@ -106,43 +110,114 @@ class QuizProvider with ChangeNotifier {
 
   Future<void> fetchQuizById(int id) async {
     try {
+      print("PROVIDER: Starting fetchQuizById for ID: $id");
       _isLoading = true;
       _error = '';
       notifyListeners();
+      print("PROVIDER: Set loading state to true");
 
       final response = await http.get(
         Uri.parse('${Globals.baseUrl}/quiz/$id'),
       );
+      print("PROVIDER: API response received - Status: ${response.statusCode}");
+      // print("PROVIDER: Response body: ${response.body.substring(0, min(100, response.body.length))}...");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print("PROVIDER: JSON decoded successfully");
         _currentQuiz = QuizDetails.fromJson(data['data']);
+        print("PROVIDER: Quiz details parsed - ID: ${_currentQuiz?.id}, Name: ${_currentQuiz?.name}");
         _error = '';
       } else {
-        _error = 'Failed to load quiz details';
+        _error = 'Failed to load quiz details - Status code: ${response.statusCode}';
+        print("PROVIDER: Error - $_error");
       }
     } catch (e) {
       _error = e.toString();
+      print("PROVIDER ERROR: $_error");
+      print("PROVIDER ERROR: Stack trace: ${StackTrace.current}");
     } finally {
       _isLoading = false;
+      print("PROVIDER: Set loading state to false, notifying listeners");
       notifyListeners();
     }
   }
 
   Future<void> updateQuiz(int id, Quiz quiz) async {
     try {
+      _isLoading = true;
+      _error = '';
+      notifyListeners();
+
       final requestBody = json.encode(quiz.toJson());
+
+      // Debug information
+      print('Updating quiz with ID: $id');
+      print('Request URL: ${Globals.baseUrl}/quiz/$id');
+      print('Request body: $requestBody');
+
+      // Add a small delay to ensure the request is processed properly
+      await Future.delayed(Duration(milliseconds: 300));
+
       final response = await http.put(
         Uri.parse('${Globals.baseUrl}/quiz/$id'),
         headers: {'Content-Type': 'application/json'},
         body: requestBody,
       );
 
-      if (response.statusCode != 200) {
-        throw Exception('Failed to update quiz: ${response.body}');
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      // Check for successful response (200 OK or 201 Created)
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        Map<String, dynamic> errorData = {};
+        try {
+          errorData = json.decode(response.body);
+        } catch (e) {
+          // If response body is not valid JSON
+          print('Error parsing response: $e');
+        }
+
+        String errorMessage = errorData['message'] ?? 'Unknown error occurred';
+        throw Exception('Failed to update quiz (${response.statusCode}): $errorMessage');
       }
+
+      // Update the current quiz with the new data
+      if (_currentQuiz != null && _currentQuiz!.id == id) {
+        await fetchQuizById(id);
+      }
+
+      // Refresh the quizzes list if needed
+      if (_quizzes.any((q) => q.id == id)) {
+        final index = _quizzes.indexWhere((q) => q.id == id);
+        if (index != -1) {
+          // Update the quiz in the list
+          final updatedQuiz = _quizzes[index];
+          // Create a new QuizGet with updated fields
+          // Note: We're keeping the original quiz structure but updating the fields that changed
+          _quizzes[index] = QuizGet(
+            id: updatedQuiz.id,
+            name: quiz.name,
+            type: quiz.type,
+            createdAt: updatedQuiz.createdAt,
+            updatedAt: DateTime.now(),
+            semester: updatedQuiz.semester,
+            subject: updatedQuiz.subject,
+            lesson: updatedQuiz.lesson,
+          );
+        }
+      }
+
+      // Add a small delay to ensure state is updated properly
+      await Future.delayed(Duration(milliseconds: 300));
+
     } catch (e) {
+      _error = e.toString();
+      print('Error in updateQuiz: $e');
       throw Exception('Error updating quiz: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -155,7 +230,7 @@ class QuizProvider with ChangeNotifier {
       if (response.statusCode != 200) {
         throw Exception('Failed to delete quiz: ${response.body}');
       }
-      
+
       // Remove the quiz from the local list
       _quizzes.removeWhere((quiz) => quiz.id == id);
       notifyListeners();
@@ -183,5 +258,6 @@ class QuizProvider with ChangeNotifier {
     }
   }
 }
+
 
 

@@ -43,41 +43,33 @@ class _QuizzesTabState extends State<QuizzesTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Manage Quizzes',
-                  style: AppTheme.headingLarge,
-                ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text('Create New Quiz'),
-                  style: AppTheme.primaryButtonStyle,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CreateQuizScreen()),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildFilters(),
-            const SizedBox(height: 24),
-            Expanded(
-              child: _buildQuizzesList(),
+            Spacer(), // Push the button to the right
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Create New Quiz'),
+              style: AppTheme.primaryButtonStyle,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CreateQuizScreen()),
+                );
+              },
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 24),
+        _buildFilters(),
+        const SizedBox(height: 24),
+        Expanded(
+          child: _buildQuizzesList(),
+        ),
+      ],
     );
   }
 
@@ -244,16 +236,46 @@ class _QuizzesTabState extends State<QuizzesTab> {
                   PopupMenuButton<String>(
                     onSelected: (value) async {
                       if (value == 'edit') {
-                        // Fetch full quiz details before editing
-                        await Provider.of<QuizProvider>(context, listen: false)
-                            .fetchQuizById(quiz.id);
-                        final quizDetails = Provider.of<QuizProvider>(context, listen: false).currentQuiz;
-                        if (quizDetails != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CreateQuizScreen(quizToEdit: quizDetails),
-                            ),
+                        try {
+                          // Fetch full quiz details before editing
+                          print("EDIT: Starting edit process for quiz ID: ${quiz.id}");
+                          print("EDIT: Quiz basic info - Name: ${quiz.name}, Type: ${quiz.type}");
+
+                          final provider = Provider.of<QuizProvider>(context, listen: false);
+                          print("EDIT: About to call fetchQuizById");
+
+                          await provider.fetchQuizById(quiz.id);
+                          print("EDIT: fetchQuizById completed");
+
+                          final quizDetails = provider.currentQuiz;
+                          print("EDIT: currentQuiz retrieved: ${quizDetails != null}");
+
+                          if (quizDetails != null) {
+                            print("EDIT: Quiz details - ID: ${quizDetails.id}, Name: ${quizDetails.name}");
+                            print("EDIT: About to navigate to CreateQuizScreen");
+
+                            // Try using a different approach for navigation
+                            Future.microtask(() {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => CreateQuizScreen(quizToEdit: quizDetails),
+                                ),
+                              ).then((_) {
+                                print("EDIT: Returned from CreateQuizScreen");
+                              });
+                            });
+
+                            print("EDIT: Navigation scheduled");
+                          } else {
+                            print("EDIT: Quiz details is null after fetch");
+                            print("EDIT: Provider error state: ${provider.error}");
+                            print("EDIT: Provider loading state: ${provider.isLoading}");
+                          }
+                        } catch (e) {
+                          print("EDIT ERROR: ${e.toString()}");
+                          print("EDIT ERROR: Stack trace: ${StackTrace.current}");
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error loading quiz: $e")),
                           );
                         }
                       } else if (value == 'delete') {
@@ -388,6 +410,16 @@ class _QuizzesTabState extends State<QuizzesTab> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
