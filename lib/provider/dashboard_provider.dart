@@ -8,7 +8,10 @@ class DashboardProvider with ChangeNotifier {
   int get selectedIndex => _selectedIndex;
 
   void setIndex(int index) {
-    _selectedIndex = index;
-    notifyListeners();
+    // Ensure index is within valid range (0-5 for our current pages)
+    if (index >= 0 && index <= 5) {
+      _selectedIndex = index;
+      notifyListeners();
+    }
   }
 }

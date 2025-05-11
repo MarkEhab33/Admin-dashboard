@@ -6,7 +6,11 @@ import 'package:admin_dashboard/provider/semesters_provider.dart';
 import 'package:admin_dashboard/provider/student_provider.dart';
 import 'package:admin_dashboard/provider/subject_provider.dart';
 import 'package:admin_dashboard/provider/quiz_provider.dart';
+
 import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
+
+import 'package:admin_dashboard/provider/announcements_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,6 +25,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => LessonProvider()),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
         ChangeNotifierProvider(create: (_) => QuizAnswerProvider()),
+        ChangeNotifierProvider(create: (_) => AnnouncementsProvider()),
       ],
       child: MyApp(),
     ),
