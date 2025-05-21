@@ -1,4 +1,5 @@
 import 'package:admin_dashboard/Models/quiz.dart';
+import 'package:admin_dashboard/Quizzes/quiz_answers_list_screen.dart';
 import 'package:flutter/material.dart';
 import '../Theme.dart';
 import '../provider/quiz_provider.dart';
@@ -66,7 +67,30 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(quiz.name, style: AppTheme.headingLarge),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(quiz.name, style: AppTheme.headingLarge),
+            ),
+            ElevatedButton.icon(
+              icon: Icon(Icons.list_alt, color: Colors.white),
+              label: Text('View Submissions'),
+              style: AppTheme.primaryButtonStyle,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => QuizAnswersListScreen(
+                      quizId: quiz.id,
+                      quizName: quiz.name,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
         SizedBox(height: 8),
         Row(
           children: [
@@ -74,16 +98,6 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
             SizedBox(width: 8),
             Text(
               '${quiz.subject['name']} (${quiz.subject['code']})',
-              style: AppTheme.bodyLarge,
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Icon(Icons.calendar_today, size: 20, color: AppTheme.textSecondaryColor),
-            SizedBox(width: 8),
-            Text(
-              quiz.semester['name'],
               style: AppTheme.bodyLarge,
             ),
           ],

@@ -9,22 +9,19 @@ import '../provider/subject_provider.dart';
 
 class CreateQuizScreen extends StatefulWidget {
   final QuizDetails? quizToEdit;
-  final int? initialSemesterId;
   final int? initialSubjectId;
   final int? initialLessonId;
-  final String? semesterName;
-  final String? subjectName;
-  final String? lessonName;
+  final String subjectName;
+  final String lessonName;
 
   const CreateQuizScreen({
     Key? key,
     this.quizToEdit,
-    this.initialSemesterId,
     this.initialSubjectId,
     this.initialLessonId,
-    this.semesterName,
-    this.subjectName,
-    this.lessonName,
+
+     required this.subjectName,
+    required this.lessonName,
   }) : super(key: key);
 
   @override
@@ -41,7 +38,6 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   final _timeLimitController = TextEditingController();
   final _totalGradeController = TextEditingController(text: '40'); // Default total grade
 
-  int? selectedSemesterId;
   int? selectedSubjectId;
   int? selectedLessonId;
   List<Map<String, dynamic>> availableSubjects = [];
@@ -109,8 +105,6 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    await _loadSemestersList();
-
     if (widget.quizToEdit != null && !_isInitialized) {
       final quiz = widget.quizToEdit!;
       _nameController.text = quiz.name;
@@ -129,34 +123,8 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
       _questions.addAll(quiz.content);
       _updateQuestionCounts();
 
-      // Wait for semesters list to be loaded
-      if (!mounted) return;
-
-      final quizProvider = Provider.of<QuizProvider>(context, listen: false);
-      if (quizProvider.semestersList.isNotEmpty) {
-        setState(() {
-          selectedSemesterId = quiz.semester['id'];
-          // Find and update available subjects for selected semester
-          final semester = quizProvider.semestersList
-              .firstWhere((s) => s['id'] == selectedSemesterId,
-                  orElse: () => {'id': null, 'subjects': []});
-
-          if (semester['id'] != null) {
-            availableSubjects = List<Map<String, dynamic>>.from(semester['subjects']);
-          }
-
-          selectedSubjectId = quiz.subject['id'];
-          _isInitialized = true;
-        });
-      }
     }
   }
-
-  Future<void> _loadSemestersList() async {
-    if (!mounted) return;
-    await Provider.of<QuizProvider>(context, listen: false).fetchSemestersList();
-  }
-
 
 
   @override
@@ -171,44 +139,6 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
 
   double _calculateTotalGrade() {
     return _questions.fold(0.0, (sum, question) => sum + question.grade);
-  }
-
-  String _getDisplaySemesterName() {
-    // First check if we have a name passed directly
-    if (widget.semesterName != null && widget.semesterName!.isNotEmpty) {
-      return widget.semesterName!;
-    }
-
-    // If editing a quiz, get the name from the quiz
-    if (widget.quizToEdit != null) {
-      return widget.quizToEdit!.semester['name'] as String? ?? 'Unknown Semester';
-    }
-
-    // If we have an ID but no name, show the ID
-    if (widget.initialSemesterId != null) {
-      return 'Semester ${widget.initialSemesterId}';
-    }
-
-    return 'No semester selected';
-  }
-
-  String _getDisplaySubjectName() {
-    // First check if we have a name passed directly
-    if (widget.subjectName != null && widget.subjectName!.isNotEmpty) {
-      return widget.subjectName!;
-    }
-
-    // If editing a quiz, get the name from the quiz
-    if (widget.quizToEdit != null) {
-      return widget.quizToEdit!.subject['name'] as String? ?? 'Unknown Subject';
-    }
-
-    // If we have an ID but no name, show the ID
-    if (widget.initialSubjectId != null) {
-      return 'Subject ${widget.initialSubjectId}';
-    }
-
-    return 'No subject selected';
   }
 
   String _getDisplayLessonName() {
@@ -258,12 +188,10 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   bool _canSubmitQuiz() {
     // Get the IDs from the widget parameters or from the quiz being edited
     int? subjectId = widget.initialSubjectId;
-    int? semesterId = widget.initialSemesterId;
     int? lessonId = widget.initialLessonId;
 
     if (widget.quizToEdit != null) {
       subjectId = widget.quizToEdit!.subject['id'];
-      semesterId = widget.quizToEdit!.semester['id'];
       if (widget.quizToEdit!.lesson != null) {
         lessonId = widget.quizToEdit!.lesson!['id'];
       }
@@ -271,7 +199,6 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
 
     return _formKey.currentState?.validate() == true &&
            subjectId != null &&
-           semesterId != null &&
            lessonId != null &&
            _questions.isNotEmpty &&
            _easyQuestionsCount >= _requiredQuestionsPerCategory &&
@@ -291,12 +218,10 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
 
         // Get the IDs from the widget parameters or from the quiz being edited
         int? subjectId = widget.initialSubjectId;
-        int? semesterId = widget.initialSemesterId;
         int? lessonId = widget.initialLessonId;
 
         if (widget.quizToEdit != null) {
           subjectId = widget.quizToEdit!.subject['id'];
-          semesterId = widget.quizToEdit!.semester['id'];
           if (widget.quizToEdit!.lesson != null) {
             lessonId = widget.quizToEdit!.lesson!['id'];
           }
@@ -307,10 +232,6 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
           throw Exception('Subject ID is missing');
         }
 
-        if (semesterId == null) {
-          throw Exception('Semester ID is missing');
-        }
-
         if (lessonId == null) {
           throw Exception('Lesson ID is missing');
         }
@@ -318,7 +239,6 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
         final quiz = Quiz(
           name: _nameController.text,
           subjectId: subjectId,
-          semesterId: semesterId,
           lessonId: lessonId,
           grade: totalGrade,
           type: _typeController.text,
@@ -511,22 +431,12 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                         validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
                       ),
                       const SizedBox(height: 16),
-                      // Display the selected semester, subject, and lesson as read-only text fields
                       Row(
                         children: [
                           Expanded(
                             child: TextFormField(
                               readOnly: true,
-                              initialValue: _getDisplaySemesterName(),
-                              decoration: AppTheme.inputDecoration('Semester'),
-                              enabled: false,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: TextFormField(
-                              readOnly: true,
-                              initialValue: _getDisplaySubjectName(),
+                              initialValue: widget.subjectName,
                               decoration: AppTheme.inputDecoration('Subject'),
                               enabled: false,
                             ),

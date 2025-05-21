@@ -25,7 +25,7 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         Provider.of<QuizAnswerProvider>(context, listen: false)
-            .fetchQuizAnswerById(widget.quizAnswerId);
+            .fetchQuizAnswersByQuizId(widget.quizAnswerId);
       }
     });
   }

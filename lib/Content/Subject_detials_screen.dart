@@ -1,4 +1,3 @@
-
 import 'dart:html' as html;
 
 import 'package:admin_dashboard/utils/string_extensions.dart';
@@ -17,24 +16,30 @@ import '../widgets/video_viewer.dart';
 import '../Quizzes/create_quiz_screen.dart';
 import '../Quizzes/quiz_details_screen.dart';
 
-class SubjectDetailsScreen extends StatelessWidget {
+class SubjectDetailsScreen extends StatefulWidget {
   final Subject subject;
 
   const SubjectDetailsScreen({Key? key, required this.subject}) : super(key: key);
 
   @override
+  State<SubjectDetailsScreen> createState() => _SubjectDetailsScreenState();
+}
+
+class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
+  @override
   Widget build(BuildContext context) {
     // Fetch lessons after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<LessonProvider>(context, listen: false)
-          .fetchLessons(subject.subjectId!);
+          .fetchLessons(widget.subject.subjectId!);
+      Provider.of<LessonProvider>(context, listen: false).setLessonNull();
     });
 
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
         title: Text(
-          subject.subjectName ?? "NA",
+          widget.subject.subjectName ?? "NA",
           style: AppTheme.headingMedium.copyWith(color: Colors.white),
         ),
         backgroundColor: AppTheme.primaryColor,
@@ -360,7 +365,7 @@ class SubjectDetailsScreen extends StatelessWidget {
                   style: AppTheme.headingMedium,
                 ),
                 ElevatedButton.icon(
-                  onPressed: () => _navigateToCreateQuiz(context, lessonProvider),
+                  onPressed: () => _navigateToCreateQuiz(context, lessonProvider,widget.subject.subjectName!),
                   icon: const Icon(Icons.add, size: 18, color: Colors.white),
                   label: const Text('Create Quiz'),
                   style: AppTheme.primaryButtonStyle,
@@ -430,11 +435,6 @@ class SubjectDetailsScreen extends StatelessWidget {
                               children: [
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Type: ${quiz.type} • Grade: ${quiz.semester['grade']}',
-                                  style: AppTheme.bodyMedium,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
                                   'Created: ${_formatDate(quiz.createdAt)}',
                                   style: AppTheme.bodyMedium.copyWith(
                                     color: AppTheme.textSecondaryColor,
@@ -447,7 +447,7 @@ class SubjectDetailsScreen extends StatelessWidget {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: () => _editQuiz(context, quiz, lessonProvider),
+                                  onPressed: () => _editQuiz(context, quiz),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete, color: Colors.red),
@@ -471,42 +471,19 @@ class SubjectDetailsScreen extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  void _navigateToCreateQuiz(BuildContext context, LessonProvider lessonProvider) {
+  void _navigateToCreateQuiz(BuildContext context, LessonProvider lessonProvider, String subjectName) {
     final lesson = lessonProvider.selectedLesson!;
     // Get the semester ID from the current context
-    final quizProvider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
-    int? semesterId;
-    String? semesterName;
-    String? subjectName;
 
     // Try to get the semester ID and name from the quiz provider's semester list
-    if (quizProvider.semestersList.isNotEmpty) {
-      // For simplicity, we'll use the first semester in the list
-      final semester = quizProvider.semestersList.first;
-      semesterId = semester['id'];
-      semesterName = semester['name'];
-
-      // Try to find the subject name
-      if (semester['subjects'] != null) {
-        final subjects = List<Map<String, dynamic>>.from(semester['subjects']);
-        final subject = subjects.firstWhere(
-          (s) => s['id'] == lesson.subjectId,
-          orElse: () => {},
-        );
-        if (subject.isNotEmpty) {
-          subjectName = subject['name'];
-        }
-      }
-    }
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CreateQuizScreen(
-          initialSemesterId: semesterId,
+
           initialSubjectId: lesson.subjectId,
           initialLessonId: lesson.id,
-          semesterName: semesterName,
           subjectName: subjectName ?? 'Subject ${lesson.subjectId}',
           lessonName: lesson.name,
         ),
@@ -519,41 +496,55 @@ class SubjectDetailsScreen extends StatelessWidget {
     });
   }
 
-  void _editQuiz(BuildContext context, quiz_provider.QuizGet quiz, LessonProvider lessonProvider) async {
+  void _editQuiz(BuildContext context, quiz_provider.QuizGet quiz) async {
+    // Store context before async operation
+    final currentContext = context;
+    
     final provider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
-    await provider.fetchQuizById(quiz.id);
-
-    if (!context.mounted) return;
-
-    final quizDetails = provider.currentQuiz;
-    if (quizDetails != null) {
-      // Get the semester and subject names from the quiz
-      String? semesterName = quiz.semester['name'] as String?;
-      String? subjectName = quiz.subject['name'] as String?;
-      String? lessonName;
-
-      // Get the lesson name
-      if (quiz.lesson != null) {
-        lessonName = quiz.lesson!['name'] as String?;
-      } else if (lessonProvider.selectedLesson != null) {
-        lessonName = lessonProvider.selectedLesson!.name;
+    
+    try {
+      await provider.fetchQuizById(quiz.id);
+      
+      // Check if the widget is still mounted before proceeding
+      if (!context.mounted) return;
+      
+      final quizDetails = provider.currentQuiz;
+      if (quizDetails != null) {
+        String? subjectName = quiz.subject['name'] as String;
+        
+        // Use Future.microtask to avoid the context issue
+        Future.microtask(() {
+          if (context.mounted) {
+            Navigator.push(
+              currentContext,
+              MaterialPageRoute(
+                builder: (context) => CreateQuizScreen(
+                  quizToEdit: quizDetails,
+                  subjectName: subjectName,
+                  lessonName: quizDetails.lesson!['name'],
+                ),
+              ),
+            ).then((_) {
+              // Check if still mounted before updating
+              if (context.mounted) {
+                // Refresh quizzes after returning
+                final lessonProvider = Provider.of<LessonProvider>(currentContext, listen: false);
+                if (lessonProvider.selectedLesson != null) {
+                  Provider.of<quiz_provider.QuizProvider>(currentContext, listen: false)
+                      .fetchQuizzes(lessonId: lessonProvider.selectedLesson!.id);
+                }
+              }
+            });
+          }
+        });
       }
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CreateQuizScreen(
-            quizToEdit: quizDetails,
-            semesterName: semesterName,
-            subjectName: subjectName,
-            lessonName: lessonName,
-          ),
-        ),
-      ).then((_) {
-        if (context.mounted) {
-          provider.fetchQuizzes(lessonId: lessonProvider.selectedLesson!.id);
-        }
-      });
+    } catch (e) {
+      // Handle errors
+      if (context.mounted) {
+        ScaffoldMessenger.of(currentContext).showSnackBar(
+          SnackBar(content: Text('Error loading quiz: $e')),
+        );
+      }
     }
   }
 
@@ -839,8 +830,8 @@ class SubjectDetailsScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('Subject Name', subject.subjectName ?? 'NA'),
-            _buildInfoRow('Subject Code', subject.code ?? 'NA'),
+            _buildInfoRow('Subject Name', widget.subject.subjectName ?? 'NA'),
+            _buildInfoRow('Subject Code', widget.subject.code ?? 'NA'),
             // Add more subject details as needed
           ],
         ),
@@ -897,7 +888,7 @@ class SubjectDetailsScreen extends StatelessWidget {
             onPressed: () async {
               if (lessonNameController.text.isNotEmpty) {
                 await Provider.of<LessonProvider>(context, listen: false)
-                    .addLesson(lessonNameController.text, subject.subjectId!);
+                    .addLesson(lessonNameController.text, widget.subject.subjectId!);
                 Navigator.pop(context);
               }
             },

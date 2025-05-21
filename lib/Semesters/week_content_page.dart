@@ -541,7 +541,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
   void _showAddQuizDialog(BuildContext context) {
     // Fetch quizzes before showing the dialog
     Provider.of<QuizProvider>(context, listen: false)
-        .fetchQuizzes(semesterId: widget.week.semesterId);
+        .fetchQuizzes();
         
     showDialog(
       context: context,

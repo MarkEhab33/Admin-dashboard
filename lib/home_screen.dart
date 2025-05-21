@@ -16,10 +16,11 @@ class DashboardScreen extends StatelessWidget {
 
   final List<Widget> _pages = [
     StudentsSemesterTab(),
-    ContentManagementTab(),
-    SemestersContentTab(),
     StudentRequestsTab(),
+    ContentManagementTab(),
     QuizzesMainScreen(),
+    SemestersContentTab(),
+
     AnnouncementsTab(),
   ];
 
@@ -77,10 +78,10 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
           _buildDrawerItem(context, Icons.people, 'Students & Semesters', 0),
-          _buildDrawerItem(context, Icons.pending_actions, 'Student Requests', 4),
-          _buildDrawerItem(context, Icons.import_contacts_sharp, 'Semesters', 1),
-          _buildDrawerItem(context, Icons.quiz, 'Quizzes', 2),
-          _buildDrawerItem(context, Icons.subject_outlined, 'Content', 3),
+          _buildDrawerItem(context, Icons.pending_actions, 'Student Requests', 1),
+          _buildDrawerItem(context, Icons.import_contacts_sharp, 'Semesters', 2),
+          _buildDrawerItem(context, Icons.quiz, 'Quizzes', 3),
+          _buildDrawerItem(context, Icons.subject_outlined, 'Content', 4),
           _buildDrawerItem(context, Icons.campaign_rounded, 'Announcements', 5),
         ],
       ),

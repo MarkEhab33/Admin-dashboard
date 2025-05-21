@@ -200,6 +200,7 @@ class SemesterTemplateScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
+
               builder: (context) => SubjectDetailsScreen(subject: subject),
             ),
           );

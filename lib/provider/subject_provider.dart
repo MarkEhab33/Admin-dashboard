@@ -140,7 +140,10 @@ class LessonProvider with ChangeNotifier {
       print('Error: Lesson ID is null');
     }
   }
-
+void setLessonNull(){
+    _selectedLesson =null;
+    notifyListeners();
+}
   Future<void> uploadPdfItem({
     required int lessonId,
     required String title,

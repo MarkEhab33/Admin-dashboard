@@ -1,5 +1,102 @@
 import 'package:admin_dashboard/Models/quiz.dart';
 
+class QuizAnswersList {
+  final int quizId;
+  final String quizName;
+  final int totalSubmissions;
+  final List<QuizAnswerSummary> answers;
+
+  QuizAnswersList({
+    required this.quizId,
+    required this.quizName,
+    required this.totalSubmissions,
+    required this.answers,
+  });
+
+  factory QuizAnswersList.fromJson(Map<String, dynamic> json) {
+    try {
+      print('QuizAnswersList.fromJson input: $json');
+
+      // Check if answers is a list and not empty
+      var answersList = <QuizAnswerSummary>[];
+      if (json['answers'] != null) {
+        print('Answers type: ${json['answers'].runtimeType}');
+        if (json['answers'] is List) {
+          answersList = (json['answers'] as List)
+              .map((answer) => QuizAnswerSummary.fromJson(answer))
+              .toList();
+          print('Parsed ${answersList.length} answers');
+        } else {
+          print('Answers is not a List: ${json['answers']}');
+        }
+      } else {
+        print('Answers is null');
+      }
+
+      return QuizAnswersList(
+        quizId: json['quizId'] ?? 0,
+        quizName: json['quizName'] ?? '',
+        totalSubmissions: json['totalSubmissions'] ?? 0,
+        answers: answersList,
+      );
+    } catch (e) {
+      print('Error in QuizAnswersList.fromJson: $e');
+      // Return a default object in case of parsing error
+      return QuizAnswersList(
+        quizId: 0,
+        quizName: '',
+        totalSubmissions: 0,
+        answers: [],
+      );
+    }
+  }
+}
+
+class QuizAnswerSummary {
+  final int id;
+  final String studentName;
+  final String studentCode;
+  final int attemptNumber;
+  final DateTime submissionDate;
+  final int? grade;
+
+  QuizAnswerSummary({
+    required this.id,
+    required this.studentName,
+    required this.studentCode,
+    required this.attemptNumber,
+    required this.submissionDate,
+    this.grade,
+  });
+
+  factory QuizAnswerSummary.fromJson(Map<String, dynamic> json) {
+    try {
+      print('QuizAnswerSummary.fromJson input: $json');
+      return QuizAnswerSummary(
+        id: json['id'] ?? 0,
+        studentName: json['studentName'] ?? '',
+        studentCode: json['studentCode'] ?? '',
+        attemptNumber: json['attemptNumber'] ?? 0,
+        submissionDate: json['submissionDate'] != null
+            ? DateTime.parse(json['submissionDate'])
+            : DateTime.now(),
+        grade: json['grade'],  // Already nullable, no need for special handling
+      );
+    } catch (e) {
+      print('Error in QuizAnswerSummary.fromJson: $e');
+      // Return a default object in case of parsing error
+      return QuizAnswerSummary(
+        id: 0,
+        studentName: 'Unknown',
+        studentCode: 'Unknown',
+        attemptNumber: 0,
+        submissionDate: DateTime.now(),
+        grade: null,
+      );
+    }
+  }
+}
+
 class StudentAnswer {
   final String type;
   final int questionId;

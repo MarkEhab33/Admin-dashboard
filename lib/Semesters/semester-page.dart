@@ -56,7 +56,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
 
     try {
       final provider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
-      await provider.fetchQuizzes(semesterId: widget.semester.id);
+      await provider.fetchQuizzes();
 
       setState(() {
         _semesterQuizzes = provider.quizzes;
@@ -220,7 +220,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CreateQuizScreen(),
+        builder: (context) => CreateQuizScreen(lessonName: "sss",subjectName: "ll",),
       ),
     ).then((_) => _fetchSemesterQuizzes());
   }
@@ -299,7 +299,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CreateQuizScreen(quizToEdit: quizDetails),
+          builder: (context) => CreateQuizScreen(quizToEdit: quizDetails,subjectName: "ediiit",lessonName: "yarb",),
         ),
       ).then((_) => _fetchSemesterQuizzes());
     }

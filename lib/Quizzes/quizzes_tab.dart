@@ -30,7 +30,6 @@ class _UniqueItem {
 }
 
 class _QuizzesTabState extends State<QuizzesTab> {
-  int? selectedSemesterId;
   int? selectedSubjectId;
 
   @override
@@ -57,7 +56,7 @@ class _QuizzesTabState extends State<QuizzesTab> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CreateQuizScreen()),
+                  MaterialPageRoute(builder: (context) => CreateQuizScreen(lessonName: "ems7ha",subjectName: "matensash",)),
                 );
               },
             ),
@@ -76,15 +75,6 @@ class _QuizzesTabState extends State<QuizzesTab> {
   Widget _buildFilters() {
     return Consumer<QuizProvider>(
       builder: (context, provider, _) {
-        final uniqueSemesters = provider.quizzes
-            .map((quiz) => _UniqueItem(
-                  quiz.semester['id'] as int,
-                  quiz.semester['name'] as String,
-                ))
-            .toSet()
-            .toList()
-          ..sort((a, b) => a.name.compareTo(b.name));
-
         final uniqueSubjects = provider.quizzes
             .map((quiz) => _UniqueItem(
                   quiz.subject['id'] as int,
@@ -96,32 +86,6 @@ class _QuizzesTabState extends State<QuizzesTab> {
 
         return Row(
           children: [
-            Expanded(
-              child: DropdownButtonFormField<int>(
-                decoration: AppTheme.inputDecoration('Select Semester'),
-                value: selectedSemesterId,
-                items: [
-                  const DropdownMenuItem<int>(
-                    value: null,
-                    child: Text('All Semesters'),
-                  ),
-                  ...uniqueSemesters.map((semester) => DropdownMenuItem<int>(
-                        value: semester.id,
-                        child: Text(semester.name),
-                      )),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    selectedSemesterId = value;
-                  });
-                  provider.fetchQuizzes(
-                    semesterId: value,
-                    subjectId: selectedSubjectId,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
             Expanded(
               child: DropdownButtonFormField<int>(
                 decoration: AppTheme.inputDecoration('Select Subject'),
@@ -141,7 +105,6 @@ class _QuizzesTabState extends State<QuizzesTab> {
                     selectedSubjectId = value;
                   });
                   provider.fetchQuizzes(
-                    semesterId: selectedSemesterId,
                     subjectId: value,
                   );
                 },
@@ -258,7 +221,7 @@ class _QuizzesTabState extends State<QuizzesTab> {
                             Future.microtask(() {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => CreateQuizScreen(quizToEdit: quizDetails),
+                                  builder: (context) => CreateQuizScreen(quizToEdit: quizDetails,subjectName: "maaa",lessonName: "tens",),
                                 ),
                               ).then((_) {
                                 print("EDIT: Returned from CreateQuizScreen");
@@ -344,10 +307,6 @@ class _QuizzesTabState extends State<QuizzesTab> {
                 'Subject: ${quiz.subject['name']}',
                 style: AppTheme.bodyMedium,
               ),
-              Text(
-                'Semester: ${quiz.semester['name']}',
-                style: AppTheme.bodyMedium,
-              ),
               const Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -385,7 +344,6 @@ class _QuizzesTabState extends State<QuizzesTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Subject: ${quiz.subject['name']}'),
-          Text('Semester: ${quiz.semester['name']}'),
         ],
       ),
       trailing: Container(

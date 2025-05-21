@@ -67,7 +67,6 @@ class Question {
 class Quiz {
   final String name;
   final int subjectId;
-  final int semesterId;
   final int? lessonId;
   final int grade;
   final String type;
@@ -78,7 +77,6 @@ class Quiz {
   Quiz({
     required this.name,
     required this.subjectId,
-    required this.semesterId,
     this.lessonId,
     required this.grade,
     required this.type,
@@ -90,7 +88,6 @@ class Quiz {
   Map<String, dynamic> toJson() => {
     'name': name,
     'subjectId': subjectId,
-    'semesterId': semesterId,
     if (lessonId != null) 'lessonId': lessonId,
     'grade': grade,
     'type': type,
@@ -107,7 +104,6 @@ class QuizDetails {
   final int grade;
   final int numberOfAttempts;
   final int timeLimit;
-  final Map<String, dynamic> semester;
   final Map<String, dynamic> subject;
   final Map<String, dynamic>? lesson;
   final List<Question> content;
@@ -121,7 +117,6 @@ class QuizDetails {
     required this.grade,
     required this.numberOfAttempts,
     required this.timeLimit,
-    required this.semester,
     required this.subject,
     this.lesson,
     required this.content,
@@ -137,7 +132,6 @@ class QuizDetails {
       grade: json['grade'],
       numberOfAttempts: json['numberOfAttempts'],
       timeLimit: json['timeLimit'],
-      semester: json['semester'],
       subject: json['subject'],
       lesson: json['lesson'],
       content: (json['content'] as List<dynamic>)
@@ -155,7 +149,6 @@ class QuizGet {
   final String type;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final Map<String, dynamic> semester;
   final Map<String, dynamic> subject;
   final Map<String, dynamic>? lesson;
   final List<Map<String, dynamic>> weeks;
@@ -166,7 +159,6 @@ class QuizGet {
     required this.type,
     required this.createdAt,
     required this.updatedAt,
-    required this.semester,
     required this.subject,
     this.lesson,
     required this.weeks,
@@ -179,7 +171,6 @@ class QuizGet {
       type: json['type'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
-      semester: json['semester'],
       subject: json['subject'],
       lesson: json['lesson'],
       weeks: List<Map<String, dynamic>>.from(json['weeks']),

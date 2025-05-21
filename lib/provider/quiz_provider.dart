@@ -10,7 +10,6 @@ class QuizGet {
   final String type;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final Map<String, dynamic> semester;
   final Map<String, dynamic> subject;
   final Map<String, dynamic>? lesson;
 
@@ -20,7 +19,6 @@ class QuizGet {
     required this.type,
     required this.createdAt,
     required this.updatedAt,
-    required this.semester,
     required this.subject,
     this.lesson,
   });
@@ -32,7 +30,6 @@ class QuizGet {
       type: json['type'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
-      semester: json['semester'],
       subject: json['subject'],
       lesson: json['lesson'],
     );
@@ -76,15 +73,14 @@ class QuizProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchQuizzes({int? semesterId, int? subjectId, int? lessonId}) async {
+  Future<void> fetchQuizzes({ int? subjectId, int? lessonId}) async {
     try {
       _isLoading = true;
       notifyListeners();
 
       String url = '${Globals.baseUrl}/quiz';
-      if (semesterId != null || subjectId != null || lessonId != null) {
+      if ( subjectId != null || lessonId != null) {
         url += '?';
-        if (semesterId != null) url += 'semesterId=$semesterId&';
         if (subjectId != null) url += 'subjectId=$subjectId&';
         if (lessonId != null) url += 'lessonId=$lessonId';
       }
@@ -201,7 +197,6 @@ class QuizProvider with ChangeNotifier {
             type: quiz.type,
             createdAt: updatedQuiz.createdAt,
             updatedAt: DateTime.now(),
-            semester: updatedQuiz.semester,
             subject: updatedQuiz.subject,
             lesson: updatedQuiz.lesson,
           );
@@ -236,25 +231,6 @@ class QuizProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       throw Exception('Error deleting quiz: $e');
-    }
-  }
-
-  Future<void> fetchSemestersList() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${Globals.baseUrl}/semester/list'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        _semestersList = List<Map<String, dynamic>>.from(data['data']);
-        notifyListeners();
-      } else {
-        throw Exception('Failed to load semesters list');
-      }
-    } catch (e) {
-      throw Exception('Error fetching semesters list: $e');
     }
   }
 }

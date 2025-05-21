@@ -1,4 +1,5 @@
 import 'package:admin_dashboard/Models/quiz_answer.dart';
+import 'package:admin_dashboard/Quizzes/quiz_answer_details_screen.dart';
 import 'package:admin_dashboard/Quizzes/quiz_grading_screen.dart';
 import 'package:admin_dashboard/Theme.dart';
 import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
@@ -66,29 +67,16 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildQuizSelector(),
         const SizedBox(height: 24),
-        TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: 'Table View'),
-            Tab(text: 'Card View'),
-          ],
-          labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppTheme.primaryColor,
-        ),
-        const SizedBox(height: 16),
+
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
+          child:
               _buildQuizAnswersTable(),
-              _buildQuizAnswersList(),
-            ],
-          ),
+
+
         ),
       ],
     );
@@ -140,27 +128,25 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
         }
 
         if (provider.error.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Error loading quiz submissions',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  provider.error,
-                  style: TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _loadQuizAnswers,
-                  child: Text('Retry'),
-                ),
-              ],
-            ),
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Error loading quiz submissions',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text(
+                provider.error,
+                style: TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadQuizAnswers,
+                child: Text('Retry'),
+              ),
+            ],
           );
         }
 
@@ -191,7 +177,7 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   'Student Submissions',
@@ -209,7 +195,6 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                           DataColumn(label: Text('Student Code')),
                           DataColumn(label: Text('Submission Date')),
                           DataColumn(label: Text('Status')),
-                          DataColumn(label: Text('Grade')),
                           DataColumn(label: Text('Actions')),
                         ],
                         rows: provider.quizAnswers.map((answer) {
@@ -231,100 +216,42 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                                         ? Colors.green.withAlpha(25)
                                         : Colors.orange.withAlpha(25),
                                     borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: answer.grade != null ? Colors.green : Colors.orange,
+                                      width: 1,
+                                    ),
                                   ),
                                   child: Text(
-                                    status,
+                                    answer.grade != null
+                                        ? 'Graded: ${answer.grade}/${answer.quiz?['grade'] ?? 100}'
+                                        : 'Not Graded',
                                     style: TextStyle(
                                       color: answer.grade != null ? Colors.green : Colors.orange,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ),
-                              ),
-                              DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(
-                                      width: 80,
-                                      child: TextField(
-                                        controller: _gradeControllers[answer.id],
-                                        decoration: InputDecoration(
-                                          hintText: 'Grade',
-                                          suffixText: '/$maxGrade',
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        keyboardType: TextInputType.number,
-                                      ),
-                                    ),
-                                    SizedBox(width: 8),
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        final gradeText = _gradeControllers[answer.id]!.text;
-                                        if (gradeText.isEmpty) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Please enter a grade')),
-                                          );
-                                          return;
-                                        }
-
-                                        final grade = int.tryParse(gradeText);
-                                        if (grade == null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Please enter a valid number')),
-                                          );
-                                          return;
-                                        }
-
-                                        if (grade < 0) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Grade cannot be negative')),
-                                          );
-                                          return;
-                                        }
-
-                                        if (grade > maxGrade) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Grade cannot exceed $maxGrade')),
-                                          );
-                                          return;
-                                        }
-
-                                        // Store context before async gap
-                                        final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-                                        try {
-                                          await provider.gradeQuizAnswer(answer.id, grade);
-                                          if (mounted) {
-                                            scaffoldMessenger.showSnackBar(
-                                              SnackBar(content: Text('Quiz graded successfully')),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (mounted) {
-                                            scaffoldMessenger.showSnackBar(
-                                              SnackBar(content: Text('Error grading quiz: $e')),
-                                            );
-                                          }
-                                        }
-                                      },
-                                      child: Text('Save'),
-                                    ),
-                                  ],
                                 ),
                               ),
                               DataCell(
                                 ElevatedButton.icon(
                                   icon: Icon(Icons.visibility),
                                   label: Text('View Details'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  ),
                                   onPressed: () {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => QuizGradingScreen(quizAnswerId: answer.id),
+                                        builder: (context) => QuizAnswerDetailsScreen(
+                                          quizAnswerId: answer.id,
+                                          quizId: selectedQuizId!,
+                                        ),
                                       ),
                                     ).then((_) {
-                                      // Refresh the list when returning from grading screen
+                                      // Refresh the list when returning from details screen
                                       if (selectedQuizId != null) {
                                         _loadQuizAnswers();
                                       }
@@ -509,44 +436,65 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
     final quizName = answer.quiz?['name'] ?? 'Unknown Quiz';
     final maxGrade = answer.quiz?['grade'] ?? 100;
 
-    return ListTile(
-      title: Text(studentName, style: AppTheme.headingMedium),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Student Code: $studentCode'),
-          Text('Quiz: $quizName'),
-          Text('Submitted: ${DateFormat('MMM d, y').format(answer.createdAt)}'),
-        ],
-      ),
-      trailing: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: answer.grade != null
-              ? Colors.green.withAlpha(25)
-              : Colors.orange.withAlpha(25),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          answer.grade != null ? 'Graded: ${answer.grade}/$maxGrade' : 'Not Graded',
-          style: TextStyle(
-            color: answer.grade != null ? Colors.green : Colors.orange,
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+          child: Text(
+            studentName.isNotEmpty ? studentName[0].toUpperCase() : '?',
+            style: TextStyle(
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => QuizGradingScreen(quizAnswerId: answer.id),
+        title: Text(studentName, style: AppTheme.headingMedium),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Student Code: $studentCode'),
+            Text('Submitted: ${DateFormat('MMM d, y').format(answer.createdAt)}'),
+          ],
+        ),
+        trailing: Container(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: answer.grade != null
+                ? Colors.green.withAlpha(25)
+                : Colors.orange.withAlpha(25),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: answer.grade != null ? Colors.green : Colors.orange,
+              width: 1,
+            ),
           ),
-        ).then((_) {
-          // Refresh the list when returning from grading screen
-          if (selectedQuizId != null) {
-            _loadQuizAnswers();
-          }
-        });
-      },
+          child: Text(
+            answer.grade != null ? 'Graded: ${answer.grade}/$maxGrade' : 'Not Graded',
+            style: TextStyle(
+              color: answer.grade != null ? Colors.green : Colors.orange,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QuizAnswerDetailsScreen(
+                quizAnswerId: answer.id,
+                quizId: selectedQuizId!,
+              ),
+            ),
+          ).then((_) {
+            if (selectedQuizId != null) {
+              _loadQuizAnswers();
+            }
+          });
+        },
+      ),
     );
   }
 }
