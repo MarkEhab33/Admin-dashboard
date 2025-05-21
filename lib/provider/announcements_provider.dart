@@ -143,16 +143,41 @@ class AnnouncementsProvider with ChangeNotifier {
   }
 
   // Create a new announcement
-  Future<void> createAnnouncement(Announcement announcement) async {
+  Future<void> createAnnouncement(Announcement announcement, {List<int>? weekIds}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      // Create the request body
+      final Map<String, dynamic> requestBody = {
+        'title': announcement.title,
+        'description': announcement.description,
+      };
+
+      // Add optional fields if they exist
+      if (announcement.meetingLink != null) {
+        requestBody['meetingLink'] = announcement.meetingLink;
+      }
+
+      if (announcement.imageUrl != null) {
+        requestBody['imageUrl'] = announcement.imageUrl;
+      }
+
+      // Add weekIds if provided
+      if (weekIds != null && weekIds.isNotEmpty) {
+        requestBody['weekIds'] = weekIds;
+      } else if (announcement.weeks != null && announcement.weeks!.isNotEmpty) {
+        // Extract weekIds from the announcement's weeks if available
+        requestBody['weekIds'] = announcement.weeks!
+            .map((week) => week.week.id)
+            .toList();
+      }
+
       final response = await http.post(
         Uri.parse('${Globals.baseUrl}/announcement'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(announcement.toJson()),
+        body: json.encode(requestBody),
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -161,12 +186,14 @@ class AnnouncementsProvider with ChangeNotifier {
       } else {
         final errorData = json.decode(response.body);
         _error = errorData['message'] ?? 'Failed to create announcement';
-        print(_error);
+        // Use logger instead of print in production
+        _error != null ? debugPrint(_error) : null;
         notifyListeners();
       }
     } catch (e) {
       _error = 'Error creating announcement: $e';
-      print(_error);
+      // Use logger instead of print in production
+      debugPrint(_error);
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -175,16 +202,41 @@ class AnnouncementsProvider with ChangeNotifier {
   }
 
   // Update an existing announcement
-  Future<void> updateAnnouncement(Announcement updatedAnnouncement) async {
+  Future<void> updateAnnouncement(Announcement updatedAnnouncement, {List<int>? weekIds}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      // Create the request body
+      final Map<String, dynamic> requestBody = {
+        'title': updatedAnnouncement.title,
+        'description': updatedAnnouncement.description,
+      };
+
+      // Add optional fields if they exist
+      if (updatedAnnouncement.meetingLink != null) {
+        requestBody['meetingLink'] = updatedAnnouncement.meetingLink;
+      }
+
+      if (updatedAnnouncement.imageUrl != null) {
+        requestBody['imageUrl'] = updatedAnnouncement.imageUrl;
+      }
+
+      // Add weekIds if provided
+      if (weekIds != null && weekIds.isNotEmpty) {
+        requestBody['weekIds'] = weekIds;
+      } else if (updatedAnnouncement.weeks != null && updatedAnnouncement.weeks!.isNotEmpty) {
+        // Extract weekIds from the announcement's weeks if available
+        requestBody['weekIds'] = updatedAnnouncement.weeks!
+            .map((week) => week.week.id)
+            .toList();
+      }
+
       final response = await http.put(
         Uri.parse('${Globals.baseUrl}/announcement/${updatedAnnouncement.id}'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(updatedAnnouncement.toJson()),
+        body: json.encode(requestBody),
       );
 
       if (response.statusCode == 200) {
@@ -193,12 +245,14 @@ class AnnouncementsProvider with ChangeNotifier {
       } else {
         final errorData = json.decode(response.body);
         _error = errorData['message'] ?? 'Failed to update announcement';
-        print(_error);
+        // Use logger instead of print in production
+        _error != null ? debugPrint(_error) : null;
         notifyListeners();
       }
     } catch (e) {
       _error = 'Error updating announcement: $e';
-      print(_error);
+      // Use logger instead of print in production
+      debugPrint(_error);
       notifyListeners();
     } finally {
       _isLoading = false;
@@ -224,12 +278,14 @@ class AnnouncementsProvider with ChangeNotifier {
       } else {
         final errorData = json.decode(response.body);
         _error = errorData['message'] ?? 'Failed to delete announcement';
-        print(_error);
+        // Use logger instead of print in production
+        _error != null ? debugPrint(_error) : null;
         notifyListeners();
       }
     } catch (e) {
       _error = 'Error deleting announcement: $e';
-      print(_error);
+      // Use logger instead of print in production
+      debugPrint(_error);
       notifyListeners();
     } finally {
       _isLoading = false;
