@@ -5,10 +5,13 @@ import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../Models/question.dart';
+
 class QuizGradingScreen extends StatefulWidget {
   final int quizAnswerId;
+  final int quizId;
 
-  const QuizGradingScreen({Key? key, required this.quizAnswerId}) : super(key: key);
+  const QuizGradingScreen({Key? key, required this.quizAnswerId,required this.quizId}) : super(key: key);
 
   @override
   _QuizGradingScreenState createState() => _QuizGradingScreenState();

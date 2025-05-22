@@ -268,7 +268,7 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => QuizGradingScreen(quizAnswerId: answer.id),
+                                        builder: (context) => QuizGradingScreen(quizAnswerId: answer.id,quizId: quizAnswersList.quizId,),
                                       ),
                                     ).then((_) {
                                       // Refresh the list when returning from grading screen
@@ -334,27 +334,14 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
         return LayoutBuilder(
           builder: (context, constraints) {
             final isWideScreen = constraints.maxWidth > 900;
-            return isWideScreen
-                ? _buildQuizAnswersGrid(quizAnswersList.answers)
-                : _buildQuizAnswersListView(quizAnswersList.answers);
+            return _buildQuizAnswersListView(quizAnswersList.answers);
           },
         );
       },
     );
   }
 
-  Widget _buildQuizAnswersGrid(List<QuizAnswerSummary> answers) {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1.5,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: answers.length,
-      itemBuilder: (context, index) => _buildQuizAnswerCard(answers[index]),
-    );
-  }
+
 
   Widget _buildQuizAnswersListView(List<QuizAnswerSummary> answers) {
     return ListView.separated(
@@ -364,75 +351,7 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
     );
   }
 
-  Widget _buildQuizAnswerCard(QuizAnswerSummary answer) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QuizGradingScreen(quizAnswerId: answer.id),
-            ),
-          ).then((_) {
-            // Refresh the list when returning from grading screen
-            _loadQuizAnswers();
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                answer.studentName,
-                style: AppTheme.headingMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Student Code: ${answer.studentCode}',
-                style: AppTheme.bodyMedium,
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Attempt: ${answer.attemptNumber}',
-                style: AppTheme.bodyMedium,
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    DateFormat('MMM d, y HH:mm').format(answer.submissionDate),
-                    style: AppTheme.bodyMedium,
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: answer.grade != null
-                          ? Colors.green.withAlpha(25)
-                          : Colors.orange.withAlpha(25),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      answer.grade != null
-                          ? 'Graded: ${answer.grade}'
-                          : 'Not Graded',
-                      style: AppTheme.bodyMedium.copyWith(
-                        color: answer.grade != null ? Colors.green : Colors.orange,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildQuizAnswerListItem(QuizAnswerSummary answer) {
     return ListTile(
@@ -460,17 +379,7 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
           ),
         ),
       ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => QuizGradingScreen(quizAnswerId: answer.id),
-          ),
-        ).then((_) {
-          // Refresh the list when returning from grading screen
-          _loadQuizAnswers();
-        });
-      },
+
     );
   }
 }

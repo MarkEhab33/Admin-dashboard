@@ -1,5 +1,4 @@
 import 'package:admin_dashboard/Models/quiz_answer.dart';
-import 'package:admin_dashboard/Quizzes/quiz_answer_details_screen.dart';
 import 'package:admin_dashboard/Quizzes/quiz_grading_screen.dart';
 import 'package:admin_dashboard/Theme.dart';
 import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
@@ -24,7 +23,8 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadQuizzes();
+    // Use Future.microtask to schedule the loading after the current build is complete
+    Future.microtask(() => _loadQuizzes());
   }
 
   @override
@@ -150,14 +150,15 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
           );
         }
 
-        if (provider.quizAnswers.isEmpty) {
+        final quizAnswersList = provider.quizAnswersList;
+        if (quizAnswersList == null || quizAnswersList.answers.isEmpty) {
           return Center(
             child: Text('No submissions found for this quiz', style: AppTheme.bodyLarge),
           );
         }
 
         // Initialize controllers for each answer if not already created
-        for (var answer in provider.quizAnswers) {
+        for (var answer in quizAnswersList.answers) {
           if (!_gradeControllers.containsKey(answer.id)) {
             _gradeControllers[answer.id] = TextEditingController(
               text: answer.grade?.toString() ?? '',
@@ -168,16 +169,14 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
           }
         }
 
-        // Get the max grade for this quiz
-        final maxGrade = provider.quizAnswers.isNotEmpty && provider.quizAnswers[0].quiz != null
-            ? provider.quizAnswers[0].quiz!['grade'] ?? 100
-            : 100;
+        // Get the max grade for this quiz (we'll need to get this from the quiz provider or set a default)
+        final maxGrade = 100; // Default value, you might want to get this from the quiz details
 
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
                   'Student Submissions',
@@ -190,6 +189,7 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
+                        columnSpacing: 120,
                         columns: [
                           DataColumn(label: Text('Student')),
                           DataColumn(label: Text('Student Code')),
@@ -197,16 +197,13 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                           DataColumn(label: Text('Status')),
                           DataColumn(label: Text('Actions')),
                         ],
-                        rows: provider.quizAnswers.map((answer) {
-                          final studentName = answer.student?['user']?['name'] ?? 'Unknown Student';
-                          final studentCode = answer.student?['studentCode'] ?? '';
-                          final submissionDate = DateFormat('MMM d, y').format(answer.createdAt);
-                          final status = answer.grade != null ? 'Graded' : 'Not Graded';
+                        rows: quizAnswersList.answers.map((answer) {
+                          final submissionDate = DateFormat('MMM d, y HH:mm').format(answer.submissionDate);
 
                           return DataRow(
                             cells: [
-                              DataCell(Text(studentName)),
-                              DataCell(Text(studentCode)),
+                              DataCell(Text(answer.studentName)),
+                              DataCell(Text(answer.studentCode)),
                               DataCell(Text(submissionDate)),
                               DataCell(
                                 Container(
@@ -223,7 +220,7 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                                   ),
                                   child: Text(
                                     answer.grade != null
-                                        ? 'Graded: ${answer.grade}/${answer.quiz?['grade'] ?? 100}'
+                                        ? 'Graded: ${answer.grade}/$maxGrade'
                                         : 'Not Graded',
                                     style: TextStyle(
                                       color: answer.grade != null ? Colors.green : Colors.orange,
@@ -245,9 +242,9 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => QuizAnswerDetailsScreen(
+                                        builder: (context) => QuizGradingScreen(
                                           quizAnswerId: answer.id,
-                                          quizId: selectedQuizId!,
+                                          quizId: quizAnswersList.quizId
                                         ),
                                       ),
                                     ).then((_) {
@@ -312,7 +309,8 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
           );
         }
 
-        if (provider.quizAnswers.isEmpty) {
+        final quizAnswersList = provider.quizAnswersList;
+        if (quizAnswersList == null || quizAnswersList.answers.isEmpty) {
           return Center(
             child: Text('No submissions found for this quiz', style: AppTheme.bodyLarge),
           );
@@ -321,29 +319,16 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
         return LayoutBuilder(
           builder: (context, constraints) {
             final isWideScreen = constraints.maxWidth > 900;
-            return isWideScreen
-                ? _buildQuizAnswersGrid(provider.quizAnswers)
-                : _buildQuizAnswersListView(provider.quizAnswers);
+            return _buildQuizAnswersListView(quizAnswersList.answers);
           },
         );
       },
     );
   }
 
-  Widget _buildQuizAnswersGrid(List<QuizAnswer> answers) {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1.5,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: answers.length,
-      itemBuilder: (context, index) => _buildQuizAnswerCard(answers[index]),
-    );
-  }
 
-  Widget _buildQuizAnswersListView(List<QuizAnswer> answers) {
+
+  Widget _buildQuizAnswersListView(List<QuizAnswerSummary> answers) {
     return ListView.separated(
       itemCount: answers.length,
       separatorBuilder: (context, index) => Divider(),
@@ -351,90 +336,9 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _buildQuizAnswerCard(QuizAnswer answer) {
-    final studentName = answer.student?['user']?['name'] ?? 'Unknown Student';
-    final studentCode = answer.student?['studentCode'] ?? '';
-    final quizName = answer.quiz?['name'] ?? 'Unknown Quiz';
-    final maxGrade = answer.quiz?['grade'] ?? 100;
 
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QuizGradingScreen(quizAnswerId: answer.id),
-            ),
-          ).then((_) {
-            // Refresh the list when returning from grading screen
-            if (selectedQuizId != null) {
-              _loadQuizAnswers();
-            }
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                studentName,
-                style: AppTheme.headingMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Student Code: $studentCode',
-                style: AppTheme.bodyMedium,
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Quiz: $quizName',
-                style: AppTheme.bodyMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    DateFormat('MMM d, y').format(answer.createdAt),
-                    style: AppTheme.bodyMedium,
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: answer.grade != null
-                          ? Colors.green.withAlpha(25)
-                          : Colors.orange.withAlpha(25),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      answer.grade != null
-                          ? 'Graded: ${answer.grade}/$maxGrade'
-                          : 'Not Graded',
-                      style: AppTheme.bodyMedium.copyWith(
-                        color: answer.grade != null ? Colors.green : Colors.orange,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuizAnswerListItem(QuizAnswer answer) {
-    final studentName = answer.student?['user']?['name'] ?? 'Unknown Student';
-    final studentCode = answer.student?['studentCode'] ?? '';
-    final quizName = answer.quiz?['name'] ?? 'Unknown Quiz';
-    final maxGrade = answer.quiz?['grade'] ?? 100;
+  Widget _buildQuizAnswerListItem(QuizAnswerSummary answer) {
+    final maxGrade = 100; // Default value
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
@@ -442,21 +346,22 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
           child: Text(
-            studentName.isNotEmpty ? studentName[0].toUpperCase() : '?',
+            answer.studentName.isNotEmpty ? answer.studentName[0].toUpperCase() : '?',
             style: TextStyle(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        title: Text(studentName, style: AppTheme.headingMedium),
+        title: Text(answer.studentName, style: AppTheme.headingMedium),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Student Code: $studentCode'),
-            Text('Submitted: ${DateFormat('MMM d, y').format(answer.createdAt)}'),
+            Text('Student Code: ${answer.studentCode}'),
+            Text('Attempt: ${answer.attemptNumber}'),
+            Text('Submitted: ${DateFormat('MMM d, y').format(answer.submissionDate)}'),
           ],
         ),
         trailing: Container(
@@ -483,9 +388,9 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => QuizAnswerDetailsScreen(
+              builder: (context) => QuizGradingScreen(
                 quizAnswerId: answer.id,
-                quizId: selectedQuizId!,
+                 quizId: selectedQuizId!,
               ),
             ),
           ).then((_) {
