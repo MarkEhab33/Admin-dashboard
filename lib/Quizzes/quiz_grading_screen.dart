@@ -587,11 +587,18 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
     if (!_questionGradeControllers.containsKey(index)) {
       // For MCQ, pre-fill with max grade if correct, 0 if incorrect
       if (isMCQ) {
+        final gradeValue = answer.isCorrect == true ? answer.questionGrade : 0;
         _questionGradeControllers[index] = TextEditingController(
-          text: answer.isCorrect == true ? answer.questionGrade.toString() : "0"
+          text: gradeValue.toString()
         );
       } else {
         _questionGradeControllers[index] = TextEditingController();
+      }
+    } else if (isMCQ) {
+      // Ensure MCQ grades are always set correctly even if controller exists
+      final gradeValue = answer.isCorrect == true ? answer.questionGrade : 0;
+      if (_questionGradeControllers[index]!.text != gradeValue.toString()) {
+        _questionGradeControllers[index]!.text = gradeValue.toString();
       }
     }
 
@@ -687,49 +694,46 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
                   ),
                 ),
                 SizedBox(height: 16),
-                if (!isMCQ) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _questionGradeControllers[index],
-                          decoration: InputDecoration(
-                            labelText: 'Grade (max: ${answer.questionGrade})',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Required';
-                            }
-                            try {
-                              final grade = int.parse(value);
-                              if (grade < 0) return 'Must be positive';
-                              if (grade > answer.questionGrade) return 'Exceeds max grade';
-                            } catch (e) {
-                              return 'Invalid number';
-                            }
-                            return null;
-                          },
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _questionGradeControllers[index],
+                        decoration: InputDecoration(
+                          labelText: 'Grade (max: ${answer.questionGrade})',
+                          border: OutlineInputBorder(),
+                          filled: isMCQ,
+                          fillColor: isMCQ ? Colors.grey.shade100 : null,
                         ),
+                        keyboardType: TextInputType.number,
+                        enabled: !isMCQ, // Disable editing for MCQ questions
+                        readOnly: isMCQ, // Make MCQ fields read-only
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          try {
+                            final grade = int.parse(value);
+                            if (grade < 0) return 'Must be positive';
+                            if (grade > answer.questionGrade) return 'Exceeds max grade';
+                          } catch (e) {
+                            return 'Invalid number';
+                          }
+                          return null;
+                        },
                       ),
-                    ],
-                  ),
-                ] else ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _questionGradeControllers[index],
-                          decoration: InputDecoration(
-                            labelText: 'Grade (max: ${answer.questionGrade})',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                          enabled: false,
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+                if (isMCQ) ...[
+                  SizedBox(height: 8),
+                  Text(
+                    'MCQ questions are graded automatically',
+                    style: TextStyle(
+                      color: AppTheme.textSecondaryColor,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ],
