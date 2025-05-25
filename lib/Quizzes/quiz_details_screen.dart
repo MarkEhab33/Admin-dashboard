@@ -8,8 +8,8 @@ import 'package:provider/provider.dart';
 
 class QuizDetailsScreen extends StatefulWidget {
   final int quizId;
-
-  const QuizDetailsScreen({Key? key, required this.quizId}) : super(key: key);
+  final int? semesterId;
+  const QuizDetailsScreen({Key? key, required this.quizId, this.semesterId}) : super(key: key);
 
   @override
   _QuizDetailsScreenState createState() => _QuizDetailsScreenState();
@@ -85,6 +85,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                     builder: (context) => QuizAnswersListScreen(
                       quizId: quiz.id,
                       quizName: quiz.name,
+                      semesterId: widget.semesterId,
                     ),
                   ),
                 );

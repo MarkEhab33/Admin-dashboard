@@ -1,6 +1,68 @@
 import 'package:admin_dashboard/Models/question.dart';
 import 'package:admin_dashboard/Models/quiz.dart';
 
+// New model for quiz answers summary from the API
+class QuizAnswersSummary {
+  final List<QuizAnswerSummaryItem> data;
+
+  QuizAnswersSummary({
+    required this.data,
+  });
+
+  factory QuizAnswersSummary.fromJson(Map<String, dynamic> json) {
+    return QuizAnswersSummary(
+      data: (json['data'] as List)
+          .map((item) => QuizAnswerSummaryItem.fromJson(item))
+          .toList(),
+    );
+  }
+}
+
+class QuizAnswerSummaryItem {
+  final int id;
+  final String studentName;
+  final String studentCode;
+  final String quizName;
+  final int finalGrade;
+  final int? grade;
+  final int timeTaken;
+  final bool autoGraded;
+  final DateTime createdAt;
+
+  QuizAnswerSummaryItem({
+    required this.id,
+    required this.studentName,
+    required this.studentCode,
+    required this.quizName,
+    required this.finalGrade,
+    this.grade,
+    required this.timeTaken,
+    required this.autoGraded,
+    required this.createdAt,
+  });
+
+  factory QuizAnswerSummaryItem.fromJson(Map<String, dynamic> json) {
+    return QuizAnswerSummaryItem(
+      id: json['id'],
+      studentName: json['studentName'],
+      studentCode: json['studentCode'],
+      quizName: json['quizName'],
+      finalGrade: json['finalGrade'],
+      grade: json['grade'],
+      timeTaken: json['timeTaken'],
+      autoGraded: json['autoGraded'],
+      createdAt: DateTime.parse(json['createdAt']),
+    );
+  }
+
+  // Helper method to format time taken
+  String get formattedTimeTaken {
+    final minutes = timeTaken ~/ 60;
+    final seconds = timeTaken % 60;
+    return '${minutes}m ${seconds}s';
+  }
+}
+
 class QuizAnswersList {
   final int quizId;
   final String quizName;

@@ -1,4 +1,5 @@
 import 'package:admin_dashboard/Models/subject.dart';
+import 'package:admin_dashboard/Quizzes/quiz_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Models/Subject_Template.dart';
@@ -10,8 +11,8 @@ import '../Theme.dart';
 
 class WeekContentPage extends StatefulWidget {
   final Week week;
-
-  const WeekContentPage({Key? key, required this.week}) : super(key: key);
+  final int? semesterId;
+  const WeekContentPage({Key? key, required this.week, this.semesterId}) : super(key: key);
 
   @override
   State<WeekContentPage> createState() => _WeekContentPageState();
@@ -27,7 +28,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
   void initState() {
     super.initState();
     _fetchData();
-    _fetchWeekQuizzes();
+
   }
 
   Future<void> _fetchData() async {
@@ -380,12 +381,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
               'Week Quizzes',
               style: AppTheme.headingMedium,
             ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add, size: 20, color: Colors.white),
-              label: const Text('Add Quiz'),
-              style: AppTheme.primaryButtonStyle,
-              onPressed: () => _showAddQuizDialog(context),
-            ),
+
           ],
         ),
         const SizedBox(height: 16),
@@ -432,7 +428,12 @@ class _WeekContentPageState extends State<WeekContentPage> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
                   onTap: () {
-                    // Optional: Navigate to quiz details
+             Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => QuizDetailsScreen(quizId: quiz["id"],semesterId:widget.semesterId ,),
+                ),
+              );
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -538,100 +539,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
     ).join(' ');
   }
 
-  void _showAddQuizDialog(BuildContext context) {
-    // Fetch quizzes before showing the dialog
-    Provider.of<QuizProvider>(context, listen: false)
-        .fetchQuizzes();
-        
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Add Quiz to Week', style: AppTheme.headingMedium),
-              const SizedBox(height: 16),
-              Consumer<QuizProvider>(
-                builder: (context, provider, _) {
-                  // Remove the direct fetch call from here
-                  if (provider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
 
-                  if (provider.error.isNotEmpty) {
-                    return Center(
-                      child: Text(
-                        provider.error,
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    );
-                  }
-
-                  final availableQuizzes = provider.quizzes.where(
-                    (quiz) => !_weekQuizzes.any((wq) => wq['id'] == quiz.id)
-                  ).toList();
-
-                  if (availableQuizzes.isEmpty) {
-                    return const Center(
-                      child: Text('No available quizzes for this semester'),
-                    );
-                  }
-
-                  return Container(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.6,
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: availableQuizzes.length,
-                      itemBuilder: (context, index) {
-                        final quiz = availableQuizzes[index];
-                        return ListTile(
-                          title: Text(quiz.name),
-                          subtitle: Text('${quiz.subject['name']} • ${quiz.type}'),
-                          trailing: ElevatedButton(
-                            child: const Text('Add'),
-                            onPressed: () async {
-                              try {
-                                final provider = Provider.of<SemestersProvider>(
-                                  context, 
-                                  listen: false
-                                );
-                                await provider.addQuizToWeek(
-                                  weekId: widget.week.id,
-                                  quizId: quiz.id,
-                                );
-                                Navigator.pop(context);
-                                _fetchWeekQuizzes();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Quiz added successfully'),
-                                  ),
-                                );
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(e.toString()),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showDeleteQuizDialog(BuildContext context, int quizId) {
     showDialog(
@@ -650,7 +558,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                 final provider = Provider.of<SemestersProvider>(context, listen: false);
                 await provider.removeQuizFromWeek(widget.week.id, quizId);
                 Navigator.pop(context);
-                _fetchWeekQuizzes();
+                _fetchQuizzes();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Quiz removed successfully')),
                 );
@@ -670,19 +578,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
     );
   }
 
-  Future<void> _fetchWeekQuizzes() async {
-    try {
-      final provider = Provider.of<SemestersProvider>(context, listen: false);
-      final quizzes = await provider.fetchWeekQuizzes(widget.week.id);
-      setState(() {
-        _weekQuizzes = quizzes;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
-    }
-  }
+ 
 
   @override
   Widget build(BuildContext context) {

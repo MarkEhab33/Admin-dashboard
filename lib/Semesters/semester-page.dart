@@ -7,12 +7,10 @@ import '../Models/week.dart';
 import '../Theme.dart';
 import 'package:provider/provider.dart';
 import 'week_content_page.dart';
-import '../Quizzes/create_quiz_screen.dart';
-import '../Quizzes/quiz_details_screen.dart';
+
 
 import '../provider/semesters_provider.dart';
 import '../provider/student_provider.dart';
-import '../provider/quiz_provider.dart' as quiz_provider;
 
 class SemesterDetailPage extends StatefulWidget {
   final Semester semester;
@@ -28,15 +26,13 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
   late TabController _tabController;
-  List<quiz_provider.QuizGet> _semesterQuizzes = [];
-  bool _isLoadingQuizzes = false;
-  String _quizError = '';
+
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _fetchSemesterQuizzes();
+    _tabController = TabController(length: 2, vsync: this);
+
   }
 
   @override
@@ -48,27 +44,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     super.dispose();
   }
 
-  Future<void> _fetchSemesterQuizzes() async {
-    setState(() {
-      _isLoadingQuizzes = true;
-      _quizError = '';
-    });
 
-    try {
-      final provider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
-      await provider.fetchQuizzes();
-
-      setState(() {
-        _semesterQuizzes = provider.quizzes;
-        _isLoadingQuizzes = false;
-      });
-    } catch (e) {
-      setState(() {
-        _quizError = e.toString();
-        _isLoadingQuizzes = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,8 +56,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
           controller: _tabController,
           tabs: const [
             Tab(text: 'Weeks'),
-            Tab(text: 'Students'),
-            Tab(text: 'Quizzes'),
+            Tab(text: 'Students')
           ],
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
@@ -134,7 +109,6 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
               ),
             ),
           ),
-
           // Students Tab
           SingleChildScrollView(
             child: Padding(
@@ -169,195 +143,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
             ),
           ),
 
-          // Quizzes Tab
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-                  _buildQuizzesSection(),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildQuizzesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Quizzes',
-              style: AppTheme.headingMedium,
-            ),
-            ElevatedButton.icon(
-              onPressed: () => _navigateToCreateQuiz(),
-              icon: const Icon(Icons.add, size: 18, color: Colors.white),
-              label: const Text('Create New Quiz'),
-              style: AppTheme.primaryButtonStyle,
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: AppTheme.cardDecoration,
-          child: _buildQuizzesList(),
-        ),
-      ],
-    );
-  }
-
-  void _navigateToCreateQuiz() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreateQuizScreen(lessonName: "sss",subjectName: "ll",),
-      ),
-    ).then((_) => _fetchSemesterQuizzes());
-  }
-
-  Widget _buildQuizzesList() {
-    if (_isLoadingQuizzes) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (_quizError.isNotEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Text(
-            'Error loading quizzes: $_quizError',
-            style: TextStyle(color: Colors.red),
-          ),
-        ),
-      );
-    }
-
-    if (_semesterQuizzes.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Text(
-            'No quizzes available for this semester',
-            style: AppTheme.bodyLarge,
-          ),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _semesterQuizzes.length,
-      separatorBuilder: (context, index) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final quiz = _semesterQuizzes[index];
-        return ListTile(
-          title: Text(quiz.name, style: AppTheme.bodyLarge),
-          subtitle: Text('Subject: ${quiz.subject['name']} • Type: ${quiz.type}'),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue),
-                onPressed: () => _editQuiz(quiz),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _showDeleteQuizDialog(quiz),
-              ),
-            ],
-          ),
-          onTap: () => _viewQuizDetails(quiz),
-        );
-      },
-    );
-  }
-
-  void _editQuiz(quiz_provider.QuizGet quiz) async {
-    final provider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
-    await provider.fetchQuizById(quiz.id);
-
-    if (!mounted) return;
-
-    final quizDetails = provider.currentQuiz;
-    if (quizDetails != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CreateQuizScreen(quizToEdit: quizDetails,subjectName: "ediiit",lessonName: "yarb",),
-        ),
-      ).then((_) => _fetchSemesterQuizzes());
-    }
-  }
-
-  void _viewQuizDetails(quiz_provider.QuizGet quiz) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QuizDetailsScreen(quizId: quiz.id),
-      ),
-    );
-  }
-
-  void _showDeleteQuizDialog(quiz_provider.QuizGet quiz) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Quiz'),
-        content: Text('Are you sure you want to delete "${quiz.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await Provider.of<quiz_provider.QuizProvider>(context, listen: false)
-                    .deleteQuiz(quiz.id);
-
-                if (!mounted) return;
-
-                Navigator.pop(context);
-                _fetchSemesterQuizzes();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Quiz deleted successfully'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              } catch (e) {
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to delete quiz: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
         ],
       ),
     );
@@ -510,7 +296,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => WeekContentPage(week: week),
+              builder: (context) => WeekContentPage(week: week,semesterId: widget.semester.id,),
             ),
           ),
 

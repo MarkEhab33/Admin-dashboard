@@ -9,11 +9,12 @@ import 'package:intl/intl.dart';
 class QuizAnswersListScreen extends StatefulWidget {
   final int quizId;
   final String quizName;
-
+  final int? semesterId;
   const QuizAnswersListScreen({
     Key? key,
     required this.quizId,
     required this.quizName,
+    this.semesterId
   }) : super(key: key);
 
   @override
@@ -24,11 +25,20 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
   late TabController _tabController;
   final Map<int, TextEditingController> _gradeControllers = {};
 
+  // Filter parameters
+  int? _selectedLessonId;
+  int? _selectedSubjectId;
+  int? _selectedWeekId;
+  String _gradingFilter = 'all'; // 'all', 'graded', 'not_graded'
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadQuizAnswers();
+    // Schedule the data loading after the build is complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadQuizAnswers();
+    });
   }
 
   @override
@@ -40,8 +50,15 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
   }
 
   void _loadQuizAnswers() {
+    print('semester ${widget.semesterId}');
     Provider.of<QuizAnswerProvider>(context, listen: false)
-        .fetchQuizAnswersList(widget.quizId);
+        .fetchQuizAnswersSummary(
+          quizId: widget.quizId,
+          semesterId: widget.semesterId,
+          lessonId: _selectedLessonId,
+          subjectId: _selectedSubjectId,
+          weekId: _selectedWeekId,
+        );
   }
 
   @override
@@ -62,226 +79,72 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
               style: AppTheme.headingLarge,
             ),
             const SizedBox(height: 16),
-            TabBar(
-              controller: _tabController,
-              tabs: [
-                Tab(text: 'Table View'),
-                Tab(text: 'Card View'),
-              ],
-              labelColor: AppTheme.primaryColor,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: AppTheme.primaryColor,
-            ),
+            _buildSummaryStats(),
             const SizedBox(height: 16),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildQuizAnswersTable(),
-                  _buildQuizAnswersList(),
-                ],
-              ),
-            ),
+            _buildFilterOptions(),
+            const SizedBox(height: 16),
+            _buildQuizAnswersList()
           ],
         ),
       ),
     );
   }
 
-  Widget _buildQuizAnswersTable() {
+  Widget _buildSummaryStats() {
     return Consumer<QuizAnswerProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading) {
-          return Center(child: CircularProgressIndicator());
+        final summary = provider.quizAnswersSummary;
+        if (summary == null || summary.data.isEmpty) {
+          return const SizedBox.shrink();
         }
 
-        if (provider.error.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Error loading quiz submissions',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  provider.error,
-                  style: TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _loadQuizAnswers,
-                  child: Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final quizAnswersList = provider.quizAnswersList;
-        if (quizAnswersList == null || quizAnswersList.answers.isEmpty) {
-          return Center(
-            child: Text('No submissions found for this quiz', style: AppTheme.bodyLarge),
-          );
-        }
-
-        // Initialize controllers for each answer if not already created
-        for (var answer in quizAnswersList.answers) {
-          if (!_gradeControllers.containsKey(answer.id)) {
-            _gradeControllers[answer.id] = TextEditingController(
-              text: answer.grade?.toString() ?? '',
-            );
-          } else if (answer.grade != null && _gradeControllers[answer.id]!.text.isEmpty) {
-            // Update controller if grade exists but controller is empty
-            _gradeControllers[answer.id]!.text = answer.grade.toString();
-          }
-        }
+        final totalSubmissions = summary.data.length;
+        final gradedSubmissions = summary.data.where((item) => item.grade != null).length;
+        final autoGradedSubmissions = summary.data.where((item) => item.autoGraded).length;
+        final averageGrade = summary.data
+            .where((item) => item.grade != null)
+            .map((item) => item.grade!)
+            .fold(0, (sum, grade) => sum + grade) /
+            (gradedSubmissions > 0 ? gradedSubmissions : 1);
 
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  'Total Submissions: ${quizAnswersList.totalSubmissions}',
-                  style: AppTheme.headingMedium,
-                ),
-                SizedBox(height: 16),
                 Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: [
-                          DataColumn(label: Text('Student')),
-                          DataColumn(label: Text('Student Code')),
-                          DataColumn(label: Text('Attempt')),
-                          DataColumn(label: Text('Submission Date')),
-                          DataColumn(label: Text('Status')),
-                          DataColumn(label: Text('Grade')),
-                          DataColumn(label: Text('Actions')),
-                        ],
-                        rows: quizAnswersList.answers.map((answer) {
-                          final submissionDate = DateFormat('MMM d, y HH:mm').format(answer.submissionDate);
-                          final status = answer.grade != null ? 'Graded' : 'Not Graded';
-
-                          return DataRow(
-                            cells: [
-                              DataCell(Text(answer.studentName)),
-                              DataCell(Text(answer.studentCode)),
-                              DataCell(Text('Attempt ${answer.attemptNumber}')),
-                              DataCell(Text(submissionDate)),
-                              DataCell(
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: answer.grade != null
-                                        ? Colors.green.withAlpha(25)
-                                        : Colors.orange.withAlpha(25),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    status,
-                                    style: TextStyle(
-                                      color: answer.grade != null ? Colors.green : Colors.orange,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(
-                                      width: 80,
-                                      child: TextField(
-                                        controller: _gradeControllers[answer.id],
-                                        decoration: InputDecoration(
-                                          hintText: 'Grade',
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        keyboardType: TextInputType.number,
-                                      ),
-                                    ),
-                                    SizedBox(width: 8),
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        final gradeText = _gradeControllers[answer.id]!.text;
-                                        if (gradeText.isEmpty) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Please enter a grade')),
-                                          );
-                                          return;
-                                        }
-
-                                        final grade = int.tryParse(gradeText);
-                                        if (grade == null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Please enter a valid number')),
-                                          );
-                                          return;
-                                        }
-
-                                        if (grade < 0) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Grade cannot be negative')),
-                                          );
-                                          return;
-                                        }
-
-                                        // Store context before async gap
-                                        final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-                                        try {
-                                          await Provider.of<QuizAnswerProvider>(context, listen: false)
-                                              .gradeQuizAnswer(answer.id, grade);
-                                          if (mounted) {
-                                            scaffoldMessenger.showSnackBar(
-                                              SnackBar(content: Text('Quiz graded successfully')),
-                                            );
-                                            // Reload the answers list
-                                            _loadQuizAnswers();
-                                          }
-                                        } catch (e) {
-                                          if (mounted) {
-                                            scaffoldMessenger.showSnackBar(
-                                              SnackBar(content: Text('Error grading quiz: $e')),
-                                            );
-                                          }
-                                        }
-                                      },
-                                      child: Text('Save'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              DataCell(
-                                ElevatedButton.icon(
-                                  icon: Icon(Icons.visibility),
-                                  label: Text('View Details'),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => QuizGradingScreen(quizAnswerId: answer.id,quizId: quizAnswersList.quizId,),
-                                      ),
-                                    ).then((_) {
-                                      // Refresh the list when returning from grading screen
-                                      _loadQuizAnswers();
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
+                  child: _buildStatCard(
+                    'Total Submissions',
+                    totalSubmissions.toString(),
+                    Icons.assignment,
+                    Colors.blue,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Graded',
+                    '$gradedSubmissions / $totalSubmissions',
+                    Icons.grade,
+                    Colors.green,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Auto Graded',
+                    autoGradedSubmissions.toString(),
+                    Icons.auto_awesome,
+                    Colors.purple,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Average Grade',
+                    gradedSubmissions > 0 ? averageGrade.toStringAsFixed(1) : 'N/A',
+                    Icons.trending_up,
+                    Colors.orange,
                   ),
                 ),
               ],
@@ -292,50 +155,106 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
     );
   }
 
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withAlpha(50)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: AppTheme.headingMedium.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: AppTheme.bodyMedium.copyWith(
+              color: AppTheme.textSecondaryColor,
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+
   Widget _buildQuizAnswersList() {
     return Consumer<QuizAnswerProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {
-          return Center(child: CircularProgressIndicator());
+          return const Expanded(
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
 
         if (provider.error.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Error loading quiz submissions',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  provider.error,
-                  style: TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _loadQuizAnswers,
-                  child: Text('Retry'),
-                ),
-              ],
+          return Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Error loading quiz submissions',
+                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    provider.error,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadQuizAnswers,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
-        final quizAnswersList = provider.quizAnswersList;
-        if (quizAnswersList == null || quizAnswersList.answers.isEmpty) {
-          return Center(
-            child: Text('No submissions found for this quiz', style: AppTheme.bodyLarge),
+        final quizAnswersSummary = provider.quizAnswersSummary;
+        if (quizAnswersSummary == null || quizAnswersSummary.data.isEmpty) {
+          return Expanded(
+            child: Center(
+              child: Text('No submissions found for this quiz', style: AppTheme.bodyLarge),
+            ),
           );
         }
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isWideScreen = constraints.maxWidth > 900;
-            return _buildQuizAnswersListView(quizAnswersList.answers);
-          },
+        // Apply filtering based on grading status
+        var filteredAnswers = quizAnswersSummary.data;
+        if (_gradingFilter == 'graded') {
+          filteredAnswers = filteredAnswers.where((answer) => answer.grade != null).toList();
+        } else if (_gradingFilter == 'not_graded') {
+          filteredAnswers = filteredAnswers.where((answer) => answer.grade == null).toList();
+        }
+
+        if (filteredAnswers.isEmpty) {
+          return Expanded(
+            child: Center(
+              child: Text(
+                'No ${_gradingFilter == "graded" ? "graded" : "ungraded"} submissions found',
+                style: AppTheme.bodyLarge
+              ),
+            ),
+          );
+        }
+
+        return Expanded(
+          child: _buildQuizAnswersListView(filteredAnswers),
         );
       },
     );
@@ -343,43 +262,296 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
 
 
 
-  Widget _buildQuizAnswersListView(List<QuizAnswerSummary> answers) {
-    return ListView.separated(
-      itemCount: answers.length,
-      separatorBuilder: (context, index) => Divider(),
-      itemBuilder: (context, index) => _buildQuizAnswerListItem(answers[index]),
+  Widget _buildQuizAnswersListView(List<QuizAnswerSummaryItem> answers) {
+    return Column(
+      children: [
+        _buildTableHeader(),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.separated(
+            itemCount: answers.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) => _buildQuizAnswerListItem(answers[index]),
+          ),
+        ),
+      ],
     );
   }
 
-
-
-  Widget _buildQuizAnswerListItem(QuizAnswerSummary answer) {
-    return ListTile(
-      title: Text(answer.studentName, style: AppTheme.headingMedium),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withAlpha(25),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.primaryColor.withAlpha(50)),
+      ),
+      child: Row(
         children: [
-          Text('Student Code: ${answer.studentCode}'),
-          Text('Attempt: ${answer.attemptNumber}'),
-          Text('Submitted: ${DateFormat('MMM d, y HH:mm').format(answer.submissionDate)}'),
+          Expanded(
+            flex: 3,
+            child: Text(
+              'Student',
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'Quiz',
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'Time Taken',
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'Grade',
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'Status',
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              'Submitted',
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
-      trailing: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: answer.grade != null
-              ? Colors.green.withAlpha(25)
-              : Colors.orange.withAlpha(25),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          answer.grade != null ? 'Graded: ${answer.grade}' : 'Not Graded',
-          style: TextStyle(
-            color: answer.grade != null ? Colors.green : Colors.orange,
+    );
+  }
+
+  Widget _buildQuizAnswerListItem(QuizAnswerSummaryItem answer) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      elevation: 1,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QuizGradingScreen(
+                quizAnswerId: answer.id,
+                quizId: widget.quizId,
+              ),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              // Student Info (flex: 3)
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      answer.studentName,
+                      style: AppTheme.bodyLarge.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Code: ${answer.studentCode}',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Quiz Name (flex: 2)
+              Expanded(
+                flex: 2,
+                child: Text(
+                  answer.quizName,
+                  style: AppTheme.bodyMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+
+              // Time Taken (flex: 2)
+              Expanded(
+                flex: 2,
+                child: Container(
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withAlpha(25),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      answer.formattedTimeTaken,
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: Colors.blue[700],
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Grade (flex: 2)
+              Expanded(
+                flex: 2,
+                child: Container(
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: answer.grade != null
+                          ? Colors.green.withAlpha(25)
+                          : Colors.red.withAlpha(25),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      answer.grade != null
+                          ? '${answer.grade}/${answer.finalGrade}'
+                          : 'Not Graded',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: answer.grade != null ? Colors.green[700] : Colors.red[700],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Status (flex: 2)
+              Expanded(
+                flex: 2,
+                child: Container(
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: answer.autoGraded
+                          ? Colors.purple.withAlpha(25)
+                          : Colors.orange.withAlpha(25),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      answer.autoGraded ? 'Auto' : 'Manual',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: answer.autoGraded ? Colors.purple[700] : Colors.orange[700],
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Submitted Date (flex: 2)
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      DateFormat('MMM d').format(answer.createdAt),
+                      style: AppTheme.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      DateFormat('HH:mm').format(answer.createdAt),
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 11,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
 
+  Widget _buildFilterOptions() {
+    return Row(
+      children: [
+        Text('Filter: ', style: AppTheme.bodyLarge),
+        const SizedBox(width: 8),
+        _buildFilterChip('All', 'all'),
+        const SizedBox(width: 8),
+        _buildFilterChip('Graded', 'graded'),
+        const SizedBox(width: 8),
+        _buildFilterChip('Not Graded', 'not_graded'),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip(String label, String value) {
+    final isSelected = _gradingFilter == value;
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+      checkmarkColor: AppTheme.primaryColor,
+      backgroundColor: Colors.grey.withOpacity(0.1),
+      onSelected: (selected) {
+        setState(() {
+          _gradingFilter = value;
+        });
+      },
     );
   }
 }
+
+
+
+
+

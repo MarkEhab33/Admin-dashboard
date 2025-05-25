@@ -45,23 +45,6 @@ class _QuizzesTabState extends State<QuizzesTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Spacer(), // Push the button to the right
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('Create New Quiz'),
-              style: AppTheme.primaryButtonStyle,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CreateQuizScreen(lessonName: "ems7ha",subjectName: "matensash",)),
-                );
-              },
-            ),
-          ],
-        ),
         const SizedBox(height: 24),
         _buildFilters(),
         const SizedBox(height: 24),
@@ -135,30 +118,12 @@ class _QuizzesTabState extends State<QuizzesTab> {
           );
         }
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isWideScreen = constraints.maxWidth > 900;
-            return isWideScreen
-                ? _buildQuizzesGrid(provider.quizzes)
-                : _buildQuizzesListView(provider.quizzes);
-          },
-        );
+        return _buildQuizzesListView(provider.quizzes);
       },
     );
   }
 
-  Widget _buildQuizzesGrid(List<QuizGet> quizzes) {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 1.5,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: quizzes.length,
-      itemBuilder: (context, index) => _buildQuizCard(quizzes[index]),
-    );
-  }
+
 
   Widget _buildQuizzesListView(List<QuizGet> quizzes) {
     return ListView.separated(
@@ -168,174 +133,6 @@ class _QuizzesTabState extends State<QuizzesTab> {
     );
   }
 
-  Widget _buildQuizCard(QuizGet quiz) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QuizDetailsScreen(quizId: quiz.id),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      quiz.name,
-                      style: AppTheme.headingMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) async {
-                      if (value == 'edit') {
-                        try {
-                          // Fetch full quiz details before editing
-                          print("EDIT: Starting edit process for quiz ID: ${quiz.id}");
-                          print("EDIT: Quiz basic info - Name: ${quiz.name}, Type: ${quiz.type}");
-
-                          final provider = Provider.of<QuizProvider>(context, listen: false);
-                          print("EDIT: About to call fetchQuizById");
-
-                          await provider.fetchQuizById(quiz.id);
-                          print("EDIT: fetchQuizById completed");
-
-                          final quizDetails = provider.currentQuiz;
-                          print("EDIT: currentQuiz retrieved: ${quizDetails != null}");
-
-                          if (quizDetails != null) {
-                            print("EDIT: Quiz details - ID: ${quizDetails.id}, Name: ${quizDetails.name}");
-                            print("EDIT: About to navigate to CreateQuizScreen");
-
-                            // Try using a different approach for navigation
-                            Future.microtask(() {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => CreateQuizScreen(quizToEdit: quizDetails,subjectName: "maaa",lessonName: "tens",),
-                                ),
-                              ).then((_) {
-                                print("EDIT: Returned from CreateQuizScreen");
-                              });
-                            });
-
-                            print("EDIT: Navigation scheduled");
-                          } else {
-                            print("EDIT: Quiz details is null after fetch");
-                            print("EDIT: Provider error state: ${provider.error}");
-                            print("EDIT: Provider loading state: ${provider.isLoading}");
-                          }
-                        } catch (e) {
-                          print("EDIT ERROR: ${e.toString()}");
-                          print("EDIT ERROR: Stack trace: ${StackTrace.current}");
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error loading quiz: $e")),
-                          );
-                        }
-                      } else if (value == 'delete') {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text('Delete Quiz'),
-                            content: Text('Are you sure you want to delete this quiz?'),
-                            actions: [
-                              TextButton(
-                                child: Text('Cancel'),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                              TextButton(
-                                child: Text('Delete'),
-                                onPressed: () async {
-                                  try {
-                                    await Provider.of<QuizProvider>(context, listen: false)
-                                        .deleteQuiz(quiz.id);
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Quiz deleted successfully')),
-                                    );
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(e.toString()),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit),
-                            SizedBox(width: 8),
-                            Text('Edit'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Subject: ${quiz.subject['name']}',
-                style: AppTheme.bodyMedium,
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    DateFormat('MMM d, y').format(quiz.createdAt),
-                    style: AppTheme.bodyMedium,
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      quiz.type,
-                      style: AppTheme.bodyMedium.copyWith(
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildQuizListItem(QuizGet quiz) {
     return ListTile(
