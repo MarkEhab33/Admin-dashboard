@@ -233,41 +233,6 @@ class QuizProvider with ChangeNotifier {
       throw Exception('Error deleting quiz: $e');
     }
   }
-
-  Future<Map<String, dynamic>> addQuizRedo(int studentId, int quizId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${Globals.baseUrl}/quiz-answers/redo'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'studentId': studentId,
-          'quizId': quizId,
-        }),
-      );
-
-      final responseData = json.decode(response.body);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'message': responseData['message'] ?? 'Redo entry added successfully',
-          'data': responseData['data'],
-        };
-      } else {
-        return {
-          'success': false,
-          'message': responseData['message'] ?? 'Failed to add redo entry',
-          'error': responseData['error'],
-        };
-      }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Error adding redo entry: $e',
-        'error': 'Network Error',
-      };
-    }
-  }
 }
 
 

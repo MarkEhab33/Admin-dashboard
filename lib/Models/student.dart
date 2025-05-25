@@ -73,6 +73,35 @@ class Student {
 
   // Original factory constructor for full details
   factory Student.fromJson(Map<String, dynamic> json) {
+    if (json == null) {
+      return Student(
+        id: 0,
+        studentCode: '',
+        city: '',
+        church: '',
+        abEle3traf: '',
+        deaconLevel: '',
+        churchService: '',
+        qualifications: '',
+        personalIDFront: '',
+        personalIDBack: '',
+        isVerified: false,
+        tazkia: '',
+        user: User(
+          id: 0,
+          name: '',
+          email: '',
+          birthday: DateTime.now(),
+          nationality: '',
+          address: '',
+          gender: '',
+          phone:'',
+        ),
+        semesters: [],
+        completedSemesters: [],
+      );
+    }
+
     return Student(
       id: json['id'] ?? 0,
       studentCode: json['studentCode'] ?? '',
@@ -98,9 +127,9 @@ class Student {
               gender: '',
               phone: ''
             ),
-      semesters: (json['semesters'] as List<dynamic>?)?.map((e) =>
+      semesters: (json['semesters'] as List<dynamic>?)?.map((e) => 
           Semester.fromJson(e as Map<String, dynamic>)).toList() ?? [],
-      completedSemesters: (json['completedSemesters'] as List<dynamic>?)?.map((e) =>
+      completedSemesters: (json['completedSemesters'] as List<dynamic>?)?.map((e) => 
           Semester.fromJson(e as Map<String, dynamic>)).toList() ?? [],
     );
   }

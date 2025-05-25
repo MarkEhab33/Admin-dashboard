@@ -30,7 +30,7 @@ class User {
           ? DateTime.parse(json['birthday'].toString())
           : DateTime.now(),
       nationality: json['nationality']?.toString() ?? '',
-      address: json['Address']?.toString() ?? json['address']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
       gender: json['gender']?.toString() ?? '',
       phone: json['phone']?.toString() ?? '',
     );
