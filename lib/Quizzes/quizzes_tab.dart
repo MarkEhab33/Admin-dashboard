@@ -1,9 +1,10 @@
 import 'package:admin_dashboard/Quizzes/quiz_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../Theme.dart';
 import 'create_quiz_screen.dart';
-import '../provider/quiz_provider.dart';
+import '../provider/quiz_provider.dart' as quiz_provider;
 import 'package:intl/intl.dart';
 
 class QuizzesTab extends StatefulWidget {
@@ -31,12 +32,13 @@ class _UniqueItem {
 
 class _QuizzesTabState extends State<QuizzesTab> {
   int? selectedSubjectId;
+  String selectedQuizFilter = 'all'; // 'all', 'regular', 'recording'
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() =>
-      Provider.of<QuizProvider>(context, listen: false).fetchQuizzes()
+      Provider.of<quiz_provider.QuizProvider>(context, listen: false).fetchQuizzes()
     );
   }
 
@@ -56,7 +58,7 @@ class _QuizzesTabState extends State<QuizzesTab> {
   }
 
   Widget _buildFilters() {
-    return Consumer<QuizProvider>(
+    return Consumer<quiz_provider.QuizProvider>(
       builder: (context, provider, _) {
         final uniqueSubjects = provider.quizzes
             .map((quiz) => _UniqueItem(
@@ -67,31 +69,61 @@ class _QuizzesTabState extends State<QuizzesTab> {
             .toList()
           ..sort((a, b) => a.name.compareTo(b.name));
 
-        return Row(
+        return Column(
           children: [
-            Expanded(
-              child: DropdownButtonFormField<int>(
-                decoration: AppTheme.inputDecoration('Select Subject'),
-                value: selectedSubjectId,
-                items: [
-                  const DropdownMenuItem<int>(
-                    value: null,
-                    child: Text('All Subjects'),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    decoration: AppTheme.inputDecoration('Select Subject'),
+                    value: selectedSubjectId,
+                    items: [
+                      const DropdownMenuItem<int>(
+                        value: null,
+                        child: Text('All Subjects'),
+                      ),
+                      ...uniqueSubjects.map((subject) => DropdownMenuItem<int>(
+                            value: subject.id,
+                            child: Text(subject.name),
+                          )),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedSubjectId = value;
+                      });
+                      provider.fetchQuizzes(
+                        subjectId: value,
+                      );
+                    },
                   ),
-                  ...uniqueSubjects.map((subject) => DropdownMenuItem<int>(
-                        value: subject.id,
-                        child: Text(subject.name),
-                      )),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    selectedSubjectId = value;
-                  });
-                  provider.fetchQuizzes(
-                    subjectId: value,
-                  );
-                },
-              ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    decoration: AppTheme.inputDecoration('Quiz Type'),
+                    value: selectedQuizFilter,
+                    items: const [
+                      DropdownMenuItem<String>(
+                        value: 'all',
+                        child: Text('All Quizzes'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'regular',
+                        child: Text('Regular Quizzes'),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'recording',
+                        child: Text('Recording Quizzes (Tasmi3)'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedQuizFilter = value ?? 'all';
+                      });
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -100,7 +132,7 @@ class _QuizzesTabState extends State<QuizzesTab> {
   }
 
   Widget _buildQuizzesList() {
-    return Consumer<QuizProvider>(
+    return Consumer<quiz_provider.QuizProvider>(
       builder: (context, provider, _) {
         if (provider.isLoading) {
           return Center(child: CircularProgressIndicator());
@@ -118,14 +150,26 @@ class _QuizzesTabState extends State<QuizzesTab> {
           );
         }
 
-        return _buildQuizzesListView(provider.quizzes);
+        // Apply filter
+        List<quiz_provider.QuizGet> filteredQuizzes = provider.quizzes.where((quiz) {
+          switch (selectedQuizFilter) {
+            case 'regular':
+              return quiz.isRecord != true;
+            case 'recording':
+              return quiz.isRecord == true;
+            default:
+              return true;
+          }
+        }).toList();
+
+        return _buildQuizzesListView(filteredQuizzes);
       },
     );
   }
 
 
 
-  Widget _buildQuizzesListView(List<QuizGet> quizzes) {
+  Widget _buildQuizzesListView(List<quiz_provider.QuizGet> quizzes) {
     return ListView.separated(
       itemCount: quizzes.length,
       separatorBuilder: (context, index) => Divider(),
@@ -134,34 +178,98 @@ class _QuizzesTabState extends State<QuizzesTab> {
   }
 
 
-  Widget _buildQuizListItem(QuizGet quiz) {
-    return ListTile(
-      title: Text(quiz.name, style: AppTheme.headingMedium),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Subject: ${quiz.subject['name']}'),
-        ],
+  Widget _buildQuizListItem(quiz_provider.QuizGet quiz) {
+    final bool isRecordingQuiz = quiz.isRecord == true;
+    final Color cardColor = isRecordingQuiz ? Colors.green.shade50 : Colors.white;
+    final Color borderColor = isRecordingQuiz ? Colors.green.shade200 : Colors.grey.shade200;
+    final Color typeColor = isRecordingQuiz ? Colors.green : AppTheme.primaryColor;
+    final Color typeBackgroundColor = isRecordingQuiz ? Colors.green.withOpacity(0.1) : AppTheme.primaryColor.withOpacity(0.1);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      color: cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: borderColor, width: 1),
       ),
-      trailing: Container(
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          quiz.type,
-          style: TextStyle(color: AppTheme.primaryColor),
-        ),
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => QuizDetailsScreen(quizId: quiz.id),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: typeBackgroundColor,
+            borderRadius: BorderRadius.circular(8),
           ),
-        );
-      },
+          child: Icon(
+            isRecordingQuiz ? Icons.mic : Icons.quiz,
+            color: typeColor,
+            size: 24,
+          ),
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(quiz.name, style: AppTheme.headingMedium),
+            ),
+            if (isRecordingQuiz)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'TASMI3',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text('Subject: ${quiz.subject['name']}'),
+            if (isRecordingQuiz)
+              Row(
+                children: [
+                  Icon(Icons.mic, size: 14, color: Colors.green.shade600),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Audio Recording Quiz',
+                    style: TextStyle(
+                      color: Colors.green.shade600,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: typeBackgroundColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            quiz.type,
+            style: TextStyle(color: typeColor, fontWeight: FontWeight.w500),
+          ),
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QuizDetailsScreen(quizId: quiz.id),
+            ),
+          );
+        },
+      ),
     );
   }
 }

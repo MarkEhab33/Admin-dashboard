@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart'; // for file picking
 import 'package:provider/provider.dart';
 import '../Models/Subject_Template.dart';
 import '../Models/lesson_item.dart';
+
 import '../provider/subject_provider.dart';
 import '../provider/quiz_provider.dart' as quiz_provider;
 import '../Theme.dart';
@@ -14,7 +15,10 @@ import '../widgets/audio_player.dart';
 import '../widgets/pdf_viewer.dart';
 import '../widgets/video_viewer.dart';
 import '../Quizzes/create_quiz_screen.dart';
+import '../Quizzes/create_tasmi3_screen.dart';
 import '../Quizzes/quiz_details_screen.dart';
+import '../widgets/subcategories_modal.dart';
+import '../provider/subcategory_provider.dart';
 
 class SubjectDetailsScreen extends StatefulWidget {
   final Subject subject;
@@ -44,6 +48,11 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
         ),
         backgroundColor: AppTheme.primaryColor,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.category_outlined),
+            onPressed: () => _showSubcategoriesModal(context),
+            tooltip: 'Subcategories',
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () => _showSubjectInfo(context),
@@ -364,11 +373,29 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                   'Quizzes',
                   style: AppTheme.headingMedium,
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _navigateToCreateQuiz(context, lessonProvider,widget.subject.subjectName!),
-                  icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                  label: const Text('Create Quiz'),
-                  style: AppTheme.primaryButtonStyle,
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _navigateToCreateTasmi3(context, lessonProvider, widget.subject.subjectName!),
+                      icon: const Icon(Icons.mic, size: 18, color: Colors.white),
+                      label: const Text('Create Tasmi3'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _navigateToCreateQuiz(context, lessonProvider,widget.subject.subjectName!),
+                      icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                      label: const Text('Create Quiz'),
+                      style: AppTheme.primaryButtonStyle,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -405,30 +432,60 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                       itemCount: lessonQuizzes.length,
                       itemBuilder: (context, index) {
                         final quiz = lessonQuizzes[index];
+                        final bool isRecordingQuiz = quiz.isRecord == true;
+                        final Color cardColor = isRecordingQuiz ? Colors.green.shade50 : Colors.white;
+                        final Color borderColor = isRecordingQuiz ? Colors.green.shade200 : Colors.grey.shade200;
+                        final Color iconColor = isRecordingQuiz ? Colors.green : AppTheme.primaryColor;
+                        final Color iconBackgroundColor = isRecordingQuiz ? Colors.green.withOpacity(0.1) : AppTheme.primaryColor.withOpacity(0.1);
+
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           elevation: 2,
+                          color: cardColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: borderColor, width: 1),
                           ),
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(16),
                             leading: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                color: iconBackgroundColor,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
-                                Icons.quiz,
-                                color: AppTheme.primaryColor,
+                              child: Icon(
+                                isRecordingQuiz ? Icons.mic : Icons.quiz,
+                                color: iconColor,
                               ),
                             ),
-                            title: Text(
-                              quiz.name,
-                              style: AppTheme.bodyLarge.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    quiz.name,
+                                    style: AppTheme.bodyLarge.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                if (isRecordingQuiz)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text(
+                                      'TASMI3',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,6 +497,21 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                                     color: AppTheme.textSecondaryColor,
                                   ),
                                 ),
+                                if (isRecordingQuiz)
+                                  Row(
+                                    children: [
+                                      Icon(Icons.mic, size: 14, color: Colors.green.shade600),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Audio Recording Quiz',
+                                        style: TextStyle(
+                                          color: Colors.green.shade600,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                               ],
                             ),
                             trailing: Row(
@@ -496,22 +568,43 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
     });
   }
 
+  void _navigateToCreateTasmi3(BuildContext context, LessonProvider lessonProvider, String subjectName) {
+    final lesson = lessonProvider.selectedLesson!;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateTasmi3Screen(
+          initialSubjectId: lesson.subjectId,
+          initialLessonId: lesson.id,
+          subjectName: subjectName,
+          lessonName: lesson.name,
+        ),
+      ),
+    ).then((_) {
+      if (context.mounted) {
+        Provider.of<quiz_provider.QuizProvider>(context, listen: false)
+            .fetchQuizzes(lessonId: lesson.id);
+      }
+    });
+  }
+
   void _editQuiz(BuildContext context, quiz_provider.QuizGet quiz) async {
     // Store context before async operation
     final currentContext = context;
-    
+
     final provider = Provider.of<quiz_provider.QuizProvider>(context, listen: false);
-    
+
     try {
       await provider.fetchQuizById(quiz.id);
-      
+
       // Check if the widget is still mounted before proceeding
       if (!context.mounted) return;
-      
+
       final quizDetails = provider.currentQuiz;
       if (quizDetails != null) {
         String? subjectName = quiz.subject['name'] as String;
-        
+
         // Use Future.microtask to avoid the context issue
         Future.microtask(() {
           if (context.mounted) {
@@ -1271,6 +1364,16 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showSubcategoriesModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => ChangeNotifierProvider(
+        create: (context) => SubcategoryProvider(),
+        child: SubcategoriesModal(subject: widget.subject),
       ),
     );
   }

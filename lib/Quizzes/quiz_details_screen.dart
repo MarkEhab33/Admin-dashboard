@@ -71,34 +71,127 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
   }
 
   Widget _buildHeader(QuizDetails quiz) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(quiz.name, style: AppTheme.headingLarge),
-            ),
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  icon: Icon(Icons.redo, color: Colors.white),
-                  label: Text('Add Redo'),
+    final bool isRecordingQuiz = quiz.isRecord == true;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isRecordingQuiz ? Colors.green.shade50 : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isRecordingQuiz ? Colors.green.shade200 : Colors.grey.shade200,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isRecordingQuiz ? Colors.green.withOpacity(0.1) : AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isRecordingQuiz ? Icons.mic : Icons.quiz,
+                  color: isRecordingQuiz ? Colors.green : AppTheme.primaryColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(quiz.name, style: AppTheme.headingLarge),
+                        ),
+                        if (isRecordingQuiz)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'TASMI3',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.school, size: 20, color: AppTheme.textSecondaryColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${quiz.subject['name']} (${quiz.subject['code']})',
+                          style: AppTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                    if (isRecordingQuiz) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.mic, size: 16, color: Colors.green.shade600),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Audio Recording Assessment',
+                            style: TextStyle(
+                              color: Colors.green.shade600,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.redo, color: Colors.white),
+                  label: const Text('Add Redo'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   onPressed: () => _showAddRedoDialog(quiz),
                 ),
-                SizedBox(width: 12),
-                ElevatedButton.icon(
-                  icon: Icon(Icons.list_alt, color: Colors.white),
-                  label: Text('View Submissions'),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.list_alt, color: Colors.white),
+                  label: const Text('View Submissions'),
                   style: AppTheme.primaryButtonStyle,
                   onPressed: () {
                     Navigator.push(
@@ -113,54 +206,69 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                     );
                   },
                 ),
-              ],
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        Row(
-          children: [
-            Icon(Icons.school, size: 20, color: AppTheme.textSecondaryColor),
-            SizedBox(width: 8),
-            Text(
-              '${quiz.subject['name']} (${quiz.subject['code']})',
-              style: AppTheme.bodyLarge,
-            ),
-          ],
-        ),
-      ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildInfoCards(QuizDetails quiz) {
+    final bool isRecordingQuiz = quiz.isRecord == true;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWideScreen = constraints.maxWidth > 768;
-        final cards = [
+        final cards = <Widget>[
           _buildInfoCard(
             'Type',
             quiz.type.toUpperCase(),
-            Icons.quiz,
-            AppTheme.primaryColor,
+            isRecordingQuiz ? Icons.mic : Icons.quiz,
+            isRecordingQuiz ? Colors.green : AppTheme.primaryColor,
+            isRecordingQuiz,
           ),
           _buildInfoCard(
             'Grade',
             '${quiz.grade} points',
             Icons.grade,
             Colors.orange,
+            isRecordingQuiz,
           ),
           _buildInfoCard(
             'Attempts',
             '${quiz.numberOfAttempts}',
             Icons.repeat,
-            Colors.green,
+            isRecordingQuiz ? Colors.green : Colors.blue,
+            isRecordingQuiz,
           ),
-          _buildInfoCard(
-            'Time Limit',
-            '${quiz.timeLimit} min',
-            Icons.timer,
-            Colors.blue,
-          ),
+          // Show subcategory if available
+          if (quiz.subCategory != null)
+            _buildInfoCard(
+              'Subcategory',
+              quiz.subCategory!.name ?? 'Unnamed',
+              Icons.category,
+              Colors.purple,
+              isRecordingQuiz,
+            ),
+          // Only show time limit if it's not null (not a recording quiz)
+          if (quiz.timeLimit != null)
+            _buildInfoCard(
+              'Time Limit',
+              '${quiz.timeLimit} min',
+              Icons.timer,
+              Colors.blue,
+              isRecordingQuiz,
+            ),
+          // Show special info for recording quizzes
+          if (isRecordingQuiz)
+            _buildInfoCard(
+              'Format',
+              'Audio Recording',
+              Icons.audiotrack,
+              Colors.green,
+              isRecordingQuiz,
+            ),
         ];
 
         return isWideScreen
@@ -174,20 +282,44 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
     );
   }
 
-  Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
+  Widget _buildInfoCard(String title, String value, IconData icon, Color color, [bool isRecordingQuiz = false]) {
     return Card(
-      margin: EdgeInsets.all(8),
+      margin: const EdgeInsets.all(8),
+      color: isRecordingQuiz ? Colors.green.shade50 : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isRecordingQuiz ? Colors.green.shade200 : Colors.grey.shade200,
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Icon(icon, size: 32, color: color),
-            SizedBox(height: 8),
-            Text(title, style: AppTheme.bodyMedium),
-            SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 32, color: color),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: AppTheme.bodyMedium.copyWith(
+                color: AppTheme.textSecondaryColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
             Text(
               value,
-              style: AppTheme.headingMedium.copyWith(color: color),
+              style: AppTheme.headingMedium.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -196,59 +328,270 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
   }
 
   Widget _buildQuestionsList(QuizDetails quiz) {
+    final bool isRecordingQuiz = quiz.isRecord == true;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Questions', style: AppTheme.headingMedium),
-        SizedBox(height: 16),
+        Row(
+          children: [
+            Icon(
+              isRecordingQuiz ? Icons.mic : Icons.quiz,
+              color: isRecordingQuiz ? Colors.green : AppTheme.primaryColor,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isRecordingQuiz ? 'Recording Questions' : 'Questions',
+              style: AppTheme.headingMedium,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: quiz.content.length,
           itemBuilder: (context, index) {
             final question = quiz.content[index];
+            final bool isRecordQuestion = question.type == QuestionType.record;
+
             return Card(
-              margin: EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: 16),
+              color: isRecordQuestion ? Colors.green.shade50 : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isRecordQuestion ? Colors.green.shade200 : Colors.grey.shade200,
+                  width: 1,
+                ),
+              ),
               child: ExpansionTile(
-                title: Text(
-                  'Question ${index + 1}',
-                  style: AppTheme.bodyLarge,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isRecordQuestion
+                        ? Colors.green.withOpacity(0.1)
+                        : AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    isRecordQuestion ? Icons.mic : Icons.quiz,
+                    color: isRecordQuestion ? Colors.green : AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Question ${index + 1}',
+                        style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    if (isRecordQuestion)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'AUDIO',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 subtitle: Text(
-                  'Type: ${question.type.toString().split('.').last.toUpperCase()} - ${question.grade} points',
-                  style: AppTheme.bodyMedium,
+                  'Type: ${question.type.toString().split('.').last.toUpperCase()} - ${question.grade.toInt()} points',
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: isRecordQuestion ? Colors.green.shade700 : AppTheme.textSecondaryColor,
+                  ),
                 ),
                 children: [
-                  Padding(
-                    padding: EdgeInsets.all(16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isRecordQuestion ? Colors.white : Colors.grey.shade50,
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(question.question, style: AppTheme.bodyLarge),
-                        SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isRecordQuestion ? Colors.green.shade50 : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isRecordQuestion ? Colors.green.shade200 : Colors.grey.shade300,
+                            ),
+                          ),
+                          child: Text(
+                            question.question,
+                            style: AppTheme.bodyLarge,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         if (question.type == QuestionType.mcq) ...[
-                          ...question.answers!.map((answer) => ListTile(
-                                leading: Icon(
-                                  answer.id == question.correctAnswerId
-                                      ? Icons.check_circle
-                                      : Icons.radio_button_unchecked,
+                          Text(
+                            'Answer Options:',
+                            style: AppTheme.bodyMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textSecondaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ...question.answers!.map((answer) => Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
                                   color: answer.id == question.correctAnswerId
-                                      ? Colors.green
-                                      : null,
+                                      ? Colors.green.shade50
+                                      : Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: answer.id == question.correctAnswerId
+                                        ? Colors.green
+                                        : Colors.grey.shade300,
+                                  ),
                                 ),
-                                title: Text(answer.text),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      answer.id == question.correctAnswerId
+                                          ? Icons.check_circle
+                                          : Icons.radio_button_unchecked,
+                                      color: answer.id == question.correctAnswerId
+                                          ? Colors.green
+                                          : Colors.grey,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        answer.text,
+                                        style: AppTheme.bodyMedium.copyWith(
+                                          fontWeight: answer.id == question.correctAnswerId
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ),
+                                    if (answer.id == question.correctAnswerId)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'CORRECT',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               )),
                         ] else if (question.type == QuestionType.text &&
                             question.correctAnswer != null) ...[
-                          Text(
-                            'Correct Answer: ${question.correctAnswer}',
-                            style: AppTheme.bodyMedium,
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.green.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Correct Answer: ',
+                                  style: AppTheme.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green.shade700,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    question.correctAnswer!,
+                                    style: AppTheme.bodyMedium.copyWith(
+                                      color: Colors.green.shade700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ] else if (question.type == QuestionType.record &&
-                            question.maxDuration != null) ...[
-                          Text(
-                            'Max Duration: ${question.maxDuration} seconds',
-                            style: AppTheme.bodyMedium,
+                        ] else if (question.type == QuestionType.record) ...[
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.green.shade300),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.audiotrack, color: Colors.green, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Audio Recording Question',
+                                      style: AppTheme.bodyMedium.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (question.maxDuration != null) ...[
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.timer, color: Colors.green, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Max Duration: ${question.maxDuration} seconds',
+                                        style: AppTheme.bodyMedium.copyWith(
+                                          color: Colors.green.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ] else ...[
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.all_inclusive, color: Colors.green, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'No time limit for recording',
+                                        style: AppTheme.bodyMedium.copyWith(
+                                          color: Colors.green.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ],
                       ],

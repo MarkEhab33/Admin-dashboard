@@ -1,4 +1,5 @@
 import 'package:admin_dashboard/Models/question.dart' show Question;
+import 'package:admin_dashboard/Models/Subject_Template.dart' show SubCategory;
 
 class Quiz {
   final String name;
@@ -7,17 +8,21 @@ class Quiz {
   final int grade;
   final String type;
   final int numberOfAttempts;
-  final int timeLimit;
+  final int? timeLimit;
+  final bool? isRecord;
+  final SubCategory? subCategory;
   final List<Question> content;
 
   Quiz({
     required this.name,
     required this.subjectId,
     this.lessonId,
+    this.isRecord,
     required this.grade,
     required this.type,
     required this.numberOfAttempts,
-    required this.timeLimit,
+     this.timeLimit,
+    this.subCategory,
     required this.content,
   });
 
@@ -25,10 +30,12 @@ class Quiz {
     'name': name,
     'subjectId': subjectId,
     if (lessonId != null) 'lessonId': lessonId,
+    if (isRecord != null) 'isRecord': isRecord,
     'grade': grade,
     'type': type,
     'numberOfAttempts': numberOfAttempts,
-    'timeLimit': timeLimit,
+    if (timeLimit != null) 'timeLimit': timeLimit,
+    if (subCategory != null) 'subCategory': subCategory!.toJson(),
     'content': content.map((q) => q.toJson()).toList(),
   };
 }
@@ -39,9 +46,11 @@ class QuizDetails {
   final String type;
   final int grade;
   final int numberOfAttempts;
-  final int timeLimit;
+  final int? timeLimit;
+  final bool? isRecord;
   final Map<String, dynamic> subject;
   final Map<String, dynamic>? lesson;
+  final SubCategory? subCategory;
   final List<Question> content;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -52,9 +61,11 @@ class QuizDetails {
     required this.type,
     required this.grade,
     required this.numberOfAttempts,
-    required this.timeLimit,
+    this.timeLimit,
     required this.subject,
     this.lesson,
+    this.isRecord,
+    this.subCategory,
     required this.content,
     required this.createdAt,
     required this.updatedAt,
@@ -70,6 +81,10 @@ class QuizDetails {
       timeLimit: json['timeLimit'],
       subject: json['subject'],
       lesson: json['lesson'],
+      isRecord: json['isRecord'],
+      subCategory: json['subCategory'] != null
+          ? SubCategory.fromJson(json['subCategory'])
+          : null,
       content: (json['content'] as List<dynamic>)
           .map((q) => Question.fromJson(q))
           .toList(),
@@ -83,6 +98,7 @@ class QuizGet {
   final int id;
   final String name;
   final String type;
+  final bool? isRecord;
   final DateTime createdAt;
   final DateTime updatedAt;
   final Map<String, dynamic> subject;
@@ -97,6 +113,7 @@ class QuizGet {
     required this.updatedAt,
     required this.subject,
     this.lesson,
+    this.isRecord,
     required this.weeks,
   });
 
@@ -108,6 +125,7 @@ class QuizGet {
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
       subject: json['subject'],
+      isRecord: json['isRecord'],
       lesson: json['lesson'],
       weeks: List<Map<String, dynamic>>.from(json['weeks']),
     );

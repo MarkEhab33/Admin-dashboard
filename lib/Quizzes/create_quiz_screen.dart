@@ -4,9 +4,12 @@ import 'dart:math';
 import '../Models/question.dart';
 import '../Models/quiz.dart';
 import '../Models/subject.dart';
+import '../Models/Subject_Template.dart';
 import '../Theme.dart';
 import '../provider/quiz_provider.dart';
 import '../provider/subject_provider.dart';
+import '../provider/subcategory_provider.dart';
+import '../widgets/subcategory_selector.dart';
 
 class CreateQuizScreen extends StatefulWidget {
   final QuizDetails? quizToEdit;
@@ -41,6 +44,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
 
   int? selectedSubjectId;
   int? selectedLessonId;
+  SubCategory? selectedSubcategory;
   List<Map<String, dynamic>> availableSubjects = [];
   List<Lesson> availableLessons = [];
   bool _isInitialized = false;
@@ -121,6 +125,7 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
       _attemptsController.text = quiz.numberOfAttempts.toString();
       _timeLimitController.text = quiz.timeLimit.toString();
       _totalGradeController.text = quiz.grade.toString();
+      selectedSubcategory = quiz.subCategory;
       _questions.addAll(quiz.content);
       _updateQuestionCounts();
 
@@ -245,6 +250,8 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
           type: _typeController.text,
           numberOfAttempts: int.parse(_attemptsController.text),
           timeLimit: int.parse(_timeLimitController.text),
+          isRecord: false, // Regular quizzes are not recording quizzes
+          subCategory: selectedSubcategory,
           content: _questions,
         );
 
@@ -451,6 +458,21 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                         decoration: AppTheme.inputDecoration('Lesson'),
                         enabled: false,
                       ),
+                      const SizedBox(height: 16),
+                      // Subcategory Selector
+                      if (widget.initialSubjectId != null || (widget.quizToEdit != null && widget.quizToEdit!.subject['id'] != null))
+                        ChangeNotifierProvider(
+                          create: (context) => SubcategoryProvider(),
+                          child: SubcategorySelector(
+                            subjectId: widget.initialSubjectId ?? widget.quizToEdit!.subject['id'],
+                            selectedSubcategory: selectedSubcategory,
+                            onSubcategoryChanged: (subcategory) {
+                              setState(() {
+                                selectedSubcategory = subcategory;
+                              });
+                            },
+                          ),
+                        ),
                       const SizedBox(height: 16),
                       Row(
                         children: [

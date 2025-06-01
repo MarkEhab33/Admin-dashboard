@@ -8,6 +8,7 @@ class QuizGet {
   final int id;
   final String name;
   final String type;
+  final bool? isRecord;
   final DateTime createdAt;
   final DateTime updatedAt;
   final Map<String, dynamic> subject;
@@ -17,6 +18,7 @@ class QuizGet {
     required this.id,
     required this.name,
     required this.type,
+    this.isRecord,
     required this.createdAt,
     required this.updatedAt,
     required this.subject,
@@ -28,6 +30,7 @@ class QuizGet {
       id: json['id'],
       name: json['name'],
       type: json['type'],
+      isRecord: json['isRecord'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
       subject: json['subject'],
@@ -178,28 +181,37 @@ class QuizProvider with ChangeNotifier {
         throw Exception('Failed to update quiz (${response.statusCode}): $errorMessage');
       }
 
-      // Update the current quiz with the new data
-      if (_currentQuiz != null && _currentQuiz!.id == id) {
-        await fetchQuizById(id);
-      }
+      // Parse the response to get the updated quiz data
+      final responseData = json.decode(response.body);
+      if (responseData['data'] != null) {
+        // Update the current quiz with the response data
+        _currentQuiz = QuizDetails.fromJson(responseData['data']);
+        print('Quiz updated successfully - ID: ${_currentQuiz?.id}, Name: ${_currentQuiz?.name}');
+        print('Quiz subcategory: ${_currentQuiz?.subCategory?.name ?? 'None'}');
 
-      // Refresh the quizzes list if needed
-      if (_quizzes.any((q) => q.id == id)) {
-        final index = _quizzes.indexWhere((q) => q.id == id);
-        if (index != -1) {
-          // Update the quiz in the list
-          final updatedQuiz = _quizzes[index];
-          // Create a new QuizGet with updated fields
-          // Note: We're keeping the original quiz structure but updating the fields that changed
-          _quizzes[index] = QuizGet(
-            id: updatedQuiz.id,
-            name: quiz.name,
-            type: quiz.type,
-            createdAt: updatedQuiz.createdAt,
-            updatedAt: DateTime.now(),
-            subject: updatedQuiz.subject,
-            lesson: updatedQuiz.lesson,
-          );
+        // Update the quiz in the list if it exists
+        if (_quizzes.any((q) => q.id == id)) {
+          final index = _quizzes.indexWhere((q) => q.id == id);
+          if (index != -1) {
+            final existingQuiz = _quizzes[index];
+            // Create a new QuizGet with updated fields from the response
+            _quizzes[index] = QuizGet(
+              id: _currentQuiz!.id,
+              name: _currentQuiz!.name,
+              type: _currentQuiz!.type,
+              isRecord: _currentQuiz!.isRecord,
+              createdAt: _currentQuiz!.createdAt,
+              updatedAt: _currentQuiz!.updatedAt,
+              subject: _currentQuiz!.subject,
+              lesson: _currentQuiz!.lesson,
+           
+            );
+          }
+        }
+      } else {
+        // Fallback: refresh the quiz data if response doesn't contain updated data
+        if (_currentQuiz != null && _currentQuiz!.id == id) {
+          await fetchQuizById(id);
         }
       }
 

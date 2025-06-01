@@ -97,7 +97,36 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
         ),
         ...quizzes.map((quiz) => DropdownMenuItem<int>(
               value: quiz.id,
-              child: Text('${quiz.name} (${quiz.type})'),
+              child: Row(
+                children: [
+                  if (quiz.isRecord == true) ...[
+                    Icon(Icons.mic, size: 16, color: Colors.green),
+                    const SizedBox(width: 8),
+                  ] else ...[
+                    Icon(Icons.quiz, size: 16, color: AppTheme.primaryColor),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Text('${quiz.name} (${quiz.type})'),
+                  ),
+                  if (quiz.isRecord == true)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'TASMI3',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             )),
       ],
       onChanged: (value) {

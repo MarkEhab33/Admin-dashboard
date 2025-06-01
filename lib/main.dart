@@ -1,6 +1,7 @@
 import 'package:admin_dashboard/Theme.dart';
 import 'package:admin_dashboard/provider/dashboard_provider.dart';
 import 'package:admin_dashboard/home_screen.dart';
+import 'package:admin_dashboard/provider/grades_provider.dart';
 import 'package:admin_dashboard/provider/semester_templates_provider.dart';
 import 'package:admin_dashboard/provider/semesters_provider.dart';
 import 'package:admin_dashboard/provider/student_provider.dart';
@@ -8,7 +9,7 @@ import 'package:admin_dashboard/provider/subject_provider.dart';
 import 'package:admin_dashboard/provider/quiz_provider.dart';
 
 import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
-
+import 'package:admin_dashboard/provider/subcategory_provider.dart';
 import 'package:admin_dashboard/provider/announcements_provider.dart';
 
 import 'package:flutter/material.dart';
@@ -25,7 +26,9 @@ void main() {
         ChangeNotifierProvider(create: (_) => LessonProvider()),
         ChangeNotifierProvider(create: (_) => QuizProvider()),
         ChangeNotifierProvider(create: (_) => QuizAnswerProvider()),
+        ChangeNotifierProvider(create: (_) => SubcategoryProvider()),
         ChangeNotifierProvider(create: (_) => AnnouncementsProvider()),
+        ChangeNotifierProvider(create: (ctx) => GradesProvider()),
       ],
       child: MyApp(),
     ),

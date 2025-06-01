@@ -1,5 +1,6 @@
 // Assuming navigation is set up in your app:
 import 'package:admin_dashboard/Models/student.dart';
+import 'package:admin_dashboard/Students/student_semester_grades.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../Models/semester.dart';
@@ -349,10 +350,42 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
           ),
           title: Text(student.user.name),
           subtitle: Text(student.studentCode),
-          trailing: IconButton(
-            icon: Icon(Icons.remove_circle_outline, color: Colors.red),
-            onPressed: () => _showRemoveStudentDialog(context, student),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(Icons.assessment, color: AppTheme.primaryColor),
+                tooltip: 'View Grades',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StudentSemesterGrades(
+                        student: student,
+                        semester: widget.semester,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.remove_circle_outline, color: Colors.red),
+                tooltip: 'Remove Student',
+                onPressed: () => _showRemoveStudentDialog(context, student),
+              ),
+            ],
           ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StudentSemesterGrades(
+                  student: student,
+                  semester: widget.semester,
+                ),
+              ),
+            );
+          },
         );
       },
     );
