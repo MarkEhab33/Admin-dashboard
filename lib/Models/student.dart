@@ -96,13 +96,48 @@ class Student {
               nationality: '',
               address: '',
               gender: '',
-              phone: ''
+              phone: '',
+              profilePicture: json['profilePicture'] ?? '',
             ),
       semesters: (json['semesters'] as List<dynamic>?)?.map((e) =>
           Semester.fromJson(e as Map<String, dynamic>)).toList() ?? [],
       completedSemesters: (json['completedSemesters'] as List<dynamic>?)?.map((e) =>
           Semester.fromJson(e as Map<String, dynamic>)).toList() ?? [],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'studentCode': studentCode,
+      'city': city,
+      'church': church,
+      'AbEle3traf': abEle3traf,
+      'deaconLevel': deaconLevel,
+      'churchService': churchService,
+      'qualifications': qualifications,
+      'personalIDFront': personalIDFront,
+      'personalIDBack': personalIDBack,
+      'isVerified': isVerified,
+      'Tazkia': tazkia,
+
+      // Note: User and Semester models would need toJson methods for full serialization
+      // For now, we'll include basic user info
+      'user': {
+        'id': user.id,
+        'name': user.name,
+        'email': user.email,
+        'phone': user.phone,
+        'gender': user.gender,
+        'nationality': user.nationality,
+        'address': user.address,
+        'birthday': user.birthday.toIso8601String(),
+        'profilePicture': user.profilePicture,
+      },
+      // Semesters would need their own toJson implementation
+      'semesters': semesters.length,
+      'completedSemesters': completedSemesters.length,
+    };
   }
 }
 

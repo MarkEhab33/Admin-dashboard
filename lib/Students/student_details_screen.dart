@@ -265,7 +265,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                 return Dialog(
                   child: InteractiveViewer(
                     child: Image.network(
-                      widget.student.personalIDFront ?? 'https://picsum.photos/200/300',
+                      widget.student.user.profilePicture ?? 'https://picsum.photos/200/300',
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           width: 200,
@@ -303,7 +303,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               radius: 80,
               backgroundColor: Colors.grey.shade200,
               backgroundImage: NetworkImage(
-                widget.student.personalIDFront ?? 'https://picsum.photos/200/300'
+                widget.student.user.profilePicture ?? 'https://picsum.photos/200/300'
               ),
               onBackgroundImageError: (exception, stackTrace) {},
             ),
@@ -386,6 +386,38 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                     },
                     child: Text(
                       'View Tazkia',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.primaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 20),
+                  TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            child: InteractiveViewer(
+                              child: Image.network(
+                                widget.student.personalIDFront ?? 'https://picsum.photos/200/300',
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 200,
+                                    height: 300,
+                                    color: Colors.grey.shade200,
+                                    child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: Text(
+                      'View ID Front',
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.primaryColor,
                         decoration: TextDecoration.underline,
