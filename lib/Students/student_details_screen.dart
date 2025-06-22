@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../Theme.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-
+import '../l10n/app_localizations.dart';
+import '../Models/student_summary.dart';
 import '../provider/student_provider.dart';
 
 
@@ -17,6 +18,43 @@ class StudentDetailsScreen extends StatefulWidget {
 
 class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
   bool _isProcessing = false;
+  StudentSummary? _studentSummary;
+  bool _isLoadingGrades = false;
+  String _gradesError = '';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.student.isVerified) {
+      _loadStudentGrades();
+    }
+  }
+
+  Future<void> _loadStudentGrades() async {
+    setState(() {
+      _isLoadingGrades = true;
+      _gradesError = '';
+    });
+
+    try {
+      final provider = Provider.of<StudentsProvider>(context, listen: false);
+      final summary = await provider.fetchStudentSummaryGrades(widget.student.id);
+
+      if (mounted) {
+        setState(() {
+          _studentSummary = summary;
+          _isLoadingGrades = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _gradesError = e.toString();
+          _isLoadingGrades = false;
+        });
+      }
+    }
+  }
 
   Future<void> _handleVerification(BuildContext context, String action) async {
     final provider = Provider.of<StudentsProvider>(context, listen: false);
@@ -397,6 +435,11 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                   {'title': 'Deacon Level', 'value': widget.student.deaconLevel},
                 ], crossAxisCount),
               ],
+              // Add grades section for verified students
+              if (widget.student.isVerified) ...[
+                SizedBox(height: 30),
+                _buildGradesSection(),
+              ],
             ],
           ),
         );
@@ -525,6 +568,254 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildGradesSection() {
+    final localizations = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildSectionTitle(localizations.academicPerformance),
+        if (_isLoadingGrades)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (_gradesError.isNotEmpty)
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.red),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    localizations.errorLoadingData,
+                    style: AppTheme.bodyMedium.copyWith(color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else if (_studentSummary == null || _studentSummary!.semesters.isEmpty)
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: AppTheme.textSecondaryColor),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    localizations.noGradesAvailable,
+                    style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondaryColor),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ..._buildSemesterGrades(localizations),
+      ],
+    );
+  }
+
+  List<Widget> _buildSemesterGrades(AppLocalizations localizations) {
+    if (_studentSummary == null) return [];
+
+    return _studentSummary!.semesters.map((semester) {
+      return Container(
+        margin: EdgeInsets.only(bottom: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.school, color: AppTheme.primaryColor),
+                  SizedBox(width: 8),
+                  Text(
+                    '${localizations.semester} ${semester.semesterNo}: ${semester.name}',
+                    style: AppTheme.headingMedium.copyWith(color: AppTheme.primaryColor),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: semester.subjects.map((subject) => _buildSubjectGradeCard(subject, localizations)).toList(),
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildSubjectGradeCard(SubjectGrades subject, AppLocalizations localizations) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      subject.name,
+                      style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      subject.code,
+                      style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondaryColor),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _getGradeColor(subject.gradeLevel).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _getGradeColor(subject.gradeLevel)),
+                ),
+                child: Text(
+                  subject.gradeLevel,
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: _getGradeColor(subject.gradeLevel),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildQuizGradeItem(subject.weekQuizzes, localizations.weeklyQuizzes, Icons.assignment)),
+              SizedBox(width: 16),
+              Expanded(child: _buildQuizGradeItem(subject.finalQuizzes, localizations.finalQuizzes, Icons.quiz)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuizGradeItem(QuizGrades quizGrades, String title, IconData icon) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: AppTheme.primaryColor),
+              SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondaryColor),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          if (quizGrades.hasQuizzes) ...[
+            Text(
+              '${quizGrades.totalScore.toStringAsFixed(1)}/${quizGrades.finalScore.toStringAsFixed(1)}',
+              style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+            ),
+            Text(
+              '${quizGrades.percentage.toStringAsFixed(1)}%',
+              style: AppTheme.bodyMedium.copyWith(color: _getGradeColor(_getGradeFromPercentage(quizGrades.percentage))),
+            ),
+          ] else
+            Text(
+              AppLocalizations.of(context)!.noDataAvailable,
+              style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondaryColor),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Color _getGradeColor(String grade) {
+    switch (grade) {
+      case 'A+':
+      case 'A':
+        return Colors.green;
+      case 'B+':
+      case 'B':
+        return Colors.blue;
+      case 'C+':
+      case 'C':
+        return Colors.orange;
+      case 'D':
+        return Colors.red.shade300;
+      case 'F':
+        return Colors.red;
+      default:
+        return AppTheme.textSecondaryColor;
+    }
+  }
+
+  String _getGradeFromPercentage(double percentage) {
+    if (percentage >= 90) return 'A+';
+    if (percentage >= 85) return 'A';
+    if (percentage >= 80) return 'B+';
+    if (percentage >= 75) return 'B';
+    if (percentage >= 70) return 'C+';
+    if (percentage >= 65) return 'C';
+    if (percentage >= 60) return 'D';
+    return 'F';
   }
 
   Widget _buildVerificationButtons() {

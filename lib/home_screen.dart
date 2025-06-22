@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'Theme.dart';
+import 'l10n/app_localizations.dart';
 
 import 'Content/semesters_content_tab.dart';
 import 'Semesters/Content-management_tab.dart';
@@ -10,6 +11,7 @@ import 'Quizzes/quizzes_main_screen.dart';
 import 'provider/dashboard_provider.dart';
 import 'Quizzes/quizzes_tab.dart';
 import 'Announcements/announcements_tab.dart';
+import 'Settings/settings_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   DashboardScreen({Key? key}) : super(key: key);
@@ -20,8 +22,8 @@ class DashboardScreen extends StatelessWidget {
     ContentManagementTab(),
     QuizzesMainScreen(),
     SemestersContentTab(),
-
     AnnouncementsTab(),
+    SettingsScreen(),
   ];
 
   @override
@@ -57,6 +59,8 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildDrawer(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Container(
       width: 280,
       decoration: BoxDecoration(
@@ -73,16 +77,17 @@ class DashboardScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              "Aripsalin Dashboard",
+              localizations.dashboardTitle,
               style: AppTheme.headingMedium,
             ),
           ),
-          _buildDrawerItem(context, Icons.people, 'Students & Semesters', 0),
-          _buildDrawerItem(context, Icons.pending_actions, 'Student Requests', 1),
-          _buildDrawerItem(context, Icons.import_contacts_sharp, 'Semesters', 2),
-          _buildDrawerItem(context, Icons.quiz, 'Quizzes', 3),
-          _buildDrawerItem(context, Icons.subject_outlined, 'Content', 4),
-          _buildDrawerItem(context, Icons.campaign_rounded, 'Announcements', 5),
+          _buildDrawerItem(context, Icons.people, localizations.studentsAndSemesters, 0),
+          _buildDrawerItem(context, Icons.pending_actions, localizations.studentRequests, 1),
+          _buildDrawerItem(context, Icons.import_contacts_sharp, localizations.semesters, 2),
+          _buildDrawerItem(context, Icons.quiz, localizations.quizzes, 3),
+          _buildDrawerItem(context, Icons.subject_outlined, localizations.content, 4),
+          _buildDrawerItem(context, Icons.campaign_rounded, localizations.announcements, 5),
+          _buildDrawerItem(context, Icons.settings, localizations.settings, 6),
         ],
       ),
     );

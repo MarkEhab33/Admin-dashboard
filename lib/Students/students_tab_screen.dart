@@ -4,6 +4,7 @@ import '../Models/student.dart';
 import '../provider/student_provider.dart';
 import 'student_details_screen.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 
 
 class StudentsSemesterTab extends StatefulWidget {
@@ -40,6 +41,8 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
   }
 
   Widget _buildHeader(StudentsProvider provider) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -47,7 +50,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 5,
           ),
@@ -57,11 +60,11 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Students Management',
+            localizations.studentsAndSemesters,
             style: AppTheme.headingLarge,
           ),
           Text(
-            'Total Students: ${provider.students.length}',
+            '${localizations.students}: ${provider.students.length}',
             style: AppTheme.bodyLarge,
           ),
         ],
@@ -70,12 +73,14 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
   }
 
   Widget _buildSearchBar(StudentsProvider provider) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Padding(
       padding: EdgeInsets.all(20),
       child: TextField(
         onChanged: provider.updateSearchQuery,
         decoration: InputDecoration(
-          hintText: 'Search by name or student code',
+          hintText: localizations.searchByNameOrCode,
           prefixIcon: Icon(Icons.search),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -88,6 +93,8 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
   }
 
   Widget _buildStudentsList(StudentsProvider provider) {
+    final localizations = AppLocalizations.of(context)!;
+
     if (provider.isLoading) {
       return Center(child: CircularProgressIndicator());
     }
@@ -100,7 +107,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
 
     if (provider.filteredStudents.isEmpty) {
       return Center(
-        child: Text('No students found', style: AppTheme.bodyLarge),
+        child: Text(localizations.noStudentsFound, style: AppTheme.bodyLarge),
       );
     }
 
@@ -109,10 +116,10 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.1),
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
             border: Border(
               bottom: BorderSide(
-                color: AppTheme.primaryColor.withOpacity(0.2),
+                color: AppTheme.primaryColor.withValues(alpha: 0.2),
                 width: 2,
               ),
             ),
@@ -122,7 +129,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
               Expanded(
                 flex: 3,
                 child: Text(
-                  'Name',
+                  localizations.name,
                   style: AppTheme.bodyLarge.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
@@ -132,7 +139,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
               Expanded(
                 flex: 2,
                 child: Text(
-                  'Current Semester',
+                  localizations.currentSemester,
                   style: AppTheme.bodyLarge.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
@@ -142,7 +149,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
               Expanded(
                 flex: 2,
                 child: Text(
-                  'Church',
+                  localizations.church,
                   style: AppTheme.bodyLarge.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
@@ -152,7 +159,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
               Expanded(
                 flex: 2,
                 child: Text(
-                  'Phone Number',
+                  localizations.phoneNumber,
                   style: AppTheme.bodyLarge.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
@@ -177,8 +184,10 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
   }
 
   Widget _buildStudentListItem(Student student) {
+    final localizations = AppLocalizations.of(context)!;
+
     // Safe way to get current semester
-    final currentSemester = student.semesters.isNotEmpty 
+    final currentSemester = student.semesters.isNotEmpty
         ? (student.semesters.firstWhere(
             (sem) => sem.isCurrent,
             orElse: () => student.semesters.first,
@@ -189,7 +198,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
           ),
         ),
       ),
@@ -245,7 +254,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
             Expanded(
               flex: 2,
               child: Text(
-                currentSemester?.name ?? 'Not Assigned',
+                currentSemester?.name ?? localizations.notAssigned,
                 style: AppTheme.bodyMedium,
                 overflow: TextOverflow.ellipsis,
               ),

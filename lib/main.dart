@@ -11,14 +11,18 @@ import 'package:admin_dashboard/provider/quiz_provider.dart';
 import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
 import 'package:admin_dashboard/provider/subcategory_provider.dart';
 import 'package:admin_dashboard/provider/announcements_provider.dart';
+import 'package:admin_dashboard/provider/locale_provider.dart';
+import 'package:admin_dashboard/l10n/app_localizations.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => SemestersProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => StudentsProvider()),
@@ -36,35 +40,57 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Aripsalin Dashboard',
-      theme: ThemeData(
-        colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
-        scaffoldBackgroundColor: AppTheme.backgroundColor,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppTheme.primaryColor,
-          elevation: 0,
-          centerTitle: false,
-          titleTextStyle: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'لوحة تحكم أريبسالين',
+          locale: localeProvider.locale,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: ThemeData(
+            colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+            scaffoldBackgroundColor: AppTheme.backgroundColor,
+            fontFamily: 'NotoKufiArabic',
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppTheme.primaryColor,
+              elevation: 0,
+              centerTitle: false,
+              titleTextStyle: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'NotoKufiArabic',
+              ),
+              iconTheme: IconThemeData(color: Colors.white),
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: AppTheme.primaryButtonStyle,
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
           ),
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: AppTheme.primaryButtonStyle,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      ),
-      home: DashboardScreen(),
+          builder: (context, child) {
+            return Directionality(
+              textDirection: localeProvider.isArabic ? TextDirection.rtl : TextDirection.ltr,
+              child: child!,
+            );
+          },
+          home: DashboardScreen(),
+        );
+      },
     );
   }
 }

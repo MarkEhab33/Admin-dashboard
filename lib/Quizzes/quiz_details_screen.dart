@@ -10,6 +10,7 @@ import '../Theme.dart';
 import '../provider/quiz_provider.dart';
 import '../provider/semesters_provider.dart';
 import '../Constants/globals.dart';
+import '../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class QuizDetailsScreen extends StatefulWidget {
@@ -125,9 +126,9 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                               color: Colors.green,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
-                              'TASMI3',
-                              style: TextStyle(
+                            child: Text(
+                              AppLocalizations.of(context)!.tasmi3,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -342,7 +343,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              isRecordingQuiz ? 'Recording Questions' : 'Questions',
+              isRecordingQuiz ? AppLocalizations.of(context)!.recordingQuestions : AppLocalizations.of(context)!.questions,
               style: AppTheme.headingMedium,
             ),
           ],

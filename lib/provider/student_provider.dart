@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../Models/student.dart';
+import '../Models/student_summary.dart';
 
 
 class StudentsProvider with ChangeNotifier {
@@ -137,5 +138,28 @@ class StudentsProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<StudentSummary?> fetchStudentSummaryGrades(int studentId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Globals.baseUrl}/grades/student/$studentId/summary'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['data'] != null) {
+          return StudentSummary.fromJson(responseData['data']);
+        }
+      } else {
+        throw Exception('Failed to fetch student summary grades: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching student summary grades: $e');
+    }
+    return null;
   }
 }

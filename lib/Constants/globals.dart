@@ -1,3 +1,3 @@
 class Globals {
-  static var baseUrl = "https://aripsalin-api-production.up.railway.app";
+  static var baseUrl = "http://37.27.208.2:80";
 }
