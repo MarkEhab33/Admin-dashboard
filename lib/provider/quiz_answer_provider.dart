@@ -350,30 +350,54 @@ class QuizAnswerProvider with ChangeNotifier {
   }
 
   Future<void> fetchQuizAnswerDetails(int quizAnswerId) async {
+    print('=== PROVIDER: fetchQuizAnswerDetails ===');
+    print('PROVIDER: Quiz Answer ID: $quizAnswerId');
+
     _isLoading = true;
     _error = '';
     notifyListeners();
 
     try {
+      final url = '${Globals.baseUrl}/quiz-answers/$quizAnswerId';
       final response = await http.get(
-        Uri.parse('${Globals.baseUrl}/quiz-answers/$quizAnswerId'),
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
-          // Add authorization header if needed
-          // 'Authorization': 'Bearer $token',
         },
       );
+
+      print('PROVIDER: Response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        _currentQuizAnswer = QuizAnswerDetails.fromJson(responseData['data']);
-        _isLoading = false;
-        notifyListeners();
+        try {
+          final responseData = json.decode(response.body);
+
+          if (responseData['data'] != null) {
+            _currentQuizAnswer = QuizAnswerDetails.fromJson(responseData['data']);
+            print('PROVIDER: Successfully loaded quiz answer details');
+            print('PROVIDER: Quiz: ${_currentQuizAnswer?.quizName}');
+            print('PROVIDER: Answers count: ${_currentQuizAnswer?.answers.length}');
+
+            _isLoading = false;
+            notifyListeners();
+          } else {
+            _error = 'No data field in response';
+            _isLoading = false;
+            notifyListeners();
+          }
+        } catch (jsonError) {
+          print('PROVIDER: JSON parsing error: $jsonError');
+          _error = 'Error parsing response: $jsonError';
+          _isLoading = false;
+          notifyListeners();
+        }
       } else {
-        _error = 'Failed to load quiz answer details';
+        _error = 'Failed to load quiz answer details - Status: ${response.statusCode}';
         _isLoading = false;
         notifyListeners();
       }
     } catch (e) {
+      print('PROVIDER: Network error: $e');
       _error = e.toString();
       _isLoading = false;
       notifyListeners();

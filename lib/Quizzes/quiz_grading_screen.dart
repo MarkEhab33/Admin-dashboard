@@ -4,6 +4,8 @@ import 'package:admin_dashboard/Theme.dart';
 import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:html' as html;
+import 'dart:ui_web' as ui_web;
 
 import '../Models/question.dart';
 import '../Models/quiz_answer_details.dart';
@@ -30,6 +32,9 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        print('=== Quiz Grading Screen Debug ===');
+        print('Quiz Answer ID: ${widget.quizAnswerId}');
+        print('Quiz ID: ${widget.quizId}');
         Provider.of<QuizAnswerProvider>(context, listen: false)
             .fetchQuizAnswerDetails(widget.quizAnswerId);
       }
@@ -274,10 +279,17 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
   }
 
   Widget _buildQuizInfoCards(QuizAnswerDetails quizAnswer) {
+    print('=== Quiz Info Cards Debug ===');
+    print('Time taken: ${quizAnswer.timeTaken}');
+    print('Time limit: ${quizAnswer.timeLimit}');
+    print('Final grade: ${quizAnswer.finalGrade}');
+
     // Format time taken in minutes and seconds
-    final minutes = quizAnswer.timeTaken ~/ 60;
-    final seconds = quizAnswer.timeTaken % 60;
-    final formattedTimeTaken = '$minutes min ${seconds} sec';
+    // Handle null or negative time values for recording quizzes
+    final timeTaken = quizAnswer.timeTaken;
+    final minutes = timeTaken ~/ 60;
+    final seconds = timeTaken % 60;
+    final formattedTimeTaken = timeTaken > 0 ? '$minutes min ${seconds} sec' : 'No time limit';
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,6 +303,7 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
             scrollDirection: Axis.horizontal,
             children: [
               _buildInfoCard('Time Taken', formattedTimeTaken, Icons.timer, Colors.blue),
+              _buildInfoCard('Time Limit', quizAnswer.timeLimit != null ? '${quizAnswer.timeLimit! ~/ 60} min' : 'No limit', Icons.schedule, Colors.orange),
               _buildInfoCard('Attempt', '${quizAnswer.attemptNumber}/${quizAnswer.maxAttempts}', Icons.repeat, Colors.purple),
               _buildInfoCard('Max Grade', '${quizAnswer.finalGrade} points', Icons.grade, Colors.amber),
               _buildInfoCard('Submitted', _formatDate(quizAnswer.submissionDate), Icons.calendar_today, Colors.teal),
@@ -569,36 +582,69 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
   }
 
   Widget _buildAnswerCard(QuizAnswerItem answer, int index) {
+    print('=== Building Answer Card Debug ===');
+    print('Index: $index');
+    print('Answer type: ${answer.type}');
+    print('Question: ${answer.question}');
+    print('Question grade: ${answer.questionGrade}');
+    print('User answer: ${answer.userAnswer}');
+    print('Is correct: ${answer.isCorrect}');
+
     final bool isMCQ = answer.type.toLowerCase() == 'mcq';
-    final Color cardColor = isMCQ
-        ? (answer.isCorrect == true ? Colors.green.shade50 : Colors.red.shade50)
-        : Colors.blue.shade50;
-    final Color borderColor = isMCQ
-        ? (answer.isCorrect == true ? Colors.green.shade200 : Colors.red.shade200)
-        : Colors.blue.shade200;
-    final IconData statusIcon = isMCQ
-        ? (answer.isCorrect == true ? Icons.check_circle : Icons.cancel)
-        : Icons.text_fields;
-    final Color iconColor = isMCQ
-        ? (answer.isCorrect == true ? Colors.green : Colors.red)
-        : Colors.blue;
+    final bool isRecord = answer.type.toLowerCase() == 'record';
+
+    print('Is MCQ: $isMCQ');
+    print('Is Record: $isRecord');
+
+    // Handle different question types
+    Color cardColor;
+    Color borderColor;
+    IconData statusIcon;
+    Color iconColor;
+
+    if (isMCQ) {
+      cardColor = answer.isCorrect == true ? Colors.green.shade50 : Colors.red.shade50;
+      borderColor = answer.isCorrect == true ? Colors.green.shade200 : Colors.red.shade200;
+      statusIcon = answer.isCorrect == true ? Icons.check_circle : Icons.cancel;
+      iconColor = answer.isCorrect == true ? Colors.green : Colors.red;
+    } else if (isRecord) {
+      cardColor = Colors.purple.shade50;
+      borderColor = Colors.purple.shade200;
+      statusIcon = Icons.mic;
+      iconColor = Colors.purple;
+    } else {
+      // Text questions
+      cardColor = Colors.blue.shade50;
+      borderColor = Colors.blue.shade200;
+      statusIcon = Icons.text_fields;
+      iconColor = Colors.blue;
+    }
     
     // Create a controller for this question if it doesn't exist
     if (!_questionGradeControllers.containsKey(index)) {
+      print('Creating controller for question $index');
       // For MCQ, pre-fill with max grade if correct, 0 if incorrect
       if (isMCQ) {
         final gradeValue = answer.isCorrect == true ? answer.questionGrade : 0;
         _questionGradeControllers[index] = TextEditingController(
           text: gradeValue.toString()
         );
-      } else {
+        print('MCQ controller created with grade: $gradeValue');
+      } else if (isRecord) {
+        // For recording questions, start with empty grade (manual grading required)
         _questionGradeControllers[index] = TextEditingController();
+        print('Record controller created (empty)');
+      } else {
+        // For text questions
+        _questionGradeControllers[index] = TextEditingController();
+        print('Text controller created (empty)');
       }
     } else if (isMCQ) {
       // Ensure MCQ grades are always set correctly even if controller exists
       final gradeValue = answer.isCorrect == true ? answer.questionGrade : 0;
       if (_questionGradeControllers[index]!.text != gradeValue.toString()) {
         _questionGradeControllers[index]!.text = gradeValue.toString();
+        print('MCQ controller updated with grade: $gradeValue');
       }
     }
 
@@ -627,7 +673,7 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
           ),
         ),
         subtitle: Text(
-          '${answer.type.toUpperCase()} • ${answer.questionGrade} points',
+          '${answer.type.toUpperCase()} • ${answer.questionGrade} points${isRecord ? ' • Manual Grading Required' : ''}',
           style: TextStyle(
             color: AppTheme.textSecondaryColor,
             fontSize: 12,
@@ -643,7 +689,9 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
           child: Text(
             isMCQ
                 ? (answer.isCorrect == true ? 'Correct' : 'Incorrect')
-                : 'Text Answer',
+                : isRecord
+                    ? 'Recording'
+                    : 'Text Answer',
             style: TextStyle(
               color: iconColor,
               fontWeight: FontWeight.bold,
@@ -687,12 +735,14 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
                   ),
                 ),
                 SizedBox(height: 8),
-                Text(
-                  answer.userAnswer,
-                  style: TextStyle(
-                    color: AppTheme.textPrimaryColor,
-                  ),
-                ),
+                isRecord
+                    ? _buildAudioPlayer(answer.userAnswer)
+                    : Text(
+                        answer.userAnswer,
+                        style: TextStyle(
+                          color: AppTheme.textPrimaryColor,
+                        ),
+                      ),
                 SizedBox(height: 16),
                 Row(
                   children: [
@@ -706,7 +756,7 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
                           fillColor: isMCQ ? Colors.grey.shade100 : null,
                         ),
                         keyboardType: TextInputType.number,
-                        enabled: !isMCQ, // Disable editing for MCQ questions
+                        enabled: !isMCQ, // Disable editing for MCQ questions only
                         readOnly: isMCQ, // Make MCQ fields read-only
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -735,6 +785,16 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
                       fontSize: 12,
                     ),
                   ),
+                ] else if (isRecord) ...[
+                  SizedBox(height: 8),
+                  Text(
+                    'Recording questions require manual grading. Listen to the audio and assign appropriate grade.',
+                    style: TextStyle(
+                      color: Colors.purple.shade600,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -742,5 +802,144 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildAudioPlayer(String audioUrl) {
+    print('Building audio player for URL: $audioUrl');
+
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.purple.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.purple.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.audiotrack, color: Colors.purple, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Audio Recording',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple.shade700,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          // Audio player using iframe
+          Container(
+            width: double.infinity,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: _buildIframeAudioPlayer(audioUrl),
+            ),
+          ),
+          SizedBox(height: 8),
+          // Filename and controls
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.audiotrack, size: 16, color: Colors.grey.shade600),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    audioUrl.split('/').last, // Show filename
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // Play in new tab button
+                TextButton.icon(
+                  onPressed: () {
+                    html.window.open(audioUrl, '_blank');
+                  },
+                  icon: Icon(Icons.open_in_new, size: 16),
+                  label: Text('Open'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.purple.shade600,
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIframeAudioPlayer(String audioUrl) {
+    // Create HTML for audio player
+    final audioHtml = '''
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body {
+            margin: 0;
+            padding: 8px;
+            font-family: Arial, sans-serif;
+            background: white;
+          }
+          audio {
+            width: 100%;
+            height: 40px;
+            outline: none;
+          }
+        </style>
+      </head>
+      <body>
+        <audio controls preload="metadata">
+          <source src="$audioUrl" type="audio/mpeg">
+          <source src="$audioUrl" type="audio/wav">
+          <source src="$audioUrl" type="audio/ogg">
+          Your browser does not support the audio element.
+        </audio>
+      </body>
+      </html>
+    ''';
+
+    // Create data URL
+    final dataUrl = 'data:text/html;charset=utf-8,${Uri.encodeComponent(audioHtml)}';
+
+    // Create iframe element
+    final iframe = html.IFrameElement()
+      ..src = dataUrl
+      ..style.width = '100%'
+      ..style.height = '60px'
+      ..style.border = 'none'
+      ..style.borderRadius = '8px';
+
+    // Create unique view type
+    final viewType = 'audio-iframe-${audioUrl.hashCode}';
+
+    // Register view factory
+    ui_web.platformViewRegistry.registerViewFactory(
+      viewType,
+      (int viewId) => iframe,
+    );
+
+    return HtmlElementView(viewType: viewType);
   }
 }
