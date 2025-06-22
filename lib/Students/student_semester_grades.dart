@@ -51,69 +51,117 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
     );
   }
 
-  // Calculate overall semester statistics
+  // Calculate overall semester statistics with weighted grading
   Map<String, dynamic> _calculateSemesterStats(List<SubjectGrades> subjects) {
-    int totalUserGrade = 0;
-    int totalMaxGrade = 0;
+    double totalWeightedScore = 0.0;
     int completedSubjects = 0;
     int totalSubjects = subjects.length;
+    int passedSubjects = 0;
 
     for (var subject in subjects) {
-      int subjectUserGrade = 0;
-      int subjectMaxGrade = 0;
-      bool hasGrades = false;
-
-      for (var quiz in subject.quizzes) {
-        subjectMaxGrade += quiz.finalGrade;
-        if (quiz.userGrade != null) {
-          subjectUserGrade += quiz.userGrade!;
-          hasGrades = true;
-        }
-      }
-
-      totalMaxGrade += subjectMaxGrade;
-      if (hasGrades) {
-        totalUserGrade += subjectUserGrade;
+      final subjectStats = _calculateSubjectStats(subject);
+      if (subjectStats['hasGrades']) {
+        totalWeightedScore += subjectStats['weightedPercentage'];
         completedSubjects++;
+        if (subjectStats['weightedPercentage'] >= 60.0) {
+          passedSubjects++;
+        }
       }
     }
 
-    final percentage = totalMaxGrade > 0 ? (totalUserGrade / totalMaxGrade * 100) : 0.0;
+    final averagePercentage = completedSubjects > 0 ? (totalWeightedScore / completedSubjects) : 0.0;
     final completionRate = totalSubjects > 0 ? (completedSubjects / totalSubjects * 100) : 0.0;
+    final passRate = completedSubjects > 0 ? (passedSubjects / completedSubjects * 100) : 0.0;
 
     return {
-      'totalUserGrade': totalUserGrade,
-      'totalMaxGrade': totalMaxGrade,
-      'percentage': percentage,
+      'averagePercentage': averagePercentage,
       'completedSubjects': completedSubjects,
       'totalSubjects': totalSubjects,
+      'passedSubjects': passedSubjects,
       'completionRate': completionRate,
+      'passRate': passRate,
     };
   }
 
-  // Calculate subject total grades
+  // Calculate subject total grades with weighted system (40% weekly, 60% final)
   Map<String, dynamic> _calculateSubjectStats(SubjectGrades subject) {
-    int totalUserGrade = 0;
-    int totalMaxGrade = 0;
-    bool hasGrades = false;
+    // Separate weekly and final quizzes
+    final weeklyQuizzes = subject.quizzes.where((quiz) =>
+        quiz.name.toLowerCase() == 'week quizzes').toList();
+    final finalQuizzes = subject.quizzes.where((quiz) =>
+        quiz.name.toLowerCase() != 'week quizzes').toList();
 
-    for (var quiz in subject.quizzes) {
-      totalMaxGrade += quiz.finalGrade;
+    // Calculate weekly quiz stats
+    int weeklyUserGrade = 0;
+    int weeklyMaxGrade = 0;
+    bool hasWeeklyGrades = false;
+
+    for (var quiz in weeklyQuizzes) {
+      weeklyMaxGrade += quiz.finalGrade;
       if (quiz.userGrade != null) {
-        totalUserGrade += quiz.userGrade!;
-        hasGrades = true;
+        weeklyUserGrade += quiz.userGrade!;
+        hasWeeklyGrades = true;
       }
     }
 
-    final percentage = hasGrades && totalMaxGrade > 0
+    // Calculate final quiz stats
+    int finalUserGrade = 0;
+    int finalMaxGrade = 0;
+    bool hasFinalGrades = false;
+
+    for (var quiz in finalQuizzes) {
+      finalMaxGrade += quiz.finalGrade;
+      if (quiz.userGrade != null) {
+        finalUserGrade += quiz.userGrade!;
+        hasFinalGrades = true;
+      }
+    }
+
+    // Calculate percentages
+    final weeklyPercentage = hasWeeklyGrades && weeklyMaxGrade > 0
+        ? (weeklyUserGrade / weeklyMaxGrade * 100)
+        : 0.0;
+
+    final finalPercentage = hasFinalGrades && finalMaxGrade > 0
+        ? (finalUserGrade / finalMaxGrade * 100)
+        : 0.0;
+
+    // Calculate weighted percentage (40% weekly + 60% final)
+    double weightedPercentage = 0.0;
+    bool hasGrades = hasWeeklyGrades || hasFinalGrades;
+
+    if (hasWeeklyGrades && hasFinalGrades) {
+      // Both types available - use full weighted calculation
+      weightedPercentage = (weeklyPercentage * 0.4) + (finalPercentage * 0.6);
+    } else if (hasWeeklyGrades && !hasFinalGrades) {
+      // Only weekly grades available - scale to represent 40% of total
+      weightedPercentage = weeklyPercentage * 0.4;
+    } else if (!hasWeeklyGrades && hasFinalGrades) {
+      // Only final grades available - scale to represent 60% of total
+      weightedPercentage = finalPercentage * 0.6;
+    }
+
+    // Calculate traditional total for display
+    final totalUserGrade = weeklyUserGrade + finalUserGrade;
+    final totalMaxGrade = weeklyMaxGrade + finalMaxGrade;
+    final traditionalPercentage = hasGrades && totalMaxGrade > 0
         ? (totalUserGrade / totalMaxGrade * 100)
         : 0.0;
 
     return {
       'totalUserGrade': totalUserGrade,
       'totalMaxGrade': totalMaxGrade,
-      'percentage': percentage,
+      'traditionalPercentage': traditionalPercentage,
+      'weightedPercentage': weightedPercentage,
+      'weeklyPercentage': weeklyPercentage,
+      'finalPercentage': finalPercentage,
       'hasGrades': hasGrades,
+      'hasWeeklyGrades': hasWeeklyGrades,
+      'hasFinalGrades': hasFinalGrades,
+      'weeklyUserGrade': weeklyUserGrade,
+      'weeklyMaxGrade': weeklyMaxGrade,
+      'finalUserGrade': finalUserGrade,
+      'finalMaxGrade': finalMaxGrade,
     };
   }
 
@@ -188,14 +236,14 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryColor.withOpacity(0.1),
-            AppTheme.primaryColor.withOpacity(0.05),
+            AppTheme.primaryColor.withValues(alpha: 0.1),
+            AppTheme.primaryColor.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,39 +266,98 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
             children: [
               Expanded(
                 child: _buildSummaryCard(
-                  'Total Grade',
-                  '${stats['totalUserGrade']}/${stats['totalMaxGrade']}',
-                  Icons.grade,
-                  AppTheme.primaryColor,
+                  'Weighted Average',
+                  '${stats['averagePercentage'].toStringAsFixed(1)}%',
+                  Icons.analytics,
+                  _getGradeColor(stats['averagePercentage']),
                 ),
               ),
               SizedBox(width: 16),
               Expanded(
                 child: _buildSummaryCard(
-                  'Overall Percentage',
-                  '${stats['percentage'].toStringAsFixed(1)}%',
-                  Icons.percent,
-                  _getGradeColor(stats['percentage']),
+                  'Pass Status',
+                  stats['averagePercentage'] >= 60.0 ? 'PASSED' : 'FAILED',
+                  stats['averagePercentage'] >= 60.0 ? Icons.check_circle : Icons.cancel,
+                  stats['averagePercentage'] >= 60.0 ? Colors.green : Colors.red,
                 ),
               ),
               SizedBox(width: 16),
               Expanded(
                 child: _buildSummaryCard(
-                  'Completed Subjects',
-                  '${stats['completedSubjects']}/${stats['totalSubjects']}',
-                  Icons.subject,
+                  'Subjects Passed',
+                  '${stats['passedSubjects']}/${stats['completedSubjects']}',
+                  Icons.school,
                   Colors.blue,
                 ),
               ),
               SizedBox(width: 16),
               Expanded(
                 child: _buildProgressCard(
-                  'Progress',
+                  'Completion',
                   stats['completionRate'] / 100,
                   '${stats['completionRate'].toStringAsFixed(0)}%',
                 ),
               ),
             ],
+          ),
+          SizedBox(height: 16),
+          // Grading System Info
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Grading System',
+                      style: AppTheme.bodyLarge.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildGradingInfoCard(
+                        'Weekly Quizzes',
+                        '40%',
+                        Colors.green,
+                        Icons.quiz,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: _buildGradingInfoCard(
+                        'Final Exams',
+                        '60%',
+                        Colors.blue,
+                        Icons.school,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: _buildGradingInfoCard(
+                        'Pass Threshold',
+                        '60%',
+                        Colors.orange,
+                        Icons.flag,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -265,7 +372,7 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 4,
             offset: Offset(0, 2),
@@ -311,7 +418,7 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.1),
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 4,
             offset: Offset(0, 2),
@@ -348,8 +455,43 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
               ),
             ),
             progressColor: AppTheme.primaryColor,
-            backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
             circularStrokeCap: CircularStrokeCap.round,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGradingInfoCard(String title, String value, Color color, IconData icon) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 18),
+          SizedBox(height: 6),
+          Text(
+            title,
+            style: AppTheme.bodyMedium.copyWith(
+              color: AppTheme.textSecondaryColor,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTheme.bodyMedium.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
@@ -364,7 +506,7 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: Offset(0, 1),
@@ -425,7 +567,7 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.1)),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,7 +607,7 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
+            color: Colors.grey.withValues(alpha: 0.08),
             spreadRadius: 2,
             blurRadius: 8,
             offset: Offset(0, 4),
@@ -480,8 +622,8 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.primaryColor.withOpacity(0.08),
-                  AppTheme.primaryColor.withOpacity(0.03),
+                  AppTheme.primaryColor.withValues(alpha: 0.08),
+                  AppTheme.primaryColor.withValues(alpha: 0.03),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -495,7 +637,7 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
                     Container(
                       padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(Icons.book, color: AppTheme.primaryColor, size: 24),
@@ -529,28 +671,37 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
                   children: [
                     Expanded(
                       child: _buildSubjectStatCard(
-                        'Total Grade',
-                        '${stats['totalUserGrade']}/${stats['totalMaxGrade']}',
-                        Icons.grade,
-                        AppTheme.primaryColor,
+                        'Weighted Score',
+                        '${stats['weightedPercentage'].toStringAsFixed(1)}%',
+                        Icons.analytics,
+                        _getGradeColor(stats['weightedPercentage']),
                       ),
                     ),
                     SizedBox(width: 12),
                     Expanded(
                       child: _buildSubjectStatCard(
-                        'Percentage',
-                        '${stats['percentage'].toStringAsFixed(1)}%',
-                        Icons.percent,
-                        _getGradeColor(stats['percentage']),
+                        'Pass Status',
+                        stats['weightedPercentage'] >= 60.0 ? 'PASS' : 'FAIL',
+                        stats['weightedPercentage'] >= 60.0 ? Icons.check_circle : Icons.cancel,
+                        stats['weightedPercentage'] >= 60.0 ? Colors.green : Colors.red,
                       ),
                     ),
                     SizedBox(width: 12),
                     Expanded(
                       child: _buildSubjectStatCard(
-                        'Quizzes',
-                        '${subject.quizzes.length}',
+                        'Weekly (40%)',
+                        stats['hasWeeklyGrades'] ? '${stats['weeklyPercentage'].toStringAsFixed(1)}%' : 'N/A',
                         Icons.quiz,
-                        Colors.blue,
+                        stats['hasWeeklyGrades'] ? Colors.green : Colors.grey,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSubjectStatCard(
+                        'Final (60%)',
+                        stats['hasFinalGrades'] ? '${stats['finalPercentage'].toStringAsFixed(1)}%' : 'N/A',
+                        Icons.school,
+                        stats['hasFinalGrades'] ? Colors.blue : Colors.grey,
                       ),
                     ),
                   ],
@@ -570,7 +721,7 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -598,22 +749,9 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
   }
 
   Widget _buildSubjectGradeCircle(SubjectGrades subject) {
-    // Calculate total grades
-    int totalUserGrade = 0;
-    int totalMaxGrade = 0;
-    bool hasGrades = false;
-
-    for (var quiz in subject.quizzes) {
-      totalMaxGrade += quiz.finalGrade;
-      if (quiz.userGrade != null) {
-        totalUserGrade += quiz.userGrade!;
-        hasGrades = true;
-      }
-    }
-
-    final percentage = hasGrades && totalMaxGrade > 0
-        ? (totalUserGrade / totalMaxGrade * 100).round()
-        : null;
+    final stats = _calculateSubjectStats(subject);
+    final hasGrades = stats['hasGrades'];
+    final weightedPercentage = stats['weightedPercentage'];
 
     return Container(
       width: 60,
@@ -623,7 +761,7 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
         color: Colors.white,
         border: Border.all(
           color: hasGrades
-              ? _getGradeColor(percentage! as double)
+              ? _getGradeColor(weightedPercentage)
               : Colors.grey,
           width: 3,
         ),
@@ -631,10 +769,10 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
       child: Center(
         child: hasGrades
             ? Text(
-                '$percentage%',
+                '${weightedPercentage.round()}%',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: _getGradeColor(percentage!as double),
+                  color: _getGradeColor(weightedPercentage),
                   fontSize: 16,
                 ),
               )
@@ -1183,11 +1321,10 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
   }
 
   Color _getGradeColor(double percentage) {
-    if (percentage >= 90) return Colors.green;
-    if (percentage >= 80) return Colors.lightGreen;
-    if (percentage >= 70) return Colors.amber;
-    if (percentage >= 60) return Colors.orange;
-    return Colors.red;
+    if (percentage >= 85) return Colors.green;
+    if (percentage >= 75) return Colors.lightGreen;
+    if (percentage >= 60) return Colors.orange; // Pass threshold
+    return Colors.red; // Fail
   }
 
   String _formatDate(DateTime date) {
