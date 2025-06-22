@@ -218,14 +218,8 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
                 children: [
                   CircleAvatar(
                     radius: 20,
+                    backgroundImage: NetworkImage(student.user.profilePicture),
                     backgroundColor: AppTheme.primaryColor,
-                    child: Text(
-                      student.user.name.substring(0, 2).toUpperCase(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
                   ),
                   SizedBox(width: 12),
                   Expanded(
@@ -270,7 +264,7 @@ class _StudentsSemesterTabState extends State<StudentsSemesterTab> {
             Expanded(
               flex: 2,
               child: Text(
-                 'N/A',
+                 student.user.phone,
                 style: AppTheme.bodyMedium,
                 overflow: TextOverflow.ellipsis,
               ),
