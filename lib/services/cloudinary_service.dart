@@ -1,7 +1,9 @@
 import 'dart:html' as html;
 import 'dart:typed_data';
+import 'dart:async';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import '../Constants/cloudinary_config.dart';
+import '../Constants/globals.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:crypto/crypto.dart' as crypto;
@@ -194,6 +196,166 @@ class CloudinaryService {
   String _generateSignature(String publicId, int timestamp) {
     final message = 'public_id=$publicId&timestamp=$timestamp${CloudinaryConfig.apiSecret}';
     return crypto.sha1.convert(utf8.encode(message)).toString();
+  }
+
+  // New methods using backend upload endpoints
+  Future<String> uploadPdfFile(html.File file) async {
+    try {
+      print('=== PDF Upload Debug ===');
+      print('File name: ${file.name}');
+      print('File size: ${file.size} bytes');
+      print('File type: ${file.type}');
+      print('Base URL: ${Globals.baseUrl}');
+      print('Full Upload URL: ${Globals.baseUrl}/upload/pdf');
+
+      final formData = html.FormData();
+      formData.appendBlob('file', file, file.name);
+
+      final request = html.HttpRequest();
+      request.open('POST', '${Globals.baseUrl}/upload/pdf');
+
+      // Create a completer to handle the async response
+      final completer = Completer<String>();
+
+      request.onLoad.listen((event) {
+        print('Request completed with status: ${request.status}');
+        print('Response text: ${request.responseText}');
+
+        if (request.status == 200 || request.status == 201) {
+          try {
+            final response = json.decode(request.responseText!);
+            print('Parsed response: $response');
+            print('File URL: ${response['url']}');
+            completer.complete(response['url']);
+          } catch (parseError) {
+            print('Error parsing response JSON: $parseError');
+            completer.completeError(Exception('Failed to parse response: $parseError'));
+          }
+        } else {
+          try {
+            final errorResponse = json.decode(request.responseText!);
+            print('Error response: $errorResponse');
+            completer.completeError(Exception(errorResponse['message'] ?? 'Upload failed with status ${request.status}'));
+          } catch (parseError) {
+            print('Error parsing error response: $parseError');
+            completer.completeError(Exception('Upload failed with status ${request.status}: ${request.responseText}'));
+          }
+        }
+      });
+
+      request.onError.listen((event) {
+        print('Network error occurred: $event');
+        completer.completeError(Exception('Network error during upload'));
+      });
+
+      request.onTimeout.listen((event) {
+        print('Request timeout occurred');
+        completer.completeError(Exception('Upload timeout'));
+      });
+
+      print('Sending request...');
+      request.send(formData);
+      return await completer.future;
+    } catch (e) {
+      print('Exception in uploadPdfFile: $e');
+      throw Exception('Error uploading PDF: $e');
+    }
+  }
+
+  Future<String> uploadAudioFile(html.File file) async {
+    try {
+      print('=== Audio Upload Debug ===');
+      print('File name: ${file.name}');
+      print('File size: ${file.size} bytes');
+      print('File type: ${file.type}');
+      print('Upload URL: ${Globals.baseUrl}/upload/record');
+
+      final formData = html.FormData();
+      formData.appendBlob('file', file, file.name);
+
+      final request = html.HttpRequest();
+      request.open('POST', '${Globals.baseUrl}/upload/record');
+
+      // Create a completer to handle the async response
+      final completer = Completer<String>();
+
+      request.onLoad.listen((event) {
+        print('Request completed with status: ${request.status}');
+        print('Response text: ${request.responseText}');
+
+        if (request.status == 200 || request.status == 201) {
+          try {
+            final response = json.decode(request.responseText!);
+            print('Parsed response: $response');
+            print('File URL: ${response['url']}');
+            completer.complete(response['url']);
+          } catch (parseError) {
+            print('Error parsing response JSON: $parseError');
+            completer.completeError(Exception('Failed to parse response: $parseError'));
+          }
+        } else {
+          try {
+            final errorResponse = json.decode(request.responseText!);
+            print('Error response: $errorResponse');
+            completer.completeError(Exception(errorResponse['message'] ?? 'Upload failed with status ${request.status}'));
+          } catch (parseError) {
+            print('Error parsing error response: $parseError');
+            completer.completeError(Exception('Upload failed with status ${request.status}: ${request.responseText}'));
+          }
+        }
+      });
+
+      request.onError.listen((event) {
+        print('Network error occurred: $event');
+        completer.completeError(Exception('Network error during upload'));
+      });
+
+      request.onTimeout.listen((event) {
+        print('Request timeout occurred');
+        completer.completeError(Exception('Upload timeout'));
+      });
+
+      print('Sending request...');
+      request.send(formData);
+      return await completer.future;
+    } catch (e) {
+      print('Exception in uploadAudioFile: $e');
+      throw Exception('Error uploading audio: $e');
+    }
+  }
+
+  // Delete file using backend endpoint
+  Future<bool> deleteFileFromBackend(String fileUrl) async {
+    try {
+      // Extract filename from URL
+      final uri = Uri.parse(fileUrl);
+      final pathSegments = uri.pathSegments;
+      final filename = pathSegments.last;
+
+      // Determine file type from URL path
+      String fileType = 'additional-documents'; // default
+      if (pathSegments.contains('pdfs')) {
+        fileType = 'pdfs';
+      } else if (pathSegments.contains('records')) {
+        fileType = 'records';
+      } else if (pathSegments.contains('user-photos')) {
+        fileType = 'user-photos';
+      } else if (pathSegments.contains('ids')) {
+        fileType = 'ids';
+      }
+
+      final response = await http.delete(
+        Uri.parse('${Globals.baseUrl}/upload/$fileType/$filename'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error deleting file from backend: $e');
+      return false;
+    }
   }
 }
 

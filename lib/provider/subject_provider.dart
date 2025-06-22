@@ -155,20 +155,23 @@ void setLessonNull(){
         throw Exception('Invalid file type. Only PDF files are allowed.');
       }
 
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        throw Exception('File size exceeds 10MB limit');
+      // Validate file size (max 20MB as per backend API)
+      if (file.size > 20 * 1024 * 1024) {
+        throw Exception('File size exceeds 20MB limit');
       }
 
       _isUploading = true;
       _uploadProgress = 0.1;
       notifyListeners();
 
-      // Upload file to Cloudinary
+      // Upload file using new backend endpoint
       _uploadProgress = 0.3;
       notifyListeners();
-      
-      final fileUrl = await _cloudinaryService.uploadWebFile(file);
+
+      print('=== Subject Provider PDF Upload ===');
+      print('About to call uploadPdfFile...');
+      final fileUrl = await _cloudinaryService.uploadPdfFile(file);
+      print('Upload completed, received URL: $fileUrl');
       
       _uploadProgress = 0.7;
       notifyListeners();
@@ -202,42 +205,39 @@ void setLessonNull(){
     required html.File file,
   }) async {
     try {
-      // Validate file type
-      final validAudioTypes = ['.mp3', '.wav', '.m4a'];
+      // Validate file type (as per backend API)
+      final validAudioTypes = ['.mp3', '.wav', '.ogg', '.m4a'];
       if (!validAudioTypes.any((type) => file.name.toLowerCase().endsWith(type))) {
         throw Exception('Invalid file type. Allowed types: ${validAudioTypes.join(", ")}');
       }
 
-      // Validate file size (max 20MB)
-      if (file.size > 20 * 1024 * 1024) {
-        throw Exception('File size exceeds 20MB limit');
+      // Validate file size (max 50MB as per backend API for audio)
+      if (file.size > 50 * 1024 * 1024) {
+        throw Exception('File size exceeds 50MB limit');
       }
 
       _isUploading = true;
       _uploadProgress = 0.1;
       notifyListeners();
 
-      // Upload file to Cloudinary
+      // Upload file using new backend endpoint
       _uploadProgress = 0.3;
       notifyListeners();
-      
-      final fileUrl = await _cloudinaryService.uploadWebFile(file);
-      
-      _uploadProgress = 0.6;
-      notifyListeners();
-      
-      // Get optimized audio URL
-      final optimizedUrl = _cloudinaryService.getOptimizedAudioUrl(fileUrl);
+
+      print('=== Subject Provider Audio Upload ===');
+      print('About to call uploadAudioFile...');
+      final fileUrl = await _cloudinaryService.uploadAudioFile(file);
+      print('Upload completed, received URL: $fileUrl');
 
       _uploadProgress = 0.8;
       notifyListeners();
 
-      // Create lesson item with optimized audio URL
+      // Create lesson item with audio URL
       await uploadLessonItem(
         lessonId: lessonId,
         title: title.trim(),
         itemType: 'audio',
-        itemContent: optimizedUrl,
+        itemContent: fileUrl,
       );
 
       _uploadProgress = 1.0;
@@ -321,10 +321,15 @@ void setLessonNull(){
 
       switch (response.statusCode) {
         case 200:
-          // Delete from Cloudinary if it's a file (not a video URL)
-          if (!item.itemContent.contains('youtube.com') && 
+          // Delete from backend storage if it's a file (not a video URL)
+          if (!item.itemContent.contains('youtube.com') &&
               !item.itemContent.contains('vimeo.com')) {
-            await _cloudinaryService.deleteFile(item.itemContent);
+            // Try to delete from new backend first, fallback to Cloudinary
+            final backendDeleted = await _cloudinaryService.deleteFileFromBackend(item.itemContent);
+            if (!backendDeleted) {
+              // Fallback to Cloudinary for existing files
+              await _cloudinaryService.deleteFile(item.itemContent);
+            }
           }
 
           // Refresh items list

@@ -1090,6 +1090,14 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                   backgroundColor: AppTheme.primaryColor,
                 ),
               ),
+              SizedBox(height: 8),
+              Text(
+                'Max file size: 20MB',
+                style: AppTheme.bodyMedium.copyWith(
+                  color: AppTheme.textSecondaryColor,
+                  fontSize: 12,
+                ),
+              ),
             ],
           ),
           actions: [
@@ -1169,7 +1177,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
               ElevatedButton.icon(
                 onPressed: () async {
                   final input = html.FileUploadInputElement()
-                    ..accept = '.mp3,.wav,.m4a'
+                    ..accept = '.mp3,.wav,.ogg,.m4a'
                     ..click();
 
                   input.onChange.listen((event) {
@@ -1184,6 +1192,14 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                 label: Text('Choose Audio'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Supported: MP3, WAV, OGG, M4A • Max size: 50MB',
+                style: AppTheme.bodyMedium.copyWith(
+                  color: AppTheme.textSecondaryColor,
+                  fontSize: 12,
                 ),
               ),
             ],
