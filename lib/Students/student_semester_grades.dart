@@ -688,18 +688,24 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
                     ),
                     SizedBox(width: 12),
                     Expanded(
-                      child: _buildSubjectStatCard(
+                      child: _buildScaledStatCard(
                         'Weekly (40%)',
-                        stats['hasWeeklyGrades'] ? '${stats['weeklyPercentage'].toStringAsFixed(1)}%' : 'N/A',
+                        stats['hasWeeklyGrades']
+                          ? '${((stats['weeklyPercentage'] / 100) * 40).toStringAsFixed(1)}/40'
+                          : 'N/A',
+                        stats['hasWeeklyGrades'] ? '${stats['weeklyPercentage'].toStringAsFixed(1)}%' : '',
                         Icons.quiz,
                         stats['hasWeeklyGrades'] ? Colors.green : Colors.grey,
                       ),
                     ),
                     SizedBox(width: 12),
                     Expanded(
-                      child: _buildSubjectStatCard(
+                      child: _buildScaledStatCard(
                         'Final (60%)',
-                        stats['hasFinalGrades'] ? '${stats['finalPercentage'].toStringAsFixed(1)}%' : 'N/A',
+                        stats['hasFinalGrades']
+                          ? '${((stats['finalPercentage'] / 100) * 60).toStringAsFixed(1)}/60'
+                          : 'N/A',
+                        stats['hasFinalGrades'] ? '${stats['finalPercentage'].toStringAsFixed(1)}%' : '',
                         Icons.school,
                         stats['hasFinalGrades'] ? Colors.blue : Colors.grey,
                       ),
@@ -743,6 +749,50 @@ class _StudentSemesterGradesState extends State<StudentSemesterGrades> {
               fontSize: 14,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScaledStatCard(String title, String scaledValue, String percentage, IconData icon, Color color) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 18),
+          SizedBox(height: 6),
+          Text(
+            title,
+            style: AppTheme.bodyMedium.copyWith(
+              color: AppTheme.textSecondaryColor,
+              fontSize: 10,
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            scaledValue,
+            style: AppTheme.bodyMedium.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          if (percentage.isNotEmpty) ...[
+            SizedBox(height: 2),
+            Text(
+              percentage,
+              style: AppTheme.bodyMedium.copyWith(
+                color: color.withValues(alpha: 0.7),
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ],
       ),
     );
