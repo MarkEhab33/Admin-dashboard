@@ -12,7 +12,10 @@ import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
 import 'package:admin_dashboard/provider/subcategory_provider.dart';
 import 'package:admin_dashboard/provider/announcements_provider.dart';
 import 'package:admin_dashboard/provider/locale_provider.dart';
+import 'package:admin_dashboard/provider/admin_auth_provider.dart';
 import 'package:admin_dashboard/l10n/app_localizations.dart';
+import 'package:admin_dashboard/screens/splash_screen.dart';
+import 'package:admin_dashboard/screens/admin_login_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -22,6 +25,7 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AdminAuthProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => SemestersProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
@@ -88,7 +92,23 @@ class MyApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: DashboardScreen(),
+          home: Consumer<AdminAuthProvider>(
+            builder: (context, authProvider, child) {
+              print('=== MAIN APP AUTH STATE ===');
+              print('Auth status: ${authProvider.status}');
+              print('Is authenticated: ${authProvider.isAuthenticated}');
+
+              switch (authProvider.status) {
+                case AuthStatus.unknown:
+                case AuthStatus.loading:
+                  return const SplashScreen();
+                case AuthStatus.authenticated:
+                  return DashboardScreen();
+                case AuthStatus.unauthenticated:
+                  return const AdminLoginScreen();
+              }
+            },
+          ),
         );
       },
     );

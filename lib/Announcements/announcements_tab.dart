@@ -3,10 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 // import 'package:flutter_animate/flutter_animate.dart'; // Removed to fix mouse tracker issue
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:image_picker/image_picker.dart';
+import 'dart:html' as html;
 
 import '../Theme.dart';
 import '../provider/announcements_provider.dart';
+import '../services/cloudinary_service.dart';
 import 'models/announcement_model.dart';
 import 'announcement_detail_screen.dart';
 
@@ -21,7 +22,7 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
   late final AnimationController _fabAnimationController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  final ImagePicker _imagePicker = ImagePicker();
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
   @override
   void initState() {
@@ -507,13 +508,22 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
       pageBuilder: (context, animation1, animation2) {
         return StatefulBuilder(
           builder: (context, setState) {
+            print('=== DIALOG REBUILD ===');
+            print('Current imageUrl: $imageUrl');
             return AlertDialog(
               title: Text('Add New Announcement', style: AppTheme.headingMedium),
-              content: SingleChildScrollView(
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height * 0.8,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                     TextField(
                       controller: titleController,
                       decoration: const InputDecoration(
@@ -546,25 +556,84 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
                         ElevatedButton.icon(
                           onPressed: () async {
                             try {
-                              // Use image_picker to select an image
-                              final XFile? image = await _imagePicker.pickImage(
-                                source: ImageSource.gallery,
-                                imageQuality: 80,
-                              );
+                              print('=== CREATE ANNOUNCEMENT IMAGE UPLOAD DEBUG ===');
+                              print('Starting image selection...');
 
-                              if (image != null) {
-                                // In a real app, you would upload this image to a server
-                                // For now, we'll just use a placeholder URL
-                                if (context.mounted) {
-                                  setState(() {
-                                    imageUrl = 'https://source.unsplash.com/random/800x600/?music';
-                                  });
+                              // Use HTML file input for web
+                              final input = html.FileUploadInputElement()
+                                ..accept = 'image/jpeg,image/png,image/webp'
+                                ..click();
+
+                              input.onChange.listen((event) async {
+                                if (input.files?.isNotEmpty ?? false) {
+                                  final file = input.files![0];
+                                  print('File selected: ${file.name}');
+                                  print('File size: ${file.size} bytes');
+                                  print('File type: ${file.type}');
+
+                                  try {
+                                    // Show loading indicator
+                                    if (context.mounted) {
+                                      print('Showing loading indicator...');
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Row(
+                                            children: [
+                                              CircularProgressIndicator(strokeWidth: 2),
+                                              SizedBox(width: 16),
+                                              Text('Uploading image...'),
+                                            ],
+                                          ),
+                                          duration: Duration(seconds: 30),
+                                        ),
+                                      );
+                                    }
+
+                                    print('Starting upload to backend...');
+                                    // Upload the image using the backend endpoint
+                                    final uploadedUrl = await _cloudinaryService.uploadImageFile(file);
+                                    print('Upload successful! URL: $uploadedUrl');
+
+                                    if (context.mounted) {
+                                      // Hide loading indicator
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                                      setState(() {
+                                        print('Setting imageUrl in setState: $uploadedUrl');
+                                        imageUrl = uploadedUrl;
+                                      });
+
+                                      print('Image URL set in state: $imageUrl');
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Image uploaded successfully!'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } catch (uploadError) {
+                                    print('Upload error: $uploadError');
+                                    if (context.mounted) {
+                                      // Hide loading indicator
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Upload failed: $uploadError'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                } else {
+                                  print('No file selected');
                                 }
-                              }
+                              });
                             } catch (e) {
+                              print('Error in file selection: $e');
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Error picking image: $e')),
+                                  SnackBar(content: Text('Error selecting image: $e')),
                                 );
                               }
                             }
@@ -575,26 +644,72 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
                         const SizedBox(width: 8),
                         if (imageUrl != null)
                           Expanded(
-                            child: Text(
-                              'Image selected',
-                              style: AppTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.green, size: 16),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Image uploaded successfully',
+                                  style: AppTheme.bodyMedium.copyWith(color: Colors.green),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
                           ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Supported formats: JPEG, PNG, WebP • Max size: 5MB',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
                     if (imageUrl != null) ...[
                       const SizedBox(height: 16),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          imageUrl!,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 120),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            imageUrl!,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 120,
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 120,
+                              color: Colors.grey[200],
+                              child: const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.error, color: Colors.red),
+                                  SizedBox(height: 8),
+                                  Text('Failed to load image'),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ],
+                          ],
+                        ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -605,7 +720,14 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    print('=== CREATE ANNOUNCEMENT SAVE BUTTON CLICKED ===');
+                    print('Title: ${titleController.text}');
+                    print('Description: ${descriptionController.text}');
+                    print('Image URL: $imageUrl');
+                    print('Meeting Link: ${meetingLinkController.text}');
+
                     if (titleController.text.isEmpty || descriptionController.text.isEmpty) {
+                      print('Validation failed: Missing required fields');
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please fill in all required fields'),
@@ -623,12 +745,20 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
                     };
 
                     if (imageUrl != null) {
+                      print('Adding image URL to announcement data: $imageUrl');
                       announcementData['imageUrl'] = imageUrl;
+                    } else {
+                      print('No image URL to add');
                     }
 
                     if (meetingLinkController.text.isNotEmpty) {
+                      print('Adding meeting link to announcement data: ${meetingLinkController.text}');
                       announcementData['meetingLink'] = meetingLinkController.text;
+                    } else {
+                      print('No meeting link to add');
                     }
+
+                    print('Final announcement data: $announcementData');
 
                     // For API compatibility, we need to create a temporary announcement
                     // The actual ID, createdAt, and updatedAt will be set by the server
@@ -642,7 +772,9 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
                       updatedAt: DateTime.now(),
                     );
 
+                    print('Creating announcement with provider...');
                     provider.createAnnouncement(tempAnnouncement);
+                    print('Closing dialog...');
                     Navigator.pop(context);
                   },
                   child: const Text('Save'),

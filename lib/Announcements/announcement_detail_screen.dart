@@ -3,15 +3,16 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 // import 'package:flutter_animate/flutter_animate.dart'; // Removed to fix mouse tracker issue
-import 'package:image_picker/image_picker.dart';
+import 'dart:html' as html;
 
 import '../Theme.dart';
 import '../provider/announcements_provider.dart';
+import '../services/cloudinary_service.dart';
 import 'models/announcement_model.dart';
 
 class AnnouncementDetailScreen extends StatelessWidget {
   final int announcementId;
-  final ImagePicker _imagePicker = ImagePicker();
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
   AnnouncementDetailScreen({
     super.key,
@@ -212,11 +213,18 @@ class AnnouncementDetailScreen extends StatelessWidget {
           builder: (context, setState) {
             return AlertDialog(
               title: Text('Edit Announcement', style: AppTheme.headingMedium),
-              content: SingleChildScrollView(
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height * 0.8,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                     TextField(
                       controller: titleController,
                       decoration: const InputDecoration(
@@ -225,13 +233,18 @@ class AnnouncementDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        hintText: 'Enter announcement description',
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 100),
+                      child: TextField(
+                        controller: descriptionController,
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                          hintText: 'Enter announcement description',
+                        ),
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
                       ),
-                      maxLines: 5,
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -249,25 +262,69 @@ class AnnouncementDetailScreen extends StatelessWidget {
                         ElevatedButton.icon(
                           onPressed: () async {
                             try {
-                              // Use image_picker to select an image
-                              final XFile? image = await _imagePicker.pickImage(
-                                source: ImageSource.gallery,
-                                imageQuality: 80,
-                              );
+                              // Use HTML file input for web
+                              final input = html.FileUploadInputElement()
+                                ..accept = 'image/jpeg,image/png,image/webp'
+                                ..click();
 
-                              if (image != null) {
-                                // In a real app, you would upload this image to a server
-                                // For now, we'll just use a placeholder URL
-                                if (context.mounted) {
-                                  setState(() {
-                                    imageUrl = 'https://source.unsplash.com/random/800x600/?music';
-                                  });
+                              input.onChange.listen((event) async {
+                                if (input.files?.isNotEmpty ?? false) {
+                                  final file = input.files![0];
+
+                                  try {
+                                    // Show loading indicator
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Row(
+                                            children: [
+                                              CircularProgressIndicator(strokeWidth: 2),
+                                              SizedBox(width: 16),
+                                              Text('Uploading image...'),
+                                            ],
+                                          ),
+                                          duration: Duration(seconds: 30),
+                                        ),
+                                      );
+                                    }
+
+                                    // Upload the image using the backend endpoint
+                                    final uploadedUrl = await _cloudinaryService.uploadImageFile(file);
+
+                                    if (context.mounted) {
+                                      // Hide loading indicator
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                                      setState(() {
+                                        imageUrl = uploadedUrl;
+                                      });
+
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Image uploaded successfully!'),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } catch (uploadError) {
+                                    if (context.mounted) {
+                                      // Hide loading indicator
+                                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Upload failed: $uploadError'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 }
-                              }
+                              });
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Error picking image: $e')),
+                                  SnackBar(content: Text('Error selecting image: $e')),
                                 );
                               }
                             }
@@ -278,26 +335,72 @@ class AnnouncementDetailScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         if (imageUrl != null)
                           Expanded(
-                            child: Text(
-                              'Image selected',
-                              style: AppTheme.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.green, size: 16),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Image uploaded successfully',
+                                  style: AppTheme.bodyMedium.copyWith(color: Colors.green),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
                           ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Supported formats: JPEG, PNG, WebP • Max size: 5MB',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
                     if (imageUrl != null) ...[
                       const SizedBox(height: 16),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          imageUrl!,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 100),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            imageUrl!,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 100,
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 100,
+                              color: Colors.grey[200],
+                              child: const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.error, color: Colors.red),
+                                  SizedBox(height: 8),
+                                  Text('Failed to load image'),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

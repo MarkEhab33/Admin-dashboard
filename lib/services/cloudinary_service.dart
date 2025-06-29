@@ -324,6 +324,79 @@ class CloudinaryService {
     }
   }
 
+  Future<String> uploadImageFile(html.File file) async {
+    try {
+      print('=== Image Upload Debug ===');
+      print('File name: ${file.name}');
+      print('File size: ${file.size} bytes');
+      print('File type: ${file.type}');
+      print('Upload URL: ${Globals.baseUrl}/upload/user-photo');
+
+      // Validate file type
+      final validImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validImageTypes.contains(file.type)) {
+        throw Exception('Invalid file type. Allowed types: JPEG, PNG, WebP');
+      }
+
+      // Validate file size (max 5MB as per backend API for user photos)
+      if (file.size > 5 * 1024 * 1024) {
+        throw Exception('File size exceeds 5MB limit');
+      }
+
+      final formData = html.FormData();
+      formData.appendBlob('file', file, file.name);
+
+      final request = html.HttpRequest();
+      request.open('POST', '${Globals.baseUrl}/upload/user-photo');
+
+      // Create a completer to handle the async response
+      final completer = Completer<String>();
+
+      request.onLoad.listen((event) {
+        print('Request completed with status: ${request.status}');
+        print('Response text: ${request.responseText}');
+
+        if (request.status == 200 || request.status == 201) {
+          try {
+            final response = json.decode(request.responseText!);
+            final url = response['url'];
+            print('Upload successful, URL: $url');
+            completer.complete(url);
+          } catch (parseError) {
+            print('Error parsing success response: $parseError');
+            completer.completeError(Exception('Error parsing upload response'));
+          }
+        } else {
+          try {
+            final errorResponse = json.decode(request.responseText!);
+            print('Upload failed: ${errorResponse['message']}');
+            completer.completeError(Exception(errorResponse['message'] ?? 'Upload failed with status ${request.status}'));
+          } catch (parseError) {
+            print('Error parsing error response: $parseError');
+            completer.completeError(Exception('Upload failed with status ${request.status}: ${request.responseText}'));
+          }
+        }
+      });
+
+      request.onError.listen((event) {
+        print('Network error occurred: $event');
+        completer.completeError(Exception('Network error during upload'));
+      });
+
+      request.onTimeout.listen((event) {
+        print('Request timeout occurred');
+        completer.completeError(Exception('Upload timeout'));
+      });
+
+      print('Sending request...');
+      request.send(formData);
+      return await completer.future;
+    } catch (e) {
+      print('Exception in uploadImageFile: $e');
+      throw Exception('Error uploading image: $e');
+    }
+  }
+
   // Delete file using backend endpoint
   Future<bool> deleteFileFromBackend(String fileUrl) async {
     try {

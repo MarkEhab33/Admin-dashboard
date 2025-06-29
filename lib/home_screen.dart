@@ -9,6 +9,7 @@ import 'Students/students_tab_screen.dart';
 import 'Students/student_requests_tab.dart';
 import 'Quizzes/quizzes_main_screen.dart';
 import 'provider/dashboard_provider.dart';
+import 'provider/admin_auth_provider.dart';
 import 'Quizzes/quizzes_tab.dart';
 import 'Announcements/announcements_tab.dart';
 import 'Settings/settings_screen.dart';
@@ -74,20 +75,164 @@ class DashboardScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              localizations.dashboardTitle,
-              style: AppTheme.headingMedium,
+          // Admin Info Header
+          Consumer<AdminAuthProvider>(
+            builder: (context, authProvider, child) {
+              print('=== HOME SCREEN ADMIN DATA ===');
+              print('Admin name: ${authProvider.adminName}');
+              print('Admin username: ${authProvider.adminUsername}');
+              print('Admin role: ${authProvider.adminRole}');
+              print('Full admin data: ${authProvider.adminData}');
+
+              return Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    ),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: AppTheme.primaryColor,
+                      child: Icon(
+                        Icons.admin_panel_settings,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      authProvider.adminName ?? 'Aripsalin Administrator',
+                      style: AppTheme.headingMedium.copyWith(
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      authProvider.adminUsername ?? 'admin',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (authProvider.adminRole != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          authProvider.adminRole!.replaceAll('_', ' ').toUpperCase(),
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'SUPER ADMIN',
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+
+          // Navigation Items
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _buildDrawerItem(context, Icons.people, localizations.studentsAndSemesters, 0),
+                _buildDrawerItem(context, Icons.pending_actions, localizations.studentRequests, 1),
+                _buildDrawerItem(context, Icons.import_contacts_sharp, localizations.semesters, 2),
+                _buildDrawerItem(context, Icons.quiz, localizations.quizzes, 3),
+                _buildDrawerItem(context, Icons.subject_outlined, localizations.content, 4),
+                _buildDrawerItem(context, Icons.campaign_rounded, localizations.announcements, 5),
+                _buildDrawerItem(context, Icons.settings, localizations.settings, 6),
+              ],
             ),
           ),
-          _buildDrawerItem(context, Icons.people, localizations.studentsAndSemesters, 0),
-          _buildDrawerItem(context, Icons.pending_actions, localizations.studentRequests, 1),
-          _buildDrawerItem(context, Icons.import_contacts_sharp, localizations.semesters, 2),
-          _buildDrawerItem(context, Icons.quiz, localizations.quizzes, 3),
-          _buildDrawerItem(context, Icons.subject_outlined, localizations.content, 4),
-          _buildDrawerItem(context, Icons.campaign_rounded, localizations.announcements, 5),
-          _buildDrawerItem(context, Icons.settings, localizations.settings, 6),
+
+          // Logout Button
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                ),
+              ),
+            ),
+            child: Consumer<AdminAuthProvider>(
+              builder: (context, authProvider, child) {
+                return ListTile(
+                  leading: Icon(
+                    Icons.logout,
+                    color: Colors.red.shade600,
+                  ),
+                  title: Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.red.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  onTap: () async {
+                    // Show confirmation dialog
+                    final shouldLogout = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Confirm Logout'),
+                        content: const Text('Are you sure you want to logout?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Logout'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (shouldLogout == true) {
+                      await authProvider.logout();
+                    }
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
