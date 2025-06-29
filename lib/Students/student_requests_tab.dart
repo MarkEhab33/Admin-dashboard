@@ -4,6 +4,7 @@ import '../Models/student.dart';
 import '../provider/student_provider.dart';
 import 'student_details_screen.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 
 class StudentRequestsTab extends StatefulWidget {
   @override
@@ -56,11 +57,11 @@ class _StudentRequestsTabState extends State<StudentRequestsTab> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Student Requests',
+            AppLocalizations.of(context)!.studentRequests,
             style: AppTheme.headingLarge,
           ),
           Text(
-            'Pending Requests: ${provider.students.length}',
+            '${AppLocalizations.of(context)!.pendingRequests}: ${provider.students.length}',
             style: AppTheme.bodyLarge,
           ),
         ],
@@ -99,7 +100,7 @@ class _StudentRequestsTabState extends State<StudentRequestsTab> {
 
     if (provider.filteredStudents.isEmpty) {
       return Center(
-        child: Text('No pending requests found', style: AppTheme.bodyLarge),
+        child: Text(AppLocalizations.of(context)!.noPendingRequestsFound, style: AppTheme.bodyLarge),
       );
     }
 

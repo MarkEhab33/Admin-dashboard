@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/semester_templates_provider.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 import '../Models/semester_template.dart';
 import 'Subject_detials_screen.dart';
 
@@ -74,11 +75,11 @@ class SemesterTemplateScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(semester),
+            _buildHeader(context, semester),
             const SizedBox(height: 20),
             Expanded(
               child: semester.subjects.isEmpty
-                  ? _buildEmptyState()
+                  ? _buildEmptyState(context)
                   : _buildSubjectsGrid(semester),
             ),
           ],
@@ -94,7 +95,7 @@ class SemesterTemplateScreen extends StatelessWidget {
   }
 
 
-  Widget _buildHeader(SemesterTemplate semester) {
+  Widget _buildHeader(BuildContext context, SemesterTemplate semester) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -123,14 +124,14 @@ class SemesterTemplateScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Subjects Management',
+                    AppLocalizations.of(context)!.subjectsManagement,
                     style: AppTheme.headingLarge.copyWith(
                       color: AppTheme.primaryColor,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Manage and organize subjects for this semester',
+                    AppLocalizations.of(context)!.manageAndOrganizeSubjects,
                     style: AppTheme.bodyMedium,
                   ),
                 ],
@@ -142,7 +143,7 @@ class SemesterTemplateScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -154,14 +155,14 @@ class SemesterTemplateScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No subjects available',
+            AppLocalizations.of(context)!.noSubjectsAvailable,
             style: AppTheme.headingMedium.copyWith(
               color: AppTheme.textSecondaryColor,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Start by adding your first subject',
+            AppLocalizations.of(context)!.startByAddingFirstSubject,
             style: AppTheme.bodyMedium,
           ),
         ],

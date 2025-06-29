@@ -10,6 +10,7 @@ import '../Models/lesson_item.dart';
 import '../provider/subject_provider.dart';
 import '../provider/quiz_provider.dart' as quiz_provider;
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 import '../services/cloudinary_service.dart';
 import '../widgets/audio_player.dart';
 import '../widgets/pdf_viewer.dart';
@@ -19,6 +20,7 @@ import '../Quizzes/create_tasmi3_screen.dart';
 import '../Quizzes/quiz_details_screen.dart';
 import '../widgets/subcategories_modal.dart';
 import '../provider/subcategory_provider.dart';
+import '../l10n/app_localizations.dart';
 
 class SubjectDetailsScreen extends StatefulWidget {
   final Subject subject;
@@ -51,7 +53,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
           IconButton(
             icon: const Icon(Icons.category_outlined),
             onPressed: () => _showSubcategoriesModal(context),
-            tooltip: 'Subcategories',
+            tooltip: AppLocalizations.of(context)!.subcategories,
           ),
           IconButton(
             icon: const Icon(Icons.info_outline),
@@ -123,7 +125,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Lessons',
+                    AppLocalizations.of(context)!.lessons,
                     style: AppTheme.headingLarge.copyWith(
                       color: AppTheme.primaryColor,
                     ),
@@ -131,7 +133,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                   ElevatedButton.icon(
                     onPressed: () => _showAddLessonDialog(context),
                     icon: const Icon(Icons.add, size: 20),
-                    label: const Text('Add Lesson'),
+                    label: Text(AppLocalizations.of(context)!.addLessonButton),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,
@@ -148,7 +150,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Manage your course content',
+                AppLocalizations.of(context)!.manageCourseContent,
                 style: AppTheme.bodyMedium.copyWith(
                   color: AppTheme.textSecondaryColor,
                 ),
@@ -176,14 +178,14 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No lessons yet',
+                        AppLocalizations.of(context)!.noLessonsYet,
                         style: AppTheme.headingMedium.copyWith(
                           color: AppTheme.textSecondaryColor,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Start by adding your first lesson',
+                        AppLocalizations.of(context)!.startByAddingFirstLesson,
                         style: AppTheme.bodyMedium.copyWith(
                           color: AppTheme.textSecondaryColor,
                         ),
@@ -277,7 +279,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Select a lesson to view content',
+                  AppLocalizations.of(context)!.selectLessonToViewContent,
                   style: AppTheme.headingMedium.copyWith(
                     color: AppTheme.textSecondaryColor,
                   ),
@@ -313,9 +315,9 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TabBar(
-              tabs: const [
-                Tab(text: 'Media Content'),
-                Tab(text: 'Quizzes'),
+              tabs: [
+                Tab(text: AppLocalizations.of(context)!.mediaContent),
+                Tab(text: AppLocalizations.of(context)!.quizzesTab),
               ],
               labelColor: AppTheme.primaryColor,
               unselectedLabelColor: AppTheme.textSecondaryColor,
@@ -370,7 +372,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Quizzes',
+                  AppLocalizations.of(context)!.quizzesTab,
                   style: AppTheme.headingMedium,
                 ),
                 Row(
@@ -378,7 +380,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                     ElevatedButton.icon(
                       onPressed: () => _navigateToCreateTasmi3(context, lessonProvider, widget.subject.subjectName!),
                       icon: const Icon(Icons.mic, size: 18, color: Colors.white),
-                      label: const Text('Create Tasmi3'),
+                      label: Text(AppLocalizations.of(context)!.createTasmi3),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
@@ -392,7 +394,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                     ElevatedButton.icon(
                       onPressed: () => _navigateToCreateQuiz(context, lessonProvider,widget.subject.subjectName!),
                       icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                      label: const Text('Create Quiz'),
+                      label: Text(AppLocalizations.of(context)!.createQuiz),
                       style: AppTheme.primaryButtonStyle,
                     ),
                   ],
@@ -413,14 +415,14 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No quizzes for this lesson',
+                            AppLocalizations.of(context)!.noQuizzesForLesson,
                             style: AppTheme.headingMedium.copyWith(
                               color: AppTheme.textSecondaryColor,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Create a quiz to test student knowledge',
+                            AppLocalizations.of(context)!.createQuizToTestKnowledge,
                             style: AppTheme.bodyMedium.copyWith(
                               color: AppTheme.textSecondaryColor,
                             ),
@@ -476,8 +478,8 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                                       color: Colors.green,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Text(
-                                      'TASMI3',
+                                    child: Text(
+                                      AppLocalizations.of(context)!.tasmi3,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 10,
@@ -503,7 +505,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                                       Icon(Icons.mic, size: 14, color: Colors.green.shade600),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Audio Recording Quiz',
+                                        AppLocalizations.of(context)!.audioRecordingAssessment,
                                         style: TextStyle(
                                           color: Colors.green.shade600,
                                           fontSize: 12,
@@ -654,12 +656,12 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Quiz'),
+        title: Text(AppLocalizations.of(context)!.deleteQuizTitle),
         content: Text('Are you sure you want to delete "${quiz.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -672,8 +674,8 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                 Navigator.pop(context);
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Quiz deleted successfully'),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.quizDeletedSuccessfully),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -694,8 +696,8 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                 );
               }
             },
-            child: const Text(
-              'Delete',
+            child: Text(
+              AppLocalizations.of(context)!.delete,
               style: TextStyle(color: Colors.red),
             ),
           ),
@@ -717,7 +719,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No media content yet',
+              AppLocalizations.of(context)!.noMediaContentYet,
               style: AppTheme.headingMedium.copyWith(
                 color: AppTheme.textSecondaryColor,
               ),
@@ -908,7 +910,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
           onPressed: () => _showAddMediaDialog(context),
           backgroundColor: AppTheme.primaryColor,
           icon: const Icon(Icons.add),
-          label: const Text('Add Media'),
+          label: Text(AppLocalizations.of(context)!.addMedia),
         );
       },
     );
@@ -918,20 +920,20 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Subject Information', style: AppTheme.headingMedium),
+        title: Text(AppLocalizations.of(context)!.subjectInformation, style: AppTheme.headingMedium),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('Subject Name', widget.subject.subjectName ?? 'NA'),
-            _buildInfoRow('Subject Code', widget.subject.code ?? 'NA'),
+            _buildInfoRow(AppLocalizations.of(context)!.subjectName, widget.subject.subjectName ?? 'NA'),
+            _buildInfoRow(AppLocalizations.of(context)!.subjectCode, widget.subject.code ?? 'NA'),
             // Add more subject details as needed
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close',
+            child: Text(AppLocalizations.of(context)!.close,
                 style: TextStyle(color: AppTheme.primaryColor)),
           ),
         ],
@@ -967,15 +969,15 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add Lesson', style: AppTheme.headingMedium),
+        title: Text(AppLocalizations.of(context)!.addLessonButton, style: AppTheme.headingMedium),
         content: TextField(
           controller: lessonNameController,
-          decoration: AppTheme.inputDecoration('Enter lesson name'),
+          decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.enterLessonName),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: AppTheme.primaryColor)),
+            child: Text(AppLocalizations.of(context)!.cancel, style: TextStyle(color: AppTheme.primaryColor)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -988,7 +990,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
             ),
-            child: const Text('Add'),
+            child: Text(AppLocalizations.of(context)!.addButton),
           ),
         ],
       ),
@@ -999,13 +1001,13 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add Media', style: AppTheme.headingMedium),
+        title: Text(AppLocalizations.of(context)!.addMedia, style: AppTheme.headingMedium),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.video_library_outlined),
-              title: const Text('Video'),
+              title: Text(AppLocalizations.of(context)!.videoType),
               onTap: () {
                 Navigator.pop(context);
                 _showVideoUrlDialog(context);
@@ -1013,7 +1015,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.picture_as_pdf_outlined),
-              title: const Text('PDF'),
+              title: Text(AppLocalizations.of(context)!.pdfType),
               onTap: () {
                 Navigator.pop(context);
                 _showPdfDialog(context);
@@ -1021,7 +1023,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.audiotrack_outlined),
-              title: const Text('Audio'),
+              title: Text(AppLocalizations.of(context)!.audioType),
               onTap: () {
                 Navigator.pop(context);
                 _showAudioDialog(context);
@@ -1041,15 +1043,15 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Add PDF', style: AppTheme.headingMedium),
+          title: Text(AppLocalizations.of(context)!.addPdf, style: AppTheme.headingMedium),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleController,
-                decoration: AppTheme.inputDecoration('PDF Title')
+                decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.pdfTitle)
                     .copyWith(
-                  hintText: 'Enter PDF title',
+                  hintText: AppLocalizations.of(context)!.enterPdfTitle,
                   prefixIcon: Icon(Icons.title),
                 ),
               ),
@@ -1061,7 +1063,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        selectedFile?.name ?? 'No file selected',
+                        selectedFile?.name ?? AppLocalizations.of(context)!.noFileSelected,
                         style: AppTheme.bodyMedium,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1085,7 +1087,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                   });
                 },
                 icon: Icon(Icons.upload_file),
-                label: Text('Choose PDF'),
+                label: Text(AppLocalizations.of(context)!.choosePdf),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                 ),
@@ -1127,7 +1129,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : Text('Upload'),
+                      : Text(AppLocalizations.of(context)!.upload),
                 );
               },
             ),
@@ -1145,15 +1147,15 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Add Audio', style: AppTheme.headingMedium),
+          title: Text(AppLocalizations.of(context)!.addAudio, style: AppTheme.headingMedium),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleController,
-                decoration: AppTheme.inputDecoration('Audio Title')
+                decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.audioTitle)
                     .copyWith(
-                  hintText: 'Enter audio title',
+                  hintText: AppLocalizations.of(context)!.enterAudioTitle,
                   prefixIcon: Icon(Icons.title),
                 ),
               ),
@@ -1165,7 +1167,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        selectedFile?.name ?? 'No file selected',
+                        selectedFile?.name ?? AppLocalizations.of(context)!.noFileSelected,
                         style: AppTheme.bodyMedium,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1189,7 +1191,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                   });
                 },
                 icon: Icon(Icons.upload_file),
-                label: Text('Choose Audio'),
+                label: Text(AppLocalizations.of(context)!.chooseAudio),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                 ),
@@ -1211,7 +1213,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                   onPressed: provider.isUploading || selectedFile == null ? null : () async {
                     if (titleController.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please enter a title')),
+                        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseEnterTitle)),
                       );
                       return;
                     }
@@ -1224,7 +1226,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                       );
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Audio uploaded successfully')),
+                        SnackBar(content: Text(AppLocalizations.of(context)!.audioUploadedSuccessfully)),
                       );
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1241,7 +1243,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : Text('Upload'),
+                      : Text(AppLocalizations.of(context)!.upload),
                 );
               },
             ),
@@ -1258,21 +1260,21 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add Video URL', style: AppTheme.headingMedium),
+        title: Text(AppLocalizations.of(context)!.addVideoUrl, style: AppTheme.headingMedium),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleController,
-              decoration: AppTheme.inputDecoration('Video Title')
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.videoTitle)
                 .copyWith(
-                  hintText: 'Enter video title',
+                  hintText: AppLocalizations.of(context)!.enterVideoTitle,
                   prefixIcon: Icon(Icons.title),
                 ),
             ),
             SizedBox(height: 16),
             TextField(
-              decoration: AppTheme.inputDecoration('Enter video URL')
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.enterVideoUrl)
                 .copyWith(
                   hintText: 'https://example.com/video',
                   prefixIcon: Icon(Icons.link),
@@ -1291,7 +1293,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1306,11 +1308,11 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                       );
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Video added successfully')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.videoAddedSuccessfully)),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error adding video: $e')),
+                    SnackBar(content: Text('${AppLocalizations.of(context)!.errorAddingVideo}: $e')),
                   );
                 }
               }
@@ -1318,7 +1320,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
             ),
-            child: Text('Add'),
+            child: Text(AppLocalizations.of(context)!.addButton),
           ),
         ],
       ),
@@ -1334,7 +1336,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           Consumer<LessonProvider>(
             builder: (context, provider, _) => ElevatedButton(
@@ -1376,7 +1378,7 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                       strokeWidth: 2,
                     ),
                   )
-                : Text('Delete'),
+                : Text(AppLocalizations.of(context)!.delete),
             ),
           ),
         ],

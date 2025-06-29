@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../Theme.dart';
 import 'create_quiz_screen.dart';
 import '../provider/quiz_provider.dart' as quiz_provider;
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 class QuizzesTab extends StatefulWidget {
@@ -75,12 +76,12 @@ class _QuizzesTabState extends State<QuizzesTab> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<int>(
-                    decoration: AppTheme.inputDecoration('Select Subject'),
+                    decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.subjects),
                     value: selectedSubjectId,
                     items: [
-                      const DropdownMenuItem<int>(
+                      DropdownMenuItem<int>(
                         value: null,
-                        child: Text('All Subjects'),
+                        child: Text('${AppLocalizations.of(context)!.allQuizzes} ${AppLocalizations.of(context)!.subjects}'),
                       ),
                       ...uniqueSubjects.map((subject) => DropdownMenuItem<int>(
                             value: subject.id,
@@ -100,20 +101,20 @@ class _QuizzesTabState extends State<QuizzesTab> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    decoration: AppTheme.inputDecoration('Quiz Type'),
+                    decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.quizType),
                     value: selectedQuizFilter,
-                    items: const [
+                    items: [
                       DropdownMenuItem<String>(
                         value: 'all',
-                        child: Text('All Quizzes'),
+                        child: Text(AppLocalizations.of(context)!.allQuizzes),
                       ),
                       DropdownMenuItem<String>(
                         value: 'regular',
-                        child: Text('Regular Quizzes'),
+                        child: Text(AppLocalizations.of(context)!.regularQuizzes),
                       ),
                       DropdownMenuItem<String>(
                         value: 'recording',
-                        child: Text('Recording Quizzes (Tasmi3)'),
+                        child: Text(AppLocalizations.of(context)!.recordingQuizzesTasmi3),
                       ),
                     ],
                     onChanged: (value) {
@@ -146,7 +147,7 @@ class _QuizzesTabState extends State<QuizzesTab> {
 
         if (provider.quizzes.isEmpty) {
           return Center(
-            child: Text('No quizzes found', style: AppTheme.bodyLarge),
+            child: Text(AppLocalizations.of(context)!.noDataAvailable, style: AppTheme.bodyLarge),
           );
         }
 
@@ -217,8 +218,8 @@ class _QuizzesTabState extends State<QuizzesTab> {
                   color: Colors.green,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'TASMI3',
+                child: Text(
+                  AppLocalizations.of(context)!.tasmi3,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -232,14 +233,14 @@ class _QuizzesTabState extends State<QuizzesTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text('Subject: ${quiz.subject['name']}'),
+            Text('${AppLocalizations.of(context)!.subjects}: ${quiz.subject['name']}'),
             if (isRecordingQuiz)
               Row(
                 children: [
                   Icon(Icons.mic, size: 14, color: Colors.green.shade600),
                   const SizedBox(width: 4),
                   Text(
-                    'Audio Recording Quiz',
+                    AppLocalizations.of(context)!.audioRecordingAssessment,
                     style: TextStyle(
                       color: Colors.green.shade600,
                       fontSize: 12,

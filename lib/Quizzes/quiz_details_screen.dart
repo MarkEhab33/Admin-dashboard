@@ -155,7 +155,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                           Icon(Icons.mic, size: 16, color: Colors.green.shade600),
                           const SizedBox(width: 4),
                           Text(
-                            'Audio Recording Assessment',
+                            AppLocalizations.of(context)!.audioRecordingAssessment,
                             style: TextStyle(
                               color: Colors.green.shade600,
                               fontSize: 14,
@@ -176,7 +176,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.redo, color: Colors.white),
-                  label: const Text('Add Redo'),
+                  label: Text(AppLocalizations.of(context)!.addRedo),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
@@ -192,7 +192,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.list_alt, color: Colors.white),
-                  label: const Text('View Submissions'),
+                  label: Text(AppLocalizations.of(context)!.viewSubmissions),
                   style: AppTheme.primaryButtonStyle,
                   onPressed: () {
                     Navigator.push(
@@ -223,21 +223,21 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
         final isWideScreen = constraints.maxWidth > 768;
         final cards = <Widget>[
           _buildInfoCard(
-            'Type',
+            AppLocalizations.of(context)!.type,
             quiz.type.toUpperCase(),
             isRecordingQuiz ? Icons.mic : Icons.quiz,
             isRecordingQuiz ? Colors.green : AppTheme.primaryColor,
             isRecordingQuiz,
           ),
           _buildInfoCard(
-            'Grade',
-            '${quiz.grade} points',
+            AppLocalizations.of(context)!.grade,
+            '${quiz.grade} ${AppLocalizations.of(context)!.points}',
             Icons.grade,
             Colors.orange,
             isRecordingQuiz,
           ),
           _buildInfoCard(
-            'Attempts',
+            AppLocalizations.of(context)!.attempts,
             '${quiz.numberOfAttempts}',
             Icons.repeat,
             isRecordingQuiz ? Colors.green : Colors.blue,
@@ -255,8 +255,8 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
           // Only show time limit if it's not null (not a recording quiz)
           if (quiz.timeLimit != null)
             _buildInfoCard(
-              'Time Limit',
-              '${quiz.timeLimit} min',
+              AppLocalizations.of(context)!.timeLimit,
+              '${quiz.timeLimit} ${AppLocalizations.of(context)!.min}',
               Icons.timer,
               Colors.blue,
               isRecordingQuiz,
@@ -264,8 +264,8 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
           // Show special info for recording quizzes
           if (isRecordingQuiz)
             _buildInfoCard(
-              'Format',
-              'Audio Recording',
+              AppLocalizations.of(context)!.format,
+              AppLocalizations.of(context)!.audioRecording,
               Icons.audiotrack,
               Colors.green,
               isRecordingQuiz,
@@ -397,8 +397,8 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                           color: Colors.green,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
-                          'AUDIO',
+                        child: Text(
+                          AppLocalizations.of(context)!.audio,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -446,7 +446,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                         const SizedBox(height: 12),
                         if (question.type == QuestionType.mcq) ...[
                           Text(
-                            'Answer Options:',
+                            AppLocalizations.of(context)!.answerOptions,
                             style: AppTheme.bodyMedium.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppTheme.textSecondaryColor,
@@ -496,8 +496,8 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                                           color: Colors.green,
                                           borderRadius: BorderRadius.circular(4),
                                         ),
-                                        child: const Text(
-                                          'CORRECT',
+                                        child: Text(
+                                          AppLocalizations.of(context)!.correct,
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 10,
@@ -522,7 +522,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                                 const Icon(Icons.check_circle, color: Colors.green, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Correct Answer: ',
+                                  '${AppLocalizations.of(context)!.correctAnswer}: ',
                                   style: AppTheme.bodyMedium.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.green.shade700,
@@ -554,7 +554,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                                     const Icon(Icons.audiotrack, color: Colors.green, size: 20),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Audio Recording Question',
+                                      AppLocalizations.of(context)!.audioRecordingQuestion,
                                       style: AppTheme.bodyMedium.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: Colors.green.shade700,
@@ -569,7 +569,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                                       const Icon(Icons.timer, color: Colors.green, size: 16),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Max Duration: ${question.maxDuration} seconds',
+                                        '${AppLocalizations.of(context)!.maxDuration}: ${question.maxDuration} ${AppLocalizations.of(context)!.seconds}',
                                         style: AppTheme.bodyMedium.copyWith(
                                           color: Colors.green.shade600,
                                         ),
@@ -583,7 +583,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                                       const Icon(Icons.all_inclusive, color: Colors.green, size: 16),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'No time limit for recording',
+                                        AppLocalizations.of(context)!.noTimeLimitForRecording,
                                         style: AppTheme.bodyMedium.copyWith(
                                           color: Colors.green.shade600,
                                         ),
@@ -636,7 +636,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
         context: context,
         builder: (context) => SimpleStudentSelectionDialog(
           students: students,
-          title: 'Select Student for Redo',
+          title: AppLocalizations.of(context)!.selectStudentForRedo,
         ),
       );
 
@@ -679,11 +679,11 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
       final selectedSemester = await showDialog<int>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Select Semester'),
+          title: Text(AppLocalizations.of(context)!.selectSemester),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Please select a semester to add redo for:'),
+              Text('${AppLocalizations.of(context)!.selectSemester}:'),
               SizedBox(height: 16),
               ...semesters.map((semester) => ListTile(
                 title: Text(semester.name),
@@ -695,7 +695,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
           ],
         ),
@@ -747,7 +747,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Adding redo for ${student.name}...'),
+                  Text(AppLocalizations.of(context)!.addingRedo.replaceAll('{studentName}', student.name)),
                 ],
               ),
             ),

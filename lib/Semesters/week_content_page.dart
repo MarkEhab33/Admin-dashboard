@@ -8,6 +8,7 @@ import '../Models/week.dart';
 import '../provider/quiz_provider.dart';
 import '../provider/semesters_provider.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 
 class WeekContentPage extends StatefulWidget {
   final Week week;
@@ -27,8 +28,15 @@ class _WeekContentPageState extends State<WeekContentPage> {
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    // Don't call _fetchData() here - move to didChangeDependencies
+  }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isLoading) {
+      _fetchData();
+    }
   }
 
   Future<void> _fetchData() async {
@@ -48,7 +56,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
       final provider = Provider.of<SemestersProvider>(context, listen: false);
       final lessons = await provider.fetchWeekLessons(widget.week.id);
 
-      // Group lessons by subject name
+      // Group lessons by subject name - we'll handle localization in the UI
       final grouped = <String, List<Lesson>>{};
       for (var lesson in lessons) {
         final subjectName = lesson.subject?.subjectName ?? 'Uncategorized';
@@ -94,12 +102,12 @@ class _WeekContentPageState extends State<WeekContentPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Lesson'),
-        content: const Text('Are you sure you want to remove this lesson from the week?'),
+        title: Text(AppLocalizations.of(context)!.deleteLesson),
+        content: Text(AppLocalizations.of(context)!.deleteLessonConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -112,7 +120,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                 
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Lesson successfully removed from week')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.lessonSuccessfullyRemovedFromWeek)),
                   );
                 }
               } catch (e) {
@@ -127,7 +135,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                 }
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(AppLocalizations.of(context)!.delete, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -156,7 +164,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Add Lesson to Week',
+                    AppLocalizations.of(context)!.addLessonToWeek,
                     style: AppTheme.headingMedium.copyWith(
                       color: AppTheme.primaryColor,
                     ),
@@ -210,7 +218,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'No subjects found',
+                                  AppLocalizations.of(context)!.noSubjectsFound,
                                   style: AppTheme.bodyLarge.copyWith(
                                     color: AppTheme.textSecondaryColor,
                                   ),
@@ -252,7 +260,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                                     ),
                                   ),
                                   title: Text(
-                                    subject.subjectName ?? 'Unnamed Subject',
+                                    subject.subjectName ?? AppLocalizations.of(context)!.unnamedSubject,
                                     style: AppTheme.bodyLarge.copyWith(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -278,7 +286,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                                             padding: const EdgeInsets.all(16),
                                             child: Center(
                                               child: Text(
-                                                'No lessons available',
+                                                AppLocalizations.of(context)!.noLessonsAvailable,
                                                 style: AppTheme.bodyMedium.copyWith(
                                                   color: AppTheme.textSecondaryColor,
                                                 ),
@@ -314,8 +322,8 @@ class _WeekContentPageState extends State<WeekContentPage> {
                                                   
                                                   if (context.mounted) {
                                                     ScaffoldMessenger.of(context).showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text('Lesson added successfully'),
+                                                      SnackBar(
+                                                        content: Text(AppLocalizations.of(context)!.lessonAddedSuccessfully),
                                                         backgroundColor: Colors.green,
                                                       ),
                                                     );
@@ -354,7 +362,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      'Cancel',
+                      AppLocalizations.of(context)!.cancel,
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.textSecondaryColor,
                       ),
@@ -378,7 +386,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Week Quizzes',
+              AppLocalizations.of(context)!.weekQuizzes,
               style: AppTheme.headingMedium,
             ),
 
@@ -403,7 +411,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No quizzes assigned to this week',
+                    AppLocalizations.of(context)!.noQuizzesAssignedToWeek,
                     style: AppTheme.bodyLarge.copyWith(
                       color: Colors.grey.shade600,
                     ),
@@ -457,14 +465,14 @@ class _WeekContentPageState extends State<WeekContentPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                quiz['name'] ?? 'Untitled Quiz',
+                                quiz['name'] ?? AppLocalizations.of(context)!.untitledQuiz,
                                 style: AppTheme.bodyLarge.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                quiz['subjectName'] ?? 'No Subject',
+                                quiz['subjectName'] ?? AppLocalizations.of(context)!.noSubject,
                                 style: AppTheme.bodyMedium.copyWith(
                                   color: AppTheme.textSecondaryColor,
                                 ),
@@ -533,7 +541,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
   }
 
   String _formatQuizType(String? type) {
-    if (type == null) return 'Unknown';
+    if (type == null) return AppLocalizations.of(context)!.unknown;
     return type.split('_').map((word) => 
       word[0].toUpperCase() + word.substring(1).toLowerCase()
     ).join(' ');
@@ -545,12 +553,12 @@ class _WeekContentPageState extends State<WeekContentPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Quiz'),
-        content: const Text('Are you sure you want to remove this quiz from the week?'),
+        title: Text(AppLocalizations.of(context)!.removeQuiz),
+        content: Text(AppLocalizations.of(context)!.removeQuizConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -560,7 +568,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                 Navigator.pop(context);
                 _fetchQuizzes();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Quiz removed successfully')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.quizRemovedSuccessfully)),
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -571,7 +579,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                 );
               }
             },
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            child: Text(AppLocalizations.of(context)!.remove, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -584,7 +592,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Week ${widget.week.weekNo} Content'),
+        title: Text('محتوى اسبوع ${widget.week.weekNo} '),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -617,19 +625,19 @@ class _WeekContentPageState extends State<WeekContentPage> {
             Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
             const SizedBox(height: 16),
             Text(
-              'Error Loading Content',
+              AppLocalizations.of(context)!.errorLoadingContent,
               style: AppTheme.headingMedium.copyWith(color: Colors.red.shade700),
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Unknown error occurred',
+              _error ?? AppLocalizations.of(context)!.unknownErrorOccurred,
               style: AppTheme.bodyMedium.copyWith(color: Colors.red.shade600),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _fetchLessons,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(AppLocalizations.of(context)!.tryAgain),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade100,
                 foregroundColor: Colors.red.shade700,
@@ -649,13 +657,13 @@ class _WeekContentPageState extends State<WeekContentPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Week Lessons',
+              AppLocalizations.of(context)!.weekLessons,
               style: AppTheme.headingMedium,
             ),
             ElevatedButton.icon(
               onPressed: () => _showAddLessonDialog(context),
               icon: const Icon(Icons.add, size: 18, color: Colors.white),
-              label: const Text('Add Lesson'),
+              label: Text(AppLocalizations.of(context)!.addLesson),
               style: AppTheme.primaryButtonStyle,
             ),
           ],
@@ -664,7 +672,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
         if (_groupedLessons.isEmpty)
           Center(
             child: Text(
-              'No lessons assigned to this week',
+              AppLocalizations.of(context)!.noLessonsAssignedToWeek,
               style: AppTheme.bodyLarge.copyWith(
                 color: AppTheme.textSecondaryColor,
               ),
@@ -739,7 +747,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  '${_getTotalLessonsCount()} Lessons in ${_groupedLessons.length} Subjects',
+                  '${_getTotalLessonsCount()} ${_getTotalLessonsCount() == 1 ? AppLocalizations.of(context)!.singleLesson : AppLocalizations.of(context)!.multipleLessons} in ${_groupedLessons.length} ${_groupedLessons.length == 1 ? AppLocalizations.of(context)!.subject : AppLocalizations.of(context)!.subjects}',
                   style: AppTheme.bodyLarge.copyWith(
                     color: Colors.white.withOpacity(0.9),
                   ),
@@ -824,7 +832,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        subjectName,
+                        subjectName == 'Uncategorized' ? AppLocalizations.of(context)!.uncategorized : subjectName,
                         style: AppTheme.headingMedium.copyWith(
                           color: AppTheme.primaryColor,
                         ),
@@ -849,7 +857,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${lessons.length} ${lessons.length == 1 ? 'Lesson' : 'Lessons'}',
+                    '${lessons.length} ${lessons.length == 1 ? AppLocalizations.of(context)!.singleLesson : AppLocalizations.of(context)!.multipleLessons}',
                     style: AppTheme.bodyMedium.copyWith(
                       color: AppTheme.primaryColor,
                       fontWeight: FontWeight.bold,

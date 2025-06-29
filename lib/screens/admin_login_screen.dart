@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 import '../provider/admin_auth_provider.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -83,7 +84,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Aripsalin Admin Dashboard',
+                          AppLocalizations.of(context)!.aripsalinAdminDashboard,
                           style: AppTheme.headingLarge.copyWith(
                             color: AppTheme.primaryColor,
                             fontSize: 24,
@@ -92,7 +93,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Sign in to access the admin panel',
+                          AppLocalizations.of(context)!.signInToAccessAdminPanel,
                           style: AppTheme.bodyMedium.copyWith(
                             color: AppTheme.textSecondaryColor,
                           ),
@@ -104,8 +105,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         TextFormField(
                           controller: _usernameController,
                           decoration: InputDecoration(
-                            labelText: 'Username',
-                            hintText: 'Enter your username',
+                            labelText: AppLocalizations.of(context)!.username,
+                            hintText: AppLocalizations.of(context)!.enterYourUsername,
                             prefixIcon: const Icon(Icons.person),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -113,7 +114,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your username';
+                              return AppLocalizations.of(context)!.pleaseEnterUsername;
                             }
                             return null;
                           },
@@ -126,8 +127,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
-                            labelText: 'Password',
-                            hintText: 'Enter your password',
+                            labelText: AppLocalizations.of(context)!.password,
+                            hintText: AppLocalizations.of(context)!.enterYourPassword,
                             prefixIcon: const Icon(Icons.lock),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -147,7 +148,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
+                              return AppLocalizations.of(context)!.pleaseEnterPassword;
                             }
                             return null;
                           },
@@ -168,7 +169,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               },
                             ),
                             Text(
-                              'Remember me',
+                              AppLocalizations.of(context)!.rememberMe,
                               style: AppTheme.bodyMedium,
                             ),
                           ],
@@ -235,7 +236,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 elevation: 2,
                               ),
                               child: authProvider.isLoading
-                                  ? const Row(
+                                  ? Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         SizedBox(
@@ -249,11 +250,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                           ),
                                         ),
                                         SizedBox(width: 12),
-                                        Text('Signing in...'),
+                                        Text(AppLocalizations.of(context)!.signingIn),
                                       ],
                                     )
                                   : Text(
-                                      'Sign In',
+                                      AppLocalizations.of(context)!.signIn,
                                       style: AppTheme.bodyLarge.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
@@ -266,7 +267,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                         // Footer
                         Text(
-                          'Aripsalin Admin Dashboard v1.0',
+                          AppLocalizations.of(context)!.aripsalinAdminDashboardVersion,
                           style: AppTheme.bodyMedium.copyWith(
                             color: AppTheme.textSecondaryColor,
                           ),

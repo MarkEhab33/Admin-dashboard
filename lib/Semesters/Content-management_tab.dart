@@ -5,6 +5,7 @@ import '../Models/semester_template.dart';
 import '../provider/semester_templates_provider.dart';
 import '../provider/semesters_provider.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 import 'semester-page.dart';
 
 class ContentManagementTab extends StatefulWidget {
@@ -53,7 +54,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Add New Semester', style: AppTheme.headingMedium),
+              title: Text(AppLocalizations.of(context)!.addNewSemester, style: AppTheme.headingMedium),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -69,13 +70,13 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                         }
 
                         return DropdownButtonFormField<SemesterTemplate>(
-                          decoration: AppTheme.inputDecoration('Select Template'),
+                          decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.selectTemplate),
                           value: selectedTemplate,
-                          hint: Text('Select a semester template'),
+                          hint: Text(AppLocalizations.of(context)!.selectSemesterTemplate),
                           items: templateProvider.semesters.map((template) {
                             return DropdownMenuItem(
                               value: template,
-                              child: Text('Semester ${template.semesterNo}'),
+                              child: Text('${AppLocalizations.of(context)!.semesterNumber} ${template.semesterNo}'),
                             );
                           }).toList(),
                           onChanged: (value) {
@@ -98,7 +99,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                     // Year Field
                     TextField(
                       controller: yearController,
-                      decoration: AppTheme.inputDecoration('Year'),
+                      decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.academicYear),
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 16),
@@ -106,7 +107,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                     // Start Date Field
                     TextField(
                       controller: startDateController,
-                      decoration: AppTheme.inputDecoration('Start Date').copyWith(
+                      decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.startDate).copyWith(
                         suffixIcon: Icon(Icons.calendar_today),
                       ),
                       readOnly: true,
@@ -148,14 +149,14 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                     // End Date Field
                     TextField(
                       controller: endDateController,
-                      decoration: AppTheme.inputDecoration('End Date').copyWith(
+                      decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.endDate).copyWith(
                         suffixIcon: Icon(Icons.calendar_today),
                       ),
                       readOnly: true,
                       onTap: () async {
                         if (startDate == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Please select start date first')),
+                            SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectStartDateFirst)),
                           );
                           return;
                         }
@@ -193,7 +194,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Cancel'),
+                  child: Text(AppLocalizations.of(context)!.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -203,7 +204,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                         startDate == null ||
                         endDate == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please fill all fields')),
+                        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseFillAllFields)),
                       );
                       return;
                     }
@@ -218,17 +219,21 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                             endDate: endDate!,
                           );
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Semester created successfully')),
-                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(AppLocalizations.of(context)!.semesterCreatedSuccessfully)),
+                        );
+                      }
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
-                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      }
                     }
                   },
                   style: AppTheme.primaryButtonStyle,
-                  child: Text('Create'),
+                  child: Text(AppLocalizations.of(context)!.create),
                 ),
               ],
             );
@@ -268,7 +273,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Semesters Management',
+                      AppLocalizations.of(context)!.semestersManagement,
                       style: AppTheme.headingLarge,
                     ),
                     Row(
@@ -291,12 +296,12 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                                 ),
                                 child: DropdownButton<int?>(
                                   value: selectedYear,
-                                  hint: Text('All Years', style: AppTheme.bodyMedium),
+                                  hint: Text(AppLocalizations.of(context)!.allYears, style: AppTheme.bodyMedium),
                                   underline: Container(),
                                   items: [
                                     DropdownMenuItem<int?>(
                                       value: null,
-                                      child: Text('All Years', style: AppTheme.bodyMedium),
+                                      child: Text(AppLocalizations.of(context)!.allYears, style: AppTheme.bodyMedium),
                                     ),
                                     ...availableYears.map((year) => DropdownMenuItem<int?>(
                                       value: year,
@@ -316,7 +321,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                         ElevatedButton.icon(
                           onPressed: () => _showAddSemesterDialog(),
                           icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                          label: const Text('Add New Semester'),
+                          label: Text(AppLocalizations.of(context)!.addNewSemester),
                           style: AppTheme.primaryButtonStyle,
                         ),
                       ],
@@ -342,12 +347,12 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                         ),
                         child: Row(
                           children: [
-                            _buildHeaderCell('Semester Name', 2),
-                            _buildHeaderCell('Year', 1),
-                            _buildHeaderCell('Start Date', 2),
-                            _buildHeaderCell('End Date', 2),
-                            _buildHeaderCell('Subjects', 1),
-                            _buildHeaderCell('Students', 1),
+                            _buildHeaderCell(AppLocalizations.of(context)!.semesterName, 2),
+                            _buildHeaderCell(AppLocalizations.of(context)!.academicYear, 1),
+                            _buildHeaderCell(AppLocalizations.of(context)!.startDate, 2),
+                            _buildHeaderCell(AppLocalizations.of(context)!.endDate, 2),
+                            _buildHeaderCell(AppLocalizations.of(context)!.subjects, 1),
+                            _buildHeaderCell(AppLocalizations.of(context)!.students, 1),
                             const SizedBox(width: 60),
                           ],
                         ),
@@ -356,7 +361,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                         Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            'No semesters found for the selected year',
+                            AppLocalizations.of(context)!.noSemestersFoundForSelectedYear,
                             style: AppTheme.bodyLarge,
                           ),
                         )
@@ -436,7 +441,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Current',
+                        AppLocalizations.of(context)!.current,
                         style: AppTheme.bodyMedium.copyWith(
                           color: AppTheme.primaryColor,
                           fontWeight: FontWeight.bold,

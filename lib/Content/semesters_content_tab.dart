@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/semester_templates_provider.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 import 'Semester_Template_Screen.dart';
 
 class SemestersContentTab extends StatefulWidget {
@@ -26,7 +27,7 @@ class _SemestersContentTabState extends State<SemestersContentTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Semesters', style: AppTheme.headingMedium.copyWith(color: Colors.white)),
+        title: Text(AppLocalizations.of(context)!.semesters, style: AppTheme.headingMedium.copyWith(color: Colors.white)),
         backgroundColor: AppTheme.primaryColor,
       ),
       body: Column(
@@ -35,7 +36,7 @@ class _SemestersContentTabState extends State<SemestersContentTab> {
             padding: const EdgeInsets.symmetric(vertical: 20.0),
             child: Center(
               child: Text(
-                'Add New Semester Template',
+                AppLocalizations.of(context)!.addNewSemesterTemplate,
                 style: AppTheme.headingMedium,
               ),
             ),
@@ -45,7 +46,7 @@ class _SemestersContentTabState extends State<SemestersContentTab> {
             child: ElevatedButton(
               onPressed: showAddSemesterDialog,
               style: AppTheme.primaryButtonStyle,
-              child: const Text('Add Semester'),
+              child: Text(AppLocalizations.of(context)!.addSemester),
             ),
           ),
           Expanded(
@@ -97,19 +98,19 @@ class _SemestersContentTabState extends State<SemestersContentTab> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add New Semester', style: AppTheme.headingMedium),
+          title: Text(AppLocalizations.of(context)!.addSemester, style: AppTheme.headingMedium),
           content: Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: TextField(
               controller: semesterController,
-              decoration: AppTheme.inputDecoration('Enter Semester Number'),
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.enterSemesterNumber),
               keyboardType: TextInputType.number,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel', style: TextStyle(color: AppTheme.primaryColor)),
+              child: Text(AppLocalizations.of(context)!.cancel, style: TextStyle(color: AppTheme.primaryColor)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -117,7 +118,7 @@ class _SemestersContentTabState extends State<SemestersContentTab> {
                 Navigator.of(context).pop();
               },
               style: AppTheme.primaryButtonStyle,
-              child: const Text('Add'),
+              child: Text(AppLocalizations.of(context)!.addButton),
             ),
           ],
         );

@@ -65,19 +65,22 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
       await provider.verifyStudent(widget.student.id, action);
       
       if (!mounted) return;
-      
+
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            action == 'approve' 
-              ? 'Student approved successfully'
-              : 'Student declined successfully'
+      if (mounted) {
+        final localizations = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              action == 'approve'
+                ? localizations.studentApprovedSuccessfully
+                : localizations.studentDeclinedSuccessfully
+            ),
+            backgroundColor: action == 'approve' ? Colors.green : Colors.red,
+            duration: Duration(seconds: 2),
           ),
-          backgroundColor: action == 'approve' ? Colors.green : Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
+        );
+      }
       
       // Return to previous screen
       Navigator.pop(context);
@@ -116,7 +119,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               ),
               SizedBox(width: 10),
               Text(
-                action == 'approve' ? 'Confirm Approval' : 'Confirm Decline',
+                action == 'approve' ? AppLocalizations.of(context)!.confirmApproval : AppLocalizations.of(context)!.confirmDecline,
                 style: AppTheme.headingMedium,
               ),
             ],
@@ -126,17 +129,17 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Student Details:',
+                AppLocalizations.of(context)!.studentDetailsColon,
                 style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
-              Text('Name: ${widget.student.user.name}'),
-              Text('ID: ${widget.student.studentCode}'),
+              Text('${AppLocalizations.of(context)!.studentName}: ${widget.student.user.name}'),
+              Text('${AppLocalizations.of(context)!.studentId}: ${widget.student.studentCode}'),
               SizedBox(height: 16),
               Text(
                 action == 'approve'
-                    ? 'Are you sure you want to approve this student request?'
-                    : 'Are you sure you want to decline this student request? This action cannot be undone.',
+                    ? AppLocalizations.of(context)!.approveStudentConfirmation
+                    : AppLocalizations.of(context)!.declineStudentConfirmation,
                 style: AppTheme.bodyMedium,
               ),
             ],
@@ -146,7 +149,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               onPressed: _isProcessing 
                 ? null 
                 : () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.grey,
               ),
@@ -174,7 +177,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : Text(action == 'approve' ? 'Approve' : 'Decline'),
+                : Text(action == 'approve' ? AppLocalizations.of(context)!.approve : AppLocalizations.of(context)!.decline),
             ),
           ],
         );
@@ -186,7 +189,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Student Details', 
+        title: Text(AppLocalizations.of(context)!.studentDetails,
           style: AppTheme.headingMedium.copyWith(color: Colors.white)
         ),
         backgroundColor: AppTheme.primaryColor,
@@ -324,7 +327,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         if (!widget.student.isVerified) ...[
           SizedBox(height: 20),
           Text(
-            'Pending Verification',
+            AppLocalizations.of(context)!.pendingVerification,
             style: AppTheme.bodyMedium.copyWith(
               color: Colors.orange,
               fontStyle: FontStyle.italic,
@@ -343,19 +346,19 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              buildSectionTitle('Academic Information'),
+              buildSectionTitle(AppLocalizations.of(context)!.academicInformation),
               buildInfoGrid([
-                {'title': 'Year', 'value': widget.student.semesters.isNotEmpty ? widget.student.semesters.first.year.toString() : 'N/A'},
-                {'title': 'Semester', 'value': widget.student.semesters.isNotEmpty ? widget.student.semesters.first.name : 'N/A'},
-                {'title': 'Church', 'value': widget.student.church},
+                {'title': AppLocalizations.of(context)!.academicYear, 'value': widget.student.semesters.isNotEmpty ? widget.student.semesters.first.year.toString() : AppLocalizations.of(context)!.notAvailable},
+                {'title': AppLocalizations.of(context)!.currentSemesterName, 'value': widget.student.semesters.isNotEmpty ? widget.student.semesters.first.name : AppLocalizations.of(context)!.notAvailable},
+                {'title': AppLocalizations.of(context)!.church, 'value': widget.student.church},
               ], crossAxisCount),
               SizedBox(height: 30),
-              buildSectionTitle('Personal Information'),
+              buildSectionTitle(AppLocalizations.of(context)!.personalInformation),
               buildInfoGrid([
-                {'title': 'Date of Birth', 'value': DateFormat('MMM d, y').format(widget.student.user.birthday)},
-                {'title': 'Email', 'value': widget.student.user.email},
-                {'title': 'Phone', 'value': widget.student.user.phone},
-                {'title': 'Address', 'value': widget.student.city},
+                {'title': AppLocalizations.of(context)!.dateOfBirth, 'value': DateFormat('MMM d, y').format(widget.student.user.birthday)},
+                {'title': AppLocalizations.of(context)!.emailAddress, 'value': widget.student.user.email},
+                {'title': AppLocalizations.of(context)!.phoneContact, 'value': widget.student.user.phone},
+                {'title': AppLocalizations.of(context)!.studentAddress, 'value': widget.student.city},
               ], crossAxisCount),
               SizedBox(height: 20),
               Row(
@@ -385,7 +388,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                       );
                     },
                     child: Text(
-                      'View Tazkia',
+                      AppLocalizations.of(context)!.viewTazkia,
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.primaryColor,
                         decoration: TextDecoration.underline,
@@ -417,7 +420,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                       );
                     },
                     child: Text(
-                      'View ID Front',
+                      AppLocalizations.of(context)!.viewIdFront,
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.primaryColor,
                         decoration: TextDecoration.underline,
@@ -449,7 +452,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                       );
                     },
                     child: Text(
-                      'View ID Back',
+                      AppLocalizations.of(context)!.viewIdBack,
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.primaryColor,
                         decoration: TextDecoration.underline,
@@ -460,11 +463,11 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               ),
               if (widget.student.qualifications.isNotEmpty) ...[
                 SizedBox(height: 30),
-                buildSectionTitle('Additional Information'),
+                buildSectionTitle(AppLocalizations.of(context)!.additionalInformation),
                 buildInfoGrid([
-                  {'title': 'Qualifications', 'value': widget.student.qualifications},
-                  {'title': 'Church Service', 'value': widget.student.churchService},
-                  {'title': 'Deacon Level', 'value': widget.student.deaconLevel},
+                  {'title': AppLocalizations.of(context)!.studentQualifications, 'value': widget.student.qualifications},
+                  {'title': AppLocalizations.of(context)!.churchService, 'value': widget.student.churchService},
+                  {'title': AppLocalizations.of(context)!.deaconLevel, 'value': widget.student.deaconLevel},
                 ], crossAxisCount),
               ],
               // Add grades section for verified students
@@ -552,7 +555,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     final bool isVerified = widget.student.isVerified ?? false;
     final statusColor = isVerified ? Colors.green : Colors.orange;
     final backgroundColor = isVerified ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1);
-    final statusText = isVerified ? 'Verified' : 'Pending Approval';
+    final statusText = isVerified ? AppLocalizations.of(context)!.verifiedStatus : AppLocalizations.of(context)!.pendingApproval;
     final IconData statusIcon = isVerified ? Icons.verified_user : Icons.pending_outlined;
 
     return Container(
@@ -876,7 +879,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             Expanded(
               child: ElevatedButton.icon(
                 icon: Icon(Icons.close),
-                label: Text('Decline'),
+                label: Text(AppLocalizations.of(context)!.decline),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red.shade50,
                   foregroundColor: Colors.red,
@@ -895,7 +898,7 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             Expanded(
               child: ElevatedButton.icon(
                 icon: Icon(Icons.check),
-                label: Text('Approve'),
+                label: Text(AppLocalizations.of(context)!.approve),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade50,
                   foregroundColor: Colors.green,

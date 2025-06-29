@@ -6,6 +6,7 @@ import 'package:admin_dashboard/provider/quiz_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 
 class GradesTab extends StatefulWidget {
   @override
@@ -88,12 +89,12 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
     }
 
     return DropdownButtonFormField<int>(
-      decoration: AppTheme.inputDecoration('Select Quiz'),
+      decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.quizDetails),
       value: selectedQuizId,
       items: [
-        const DropdownMenuItem<int>(
+        DropdownMenuItem<int>(
           value: null,
-          child: Text('Select a quiz'),
+          child: Text(AppLocalizations.of(context)!.selectOption),
         ),
         ...quizzes.map((quiz) => DropdownMenuItem<int>(
               value: quiz.id,
@@ -116,8 +117,8 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                         color: Colors.green,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
-                        'TASMI3',
+                      child: Text(
+                        AppLocalizations.of(context)!.tasmi3,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 8,

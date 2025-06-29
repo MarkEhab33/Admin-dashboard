@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../Models/semester.dart';
 import '../Models/week.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'week_content_page.dart';
 
@@ -55,9 +56,9 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
         backgroundColor: AppTheme.primaryColor,
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Weeks'),
-            Tab(text: 'Students')
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.weeks),
+            Tab(text: AppLocalizations.of(context)!.students)
           ],
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
@@ -80,13 +81,13 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Weeks',
+                        AppLocalizations.of(context)!.weeks,
                         style: AppTheme.headingMedium,
                       ),
                       ElevatedButton.icon(
                         onPressed: () => _showAddWeekDialog(context),
                         icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                        label: const Text('Add Week'),
+                        label: Text(AppLocalizations.of(context)!.addWeek),
                         style: AppTheme.primaryButtonStyle,
                       ),
                     ],
@@ -99,7 +100,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                             child: Padding(
                               padding: const EdgeInsets.all(24.0),
                               child: Text(
-                                'No weeks available for this semester',
+                                AppLocalizations.of(context)!.noWeeksAvailableForSemester,
                                 style: AppTheme.bodyLarge,
                               ),
                             ),
@@ -123,13 +124,13 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Students',
+                        AppLocalizations.of(context)!.students,
                         style: AppTheme.headingMedium,
                       ),
                       ElevatedButton.icon(
                         onPressed: () => _showAddStudentDialog(context),
                         icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                        label: const Text('Add Student'),
+                        label: Text(AppLocalizations.of(context)!.addStudent),
                         style: AppTheme.primaryButtonStyle,
                       ),
                     ],
@@ -168,32 +169,32 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Semester Overview',
+            AppLocalizations.of(context)!.semesterOverview,
             style: AppTheme.headingLarge,
           ),
           SizedBox(height: 20),
           Row(
             children: [
               _buildInfoCard(
-                'Subjects',
+                AppLocalizations.of(context)!.subjects,
                 '${widget.semester.semesterTemplate.subjects.length}',
                 Icons.book,
               ),
               SizedBox(width: 16),
               _buildInfoCard(
-                'Students',
+                AppLocalizations.of(context)!.students,
                 '${widget.semester.students.length}',
                 Icons.people,
               ),
               SizedBox(width: 16),
               _buildInfoCard(
-                'Start Date',
+                AppLocalizations.of(context)!.startDate,
                 _formatDate(widget.semester.startDate),
                 Icons.calendar_today,
               ),
               SizedBox(width: 16),
               _buildInfoCard(
-                'End Date',
+                AppLocalizations.of(context)!.endDate,
                 _formatDate(widget.semester.endDate),
                 Icons.event,
               ),
@@ -279,7 +280,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                 ),
               ),
               title: Text(
-                'Week ${week.weekNo}',
+                '${AppLocalizations.of(context)!.week} ${week.weekNo}',
                 style: AppTheme.headingMedium,
               ),
               subtitle: Text(
@@ -310,7 +311,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     try {
       return DateFormat('MMM d, y').format(date);
     } catch (e) {
-      return 'Invalid date';
+      return AppLocalizations.of(context)!.invalidDate;
     }
   }
 
@@ -320,7 +321,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
         padding: const EdgeInsets.all(24.0),
         child: Center(
           child: Text(
-            'No students enrolled in this semester',
+            AppLocalizations.of(context)!.noStudentsEnrolledInSemester,
             style: AppTheme.bodyLarge,
             textAlign: TextAlign.center,
           ),
@@ -355,7 +356,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
             children: [
               IconButton(
                 icon: Icon(Icons.assessment, color: AppTheme.primaryColor),
-                tooltip: 'View Grades',
+                tooltip: AppLocalizations.of(context)!.viewGrades,
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -370,7 +371,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
               ),
               IconButton(
                 icon: Icon(Icons.remove_circle_outline, color: Colors.red),
-                tooltip: 'Remove Student',
+                tooltip: AppLocalizations.of(context)!.removeStudent,
                 onPressed: () => _showRemoveStudentDialog(context, student),
               ),
             ],
@@ -401,7 +402,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add Student to Semester'),
+        title: Text(AppLocalizations.of(context)!.addStudentToSemester),
         content: Container(
           width: 400,
           child: Column(
@@ -410,7 +411,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
               TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                  labelText: 'Search students',
+                  labelText: AppLocalizations.of(context)!.searchStudents,
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder(),
                 ),
@@ -444,7 +445,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
 
                     if (students.isEmpty) {
                       return Center(
-                        child: Text('No students found'),
+                        child: Text(AppLocalizations.of(context)!.noStudentsFoundInSearch),
                       );
                     }
 
@@ -480,7 +481,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
 
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Student added successfully'),
+                                  content: Text(AppLocalizations.of(context)!.studentAddedSuccessfully),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -505,7 +506,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
         ],
       ),
@@ -516,14 +517,14 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Remove Student'),
+        title: Text(AppLocalizations.of(context)!.removeStudentTitle),
         content: Text(
-          'Are you sure you want to remove ${student.user.name} from this semester?'
+          '${AppLocalizations.of(context)!.removeStudentConfirmation}\n\n${AppLocalizations.of(context)!.studentName}: ${student.user.name}'
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -542,7 +543,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Student removed successfully'),
+                    content: Text(AppLocalizations.of(context)!.studentRemovedSuccessfully),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -556,7 +557,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
               }
             },
             child: Text(
-              'Remove',
+              AppLocalizations.of(context)!.remove,
               style: TextStyle(color: Colors.red),
             ),
           ),
@@ -575,19 +576,19 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add New Week', style: AppTheme.headingMedium),
+        title: Text(AppLocalizations.of(context)!.addNewWeek, style: AppTheme.headingMedium),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _weekNoController,
-              decoration: AppTheme.inputDecoration('Week Number'),
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.weekNumber),
               keyboardType: TextInputType.number,
             ),
             SizedBox(height: 16),
             TextFormField(
               controller: _startDateController,
-              decoration: AppTheme.inputDecoration('Start Date').copyWith(
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.startDate).copyWith(
                 suffixIcon: Icon(Icons.calendar_today),
               ),
               readOnly: true,
@@ -628,14 +629,14 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
             SizedBox(height: 16),
             TextFormField(
               controller: _endDateController,
-              decoration: AppTheme.inputDecoration('End Date').copyWith(
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.endDate).copyWith(
                 suffixIcon: Icon(Icons.calendar_today),
               ),
               readOnly: true,
               onTap: () async {
                 if (startDate == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Please select start date first')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectStartDateFirst)),
                   );
                   return;
                 }
@@ -681,7 +682,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
               _clearControllers();
               Navigator.pop(context);
             },
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -713,21 +714,21 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
 
                   // Show success message
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Week added successfully')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.weekAddedSuccessfully)),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to add week: $e')),
+                    SnackBar(content: Text('${AppLocalizations.of(context)!.failedToAddWeek}: $e')),
                   );
                 }
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Please fill all fields')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.pleaseFillAllFields)),
                 );
               }
             },
             style: AppTheme.primaryButtonStyle,
-            child: Text('Add Week'),
+            child: Text(AppLocalizations.of(context)!.addWeek),
           ),
         ],
       ),
@@ -754,19 +755,19 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit Week', style: AppTheme.headingMedium),
+        title: Text(AppLocalizations.of(context)!.editWeek, style: AppTheme.headingMedium),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: weekNoController,
-              decoration: AppTheme.inputDecoration('Week Number'),
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.weekNumber),
               keyboardType: TextInputType.number,
             ),
             SizedBox(height: 16),
             TextFormField(
               controller: startDateController,
-              decoration: AppTheme.inputDecoration('Start Date').copyWith(
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.startDate).copyWith(
                 suffixIcon: Icon(Icons.calendar_today),
               ),
               readOnly: true,
@@ -805,14 +806,14 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
             SizedBox(height: 16),
             TextFormField(
               controller: endDateController,
-              decoration: AppTheme.inputDecoration('End Date').copyWith(
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.endDate).copyWith(
                 suffixIcon: Icon(Icons.calendar_today),
               ),
               readOnly: true,
               onTap: () async {
                 if (startDate == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Please select start date first')),
+                    SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectStartDateFirst)),
                   );
                   return;
                 }
@@ -849,7 +850,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -857,7 +858,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                   startDate == null ||
                   endDate == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Please fill all fields')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.pleaseFillAllFields)),
                 );
                 return;
               }
@@ -887,16 +888,16 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
 
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Week updated successfully')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.weekUpdatedSuccessfully)),
                 );
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to update week: $e')),
+                  SnackBar(content: Text('${AppLocalizations.of(context)!.failedToUpdateWeek}: $e')),
                 );
               }
             },
             style: AppTheme.primaryButtonStyle,
-            child: Text('Update'),
+            child: Text(AppLocalizations.of(context)!.update),
           ),
         ],
       ),
