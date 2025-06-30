@@ -459,13 +459,45 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                       ),
                     ),
                   ),
+                  SizedBox(width: 20),
+                  if (widget.student.qualifications.isNotEmpty)
+                    TextButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Dialog(
+                              child: InteractiveViewer(
+                                child: Image.network(
+                                  widget.student.qualifications,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 200,
+                                      height: 300,
+                                      color: Colors.grey.shade200,
+                                      child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      child: Text(
+                        AppLocalizations.of(context)!.viewQualifications,
+                        style: AppTheme.bodyMedium.copyWith(
+                          color: AppTheme.primaryColor,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                 ],
               ),
-              if (widget.student.qualifications.isNotEmpty) ...[
+              if (widget.student.churchService.isNotEmpty || widget.student.deaconLevel.isNotEmpty) ...[
                 SizedBox(height: 30),
                 buildSectionTitle(AppLocalizations.of(context)!.additionalInformation),
                 buildInfoGrid([
-                  {'title': AppLocalizations.of(context)!.studentQualifications, 'value': widget.student.qualifications},
                   {'title': AppLocalizations.of(context)!.churchService, 'value': widget.student.churchService},
                   {'title': AppLocalizations.of(context)!.deaconLevel, 'value': widget.student.deaconLevel},
                 ], crossAxisCount),

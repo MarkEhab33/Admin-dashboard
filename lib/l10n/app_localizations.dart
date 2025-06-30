@@ -72,6 +72,7 @@ abstract class AppLocalizations {
   String get viewTazkia;
   String get viewIdFront;
   String get viewIdBack;
+  String get viewQualifications;
   String get additionalInformation;
   String get studentQualifications;
   String get churchService;
@@ -497,6 +498,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get viewIdBack => 'عرض الهوية الخلفية';
+
+  @override
+  String get viewQualifications => 'عرض المؤهلات';
 
   @override
   String get additionalInformation => 'معلومات إضافية';
@@ -1331,6 +1335,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewIdBack => 'View ID Back';
+
+  @override
+  String get viewQualifications => 'View Qualifications';
 
   @override
   String get additionalInformation => 'Additional Information';
