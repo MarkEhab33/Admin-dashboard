@@ -92,23 +92,7 @@ class MyApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: Consumer<AdminAuthProvider>(
-            builder: (context, authProvider, child) {
-              print('=== MAIN APP AUTH STATE ===');
-              print('Auth status: ${authProvider.status}');
-              print('Is authenticated: ${authProvider.isAuthenticated}');
-
-              switch (authProvider.status) {
-                case AuthStatus.unknown:
-                case AuthStatus.loading:
-                  return const SplashScreen();
-                case AuthStatus.authenticated:
-                  return DashboardScreen();
-                case AuthStatus.unauthenticated:
-                  return const AdminLoginScreen();
-              }
-            },
-          ),
+          home: DashboardScreen(),
         );
       },
     );

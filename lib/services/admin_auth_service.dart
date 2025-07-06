@@ -99,10 +99,10 @@ class AdminAuthService {
     try {
       print('=== ADMIN LOGIN ATTEMPT ===');
       print('Username: $username');
-      print('Login URL: ${Globals.baseUrl}/admin/auth/login');
+      print('Login URL: ${Globals.getApiUrl('/admin/auth/login')}');
 
       final response = await http.post(
-        Uri.parse('${Globals.baseUrl}/admin/auth/login'),
+        Uri.parse(Globals.getApiUrl('/admin/auth/login')),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -171,10 +171,10 @@ class AdminAuthService {
       }
 
       print('=== GETTING ADMIN INFO ===');
-      print('URL: ${Globals.baseUrl}/admin/auth/me');
+      print('URL: ${Globals.getApiUrl('/admin/auth/me')}');
 
       final response = await http.get(
-        Uri.parse('${Globals.baseUrl}/admin/auth/me'),
+        Uri.parse(Globals.getApiUrl('/admin/auth/me')),
         headers: {
           'Authorization': 'Bearer $accessToken',
           'Content-Type': 'application/json',
@@ -221,10 +221,10 @@ class AdminAuthService {
       }
 
       print('=== REFRESHING TOKEN ===');
-      print('URL: ${Globals.baseUrl}/admin/auth/refresh');
+      print('URL: ${Globals.getApiUrl('/admin/auth/refresh')}');
 
       final response = await http.post(
-        Uri.parse('${Globals.baseUrl}/admin/auth/refresh'),
+        Uri.parse(Globals.getApiUrl('/admin/auth/refresh')),
         headers: {
           'Authorization': 'Bearer $refreshTokenValue',
           'Content-Type': 'application/json',
@@ -265,10 +265,10 @@ class AdminAuthService {
       print('=== ADMIN LOGOUT ===');
       
       if (accessToken != null) {
-        print('URL: ${Globals.baseUrl}/admin/auth/logout');
-        
+        print('URL: ${Globals.getApiUrl('/admin/auth/logout')}');
+
         final response = await http.post(
-          Uri.parse('${Globals.baseUrl}/admin/auth/logout'),
+          Uri.parse(Globals.getApiUrl('/admin/auth/logout')),
           headers: {
             'Authorization': 'Bearer $accessToken',
             'Content-Type': 'application/json',
