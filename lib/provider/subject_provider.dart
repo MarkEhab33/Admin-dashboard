@@ -33,7 +33,7 @@ class LessonProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final url = Uri.parse('${Globals.baseUrl}/subject/$subjectId/lessons');
+    final url = Uri.parse(Globals.getApiUrl('/subject/$subjectId/lessons'));
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

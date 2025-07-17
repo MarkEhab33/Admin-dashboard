@@ -333,6 +333,11 @@ abstract class AppLocalizations {
   String get noGradesAvailable;
   String get semester;
   String get overallGrade;
+
+  // Coptic Keyboard
+  String get copticKeyboard;
+  String get showCopticKeyboard;
+  String get hideCopticKeyboard;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -1214,6 +1219,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get overallGrade => 'الدرجة الإجمالية';
+
+  // Coptic Keyboard
+  @override
+  String get copticKeyboard => 'لوحة المفاتيح القبطية';
+
+  @override
+  String get showCopticKeyboard => 'إظهار لوحة المفاتيح القبطية';
+
+  @override
+  String get hideCopticKeyboard => 'إخفاء لوحة المفاتيح القبطية';
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -2072,4 +2087,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get overallGrade => 'Overall Grade';
+
+  // Coptic Keyboard
+  @override
+  String get copticKeyboard => 'Coptic Keyboard';
+
+  @override
+  String get showCopticKeyboard => 'Show Coptic Keyboard';
+
+  @override
+  String get hideCopticKeyboard => 'Hide Coptic Keyboard';
 }

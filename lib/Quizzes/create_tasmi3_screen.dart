@@ -6,6 +6,7 @@ import '../Models/Subject_Template.dart';
 import '../provider/quiz_provider.dart';
 import '../provider/subcategory_provider.dart';
 import '../widgets/subcategory_selector.dart';
+import '../widgets/coptic_text_field.dart';
 import '../Theme.dart';
 
 class CreateTasmi3Screen extends StatefulWidget {
@@ -646,9 +647,9 @@ class _TasmiQuestionDialogState extends State<TasmiQuestionDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
+              QuizCopticTextField(
                 controller: _questionController,
-                decoration: AppTheme.inputDecoration('Question'),
+                labelText: 'Question',
                 maxLines: 3,
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),

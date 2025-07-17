@@ -10,6 +10,7 @@ import '../provider/quiz_provider.dart';
 import '../provider/subject_provider.dart';
 import '../provider/subcategory_provider.dart';
 import '../widgets/subcategory_selector.dart';
+import '../widgets/coptic_text_field.dart';
 
 class CreateQuizScreen extends StatefulWidget {
   final QuizDetails? quizToEdit;
@@ -865,10 +866,11 @@ class _QuestionDialogState extends State<QuestionDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              QuizCopticTextField(
                 controller: _questionController,
-                decoration: AppTheme.inputDecoration('Question'),
+                labelText: 'Question',
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                maxLines: 3,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -881,9 +883,9 @@ class _QuestionDialogState extends State<QuestionDialog> {
               if (_selectedType == QuestionType.mcq) ...[
                 ..._buildMCQSection(),
               ] else if (_selectedType == QuestionType.text) ...[
-                TextFormField(
+                QuizCopticTextField(
                   controller: _correctAnswerController,
-                  decoration: AppTheme.inputDecoration('Correct Answer (Optional)'),
+                  labelText: 'Correct Answer (Optional)',
                   // Remove validator to make it optional
                 ),
               ] else if (_selectedType == QuestionType.record) ...[
@@ -917,9 +919,9 @@ class _QuestionDialogState extends State<QuestionDialog> {
         return Row(
           children: [
             Expanded(
-              child: TextFormField(
-                initialValue: _answers[index].text,
-                decoration: AppTheme.inputDecoration('Option ${index + 1}'),
+              child: QuizCopticTextField(
+                controller: TextEditingController(text: _answers[index].text),
+                labelText: 'Option ${index + 1}',
                 onChanged: (value) {
                   _answers[index] = MCQAnswer(id: index, text: value);
                 },

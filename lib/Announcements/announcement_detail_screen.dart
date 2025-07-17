@@ -8,6 +8,7 @@ import 'dart:html' as html;
 import '../Theme.dart';
 import '../provider/announcements_provider.dart';
 import '../services/cloudinary_service.dart';
+import '../widgets/full_screen_image_viewer.dart';
 import 'models/announcement_model.dart';
 
 class AnnouncementDetailScreen extends StatelessWidget {
@@ -61,33 +62,13 @@ class AnnouncementDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (announcement.imageUrl != null)
-                  Hero(
-                    tag: 'announcement-image-${announcement.id}',
-                    child: Image.network(
-                      announcement.imageUrl!,
-                      height: 300,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: 300,
-                          color: Colors.grey[200],
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 300,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.error),
-                      ),
-                    ),
+                  ClickableImage(
+                    imageUrl: announcement.imageUrl!,
+                    height: 400, // Increased from 300 to 400
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    heroTag: 'announcement-image-${announcement.id}',
+                    title: announcement.title,
                   ),
                 Padding(
                   padding: const EdgeInsets.all(24),
@@ -360,40 +341,15 @@ class AnnouncementDetailScreen extends StatelessWidget {
                     if (imageUrl != null) ...[
                       const SizedBox(height: 16),
                       Container(
-                        constraints: const BoxConstraints(maxHeight: 100),
-                        child: ClipRRect(
+                        constraints: const BoxConstraints(maxHeight: 200), // Increased from 100 to 200
+                        child: ClickableImage(
+                          imageUrl: imageUrl!,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            imageUrl!,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                height: 100,
-                                color: Colors.grey[200],
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                        : null,
-                                  ),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              height: 100,
-                              color: Colors.grey[200],
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.error, color: Colors.red),
-                                  SizedBox(height: 8),
-                                  Text('Failed to load image'),
-                                ],
-                              ),
-                            ),
-                          ),
+                          heroTag: 'edit-announcement-image-${announcement.id}',
+                          title: 'Announcement Image Preview',
                         ),
                       ),
                     ],

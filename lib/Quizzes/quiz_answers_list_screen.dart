@@ -5,6 +5,7 @@ import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../widgets/coptic_text_field.dart';
 
 class QuizAnswersListScreen extends StatefulWidget {
   final int quizId;
@@ -406,7 +407,7 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
               // Quiz Name (flex: 2)
               Expanded(
                 flex: 2,
-                child: Text(
+                child: CopticText(
                   answer.quizName,
                   style: AppTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,

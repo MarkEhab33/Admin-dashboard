@@ -15,7 +15,7 @@ class SemestersTemplatesProvider with ChangeNotifier {
   // Fetch semesters (in a real app, this could be an API call)
   Future<void> fetchSemesters() async {
     try {
-      final response = await http.get(Uri.parse('${Globals.baseUrl}/semester/templates'),
+      final response = await http.get(Uri.parse(Globals.getApiUrl('/semester/templates')),
         headers: {
           'Content-Type': 'application/json',
           // Add other headers if necessary

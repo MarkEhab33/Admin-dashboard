@@ -11,6 +11,7 @@ import '../provider/quiz_provider.dart';
 import '../provider/semesters_provider.dart';
 import '../Constants/globals.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/coptic_text_field.dart';
 import 'package:provider/provider.dart';
 
 class QuizDetailsScreen extends StatefulWidget {
@@ -117,7 +118,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(quiz.name, style: AppTheme.headingLarge),
+                          child: CopticText(quiz.name, style: AppTheme.headingLarge),
                         ),
                         if (isRecordingQuiz)
                           Container(
@@ -438,7 +439,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                               color: isRecordQuestion ? Colors.green.shade200 : Colors.grey.shade300,
                             ),
                           ),
-                          child: Text(
+                          child: CopticText(
                             question.question,
                             style: AppTheme.bodyLarge,
                           ),
@@ -480,7 +481,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: Text(
+                                      child: CopticText(
                                         answer.text,
                                         style: AppTheme.bodyMedium.copyWith(
                                           fontWeight: answer.id == question.correctAnswerId
@@ -529,7 +530,7 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                                   ),
                                 ),
                                 Expanded(
-                                  child: Text(
+                                  child: CopticText(
                                     question.correctAnswer!,
                                     style: AppTheme.bodyMedium.copyWith(
                                       color: Colors.green.shade700,

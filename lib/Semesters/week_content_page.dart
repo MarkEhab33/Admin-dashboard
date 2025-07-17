@@ -9,6 +9,7 @@ import '../provider/quiz_provider.dart';
 import '../provider/semesters_provider.dart';
 import '../Theme.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/coptic_text_field.dart';
 
 class WeekContentPage extends StatefulWidget {
   final Week week;
@@ -599,7 +600,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              CopticText(
                                 quiz['name'] ?? AppLocalizations.of(context)!.untitledQuiz,
                                 style: AppTheme.bodyLarge.copyWith(
                                   fontWeight: FontWeight.bold,

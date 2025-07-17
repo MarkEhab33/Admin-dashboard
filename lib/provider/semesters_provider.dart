@@ -24,7 +24,7 @@ class SemestersProvider with ChangeNotifier {
 
     try {
       final response = await http.get(
-        Uri.parse('${Globals.baseUrl}/semester/all'),
+        Uri.parse(Globals.getApiUrl('/semester/all')),
         headers: {'Content-Type': 'application/json'},
       );
 

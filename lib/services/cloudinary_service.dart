@@ -418,7 +418,7 @@ class CloudinaryService {
       }
 
       final response = await http.delete(
-        Uri.parse('${Globals.baseUrl}/upload/$fileType/$filename'),
+        Uri.parse(Globals.getApiUrl('/upload/$fileType/$filename')),
         headers: {
           'Content-Type': 'application/json',
         },

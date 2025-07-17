@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/coptic_text_field.dart';
 
 class GradesTab extends StatefulWidget {
   @override
@@ -108,7 +109,7 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                     const SizedBox(width: 8),
                   ],
                   Expanded(
-                    child: Text('${quiz.name} (${quiz.type})'),
+                    child: CopticText('${quiz.name} (${quiz.type})'),
                   ),
                   if (quiz.isRecord == true)
                     Container(

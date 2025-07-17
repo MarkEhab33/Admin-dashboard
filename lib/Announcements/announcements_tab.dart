@@ -8,6 +8,7 @@ import 'dart:html' as html;
 import '../Theme.dart';
 import '../provider/announcements_provider.dart';
 import '../services/cloudinary_service.dart';
+import '../widgets/full_screen_image_viewer.dart';
 import 'models/announcement_model.dart';
 import 'announcement_detail_screen.dart';
 
@@ -306,36 +307,17 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (announcement.imageUrl != null)
-              ClipRRect(
+              ClickableImage(
+                imageUrl: announcement.imageUrl!,
+                height: 180, // Increased from 120 to 180
+                width: double.infinity,
+                fit: BoxFit.cover,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
                 ),
-                child: Image.network(
-                  announcement.imageUrl!,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      height: 120,
-                      color: Colors.grey[200],
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 120,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.error),
-                  ),
-                ),
+                heroTag: 'announcement-card-image-${announcement.id}',
+                title: announcement.title,
               ),
             Expanded(
               child: Padding(
@@ -389,35 +371,14 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       leading: announcement.imageUrl != null
-          ? ClipRRect(
+          ? ClickableImage(
+              imageUrl: announcement.imageUrl!,
+              width: 80, // Increased from 60 to 80
+              height: 80, // Increased from 60 to 80
+              fit: BoxFit.cover,
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                announcement.imageUrl!,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    width: 60,
-                    height: 60,
-                    color: Colors.grey[200],
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 60,
-                  height: 60,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.error),
-                ),
-              ),
+              heroTag: 'announcement-list-image-${announcement.id}',
+              title: announcement.title,
             )
           : Container(
               width: 60,
@@ -669,40 +630,15 @@ class _AnnouncementsTabState extends State<AnnouncementsTab> with SingleTickerPr
                     if (imageUrl != null) ...[
                       const SizedBox(height: 16),
                       Container(
-                        constraints: const BoxConstraints(maxHeight: 120),
-                        child: ClipRRect(
+                        constraints: const BoxConstraints(maxHeight: 200), // Increased from 120 to 200
+                        child: ClickableImage(
+                          imageUrl: imageUrl!,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            imageUrl!,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                height: 120,
-                                color: Colors.grey[200],
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                        : null,
-                                  ),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              height: 120,
-                              color: Colors.grey[200],
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.error, color: Colors.red),
-                                  SizedBox(height: 8),
-                                  Text('Failed to load image'),
-                                ],
-                              ),
-                            ),
-                          ),
+                          heroTag: 'add-announcement-image-preview',
+                          title: 'New Announcement Image Preview',
                         ),
                       ),
                           ],

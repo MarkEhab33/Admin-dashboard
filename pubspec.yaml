@@ -122,3 +122,7 @@ flutter:
           weight: 600
         - asset: assets/fonts/NotoKufiArabic-Bold.ttf
           weight: 700
+    # CS Avva Shenouda font - uncomment when font file is available
+    - family: CS_avva_shenouda
+      fonts:
+        - asset: assets/fonts/CS-Avva-Shenouda.ttf
