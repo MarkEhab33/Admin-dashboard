@@ -63,7 +63,7 @@ class AppRoutes {
       case quizzes:
       case semesters:
       case announcements:
-      case settings:
+      case AppRoutes.settings:
         return MaterialPageRoute(
           builder: (_) => DashboardScreen(initialRoute: settings.name ?? dashboard),
           settings: settings,
