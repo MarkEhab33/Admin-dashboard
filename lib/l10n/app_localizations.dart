@@ -197,6 +197,13 @@ abstract class AppLocalizations {
   String get tryAgain;
   String get weekLessons;
   String get addLesson;
+  String get editLesson;
+  String get editLessonTitle;
+  String get lessonUpdatedSuccessfully;
+  String get editLessonItem;
+  String get editLessonItemTitle;
+  String get lessonItemUpdatedSuccessfully;
+  String get enterItemTitle;
   String get noLessonsAssignedToWeek;
   String get singleLesson;
   String get multipleLessons;
@@ -858,6 +865,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get addLesson => 'إضافة درس';
+
+  @override
+  String get editLesson => 'تعديل الدرس';
+
+  @override
+  String get editLessonTitle => 'تعديل الدرس';
+
+  @override
+  String get lessonUpdatedSuccessfully => 'تم تحديث الدرس بنجاح';
+
+  @override
+  String get editLessonItem => 'تعديل عنصر الدرس';
+
+  @override
+  String get editLessonItemTitle => 'تعديل عنصر الدرس';
+
+  @override
+  String get lessonItemUpdatedSuccessfully => 'تم تحديث عنصر الدرس بنجاح';
+
+  @override
+  String get enterItemTitle => 'أدخل عنوان العنصر';
 
   @override
   String get noLessonsAssignedToWeek => 'لا توجد دروس مخصصة لهذا الأسبوع';
@@ -1695,6 +1723,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addLesson => 'Add Lesson';
+
+  @override
+  String get editLesson => 'Edit Lesson';
+
+  @override
+  String get editLessonTitle => 'Edit Lesson';
+
+  @override
+  String get lessonUpdatedSuccessfully => 'Lesson updated successfully';
+
+  @override
+  String get editLessonItem => 'Edit Lesson Item';
+
+  @override
+  String get editLessonItemTitle => 'Edit Lesson Item';
+
+  @override
+  String get lessonItemUpdatedSuccessfully => 'Lesson item updated successfully';
+
+  @override
+  String get enterItemTitle => 'Enter item title';
 
   @override
   String get noLessonsAssignedToWeek => 'No lessons assigned to this week';
