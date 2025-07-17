@@ -2,7 +2,7 @@ import 'dart:html' as html;
 
 import 'package:admin_dashboard/utils/string_extensions.dart';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart'; // for file picking
+
 import 'package:provider/provider.dart';
 import '../Models/Subject_Template.dart';
 import '../Models/lesson_item.dart';
@@ -12,7 +12,7 @@ import '../provider/semesters_provider.dart';
 import '../provider/quiz_provider.dart' as quiz_provider;
 import '../Theme.dart';
 import '../l10n/app_localizations.dart';
-import '../services/cloudinary_service.dart';
+
 import '../widgets/audio_player.dart';
 import '../widgets/pdf_viewer.dart';
 import '../widgets/video_viewer.dart';
@@ -21,7 +21,7 @@ import '../Quizzes/create_tasmi3_screen.dart';
 import '../Quizzes/quiz_details_screen.dart';
 import '../widgets/subcategories_modal.dart';
 import '../provider/subcategory_provider.dart';
-import '../l10n/app_localizations.dart';
+
 
 class SubjectDetailsScreen extends StatefulWidget {
   final Subject subject;
@@ -255,6 +255,15 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      size: 20,
+                      color: AppTheme.textSecondaryColor,
+                    ),
+                    onPressed: () => _showEditLessonDialog(context, lesson),
+                    tooltip: 'Edit Lesson',
                   ),
                 ],
               ),
@@ -999,6 +1008,70 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
               backgroundColor: AppTheme.primaryColor,
             ),
             child: Text(AppLocalizations.of(context)!.addButton),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditLessonDialog(BuildContext context, dynamic lesson) {
+    final TextEditingController lessonNameController = TextEditingController(text: lesson.name);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit Lesson', style: AppTheme.headingMedium),
+        content: TextField(
+          controller: lessonNameController,
+          decoration: AppTheme.inputDecoration('Lesson Name'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.cancel, style: TextStyle(color: AppTheme.primaryColor)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (lessonNameController.text.isNotEmpty && lessonNameController.text != lesson.name) {
+                final navigator = Navigator.of(context);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                try {
+                  await Provider.of<LessonProvider>(context, listen: false)
+                      .updateLesson(
+                        lessonId: lesson.id,
+                        name: lessonNameController.text,
+                      );
+                  navigator.pop();
+
+                  if (mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Lesson updated successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  navigator.pop();
+                  if (mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Error updating lesson: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            child: Text('Update'),
           ),
         ],
       ),

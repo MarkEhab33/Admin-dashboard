@@ -104,6 +104,43 @@ class SemestersTemplatesProvider with ChangeNotifier {
     }
   }
 
+  Future<void> updateSubject({
+    required int subjectId,
+    required String name,
+    required String code,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/subject/$subjectId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': name,
+          'code': code,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+
+        // Update the subject in the local list
+        if (_selectedSemester != null) {
+          final subjectIndex = _selectedSemester!.subjects.indexWhere((subject) => subject.subjectId == subjectId);
+          if (subjectIndex != -1) {
+            // Update the subject with new data
+            _selectedSemester!.subjects[subjectIndex] = Subject.fromJson(responseData['data']);
+            notifyListeners();
+          }
+        }
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to update subject');
+      }
+    } catch (e) {
+      print('Error updating subject: $e');
+      throw Exception('Error updating subject: $e');
+    }
+  }
+
 
   void setSelectedSemester(SemesterTemplate semester) {
     _selectedSemester = semester;

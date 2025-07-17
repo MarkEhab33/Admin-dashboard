@@ -145,27 +145,42 @@ class SemesterTemplateScreen extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.library_books_outlined,
-            size: 64,
-            color: AppTheme.primaryColor.withOpacity(0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context)!.noSubjectsAvailable,
-            style: AppTheme.headingMedium.copyWith(
-              color: AppTheme.textSecondaryColor,
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.library_books_outlined,
+                size: 40,
+                color: AppTheme.primaryColor.withValues(alpha: 0.6),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppLocalizations.of(context)!.startByAddingFirstSubject,
-            style: AppTheme.bodyMedium,
-          ),
-        ],
+            const SizedBox(height: 24),
+            Text(
+              AppLocalizations.of(context)!.noSubjectsAvailable,
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.textSecondaryColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              AppLocalizations.of(context)!.startByAddingFirstSubject,
+              style: AppTheme.bodyMedium.copyWith(
+                color: AppTheme.textSecondaryColor.withValues(alpha: 0.8),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -173,18 +188,42 @@ class SemesterTemplateScreen extends StatelessWidget {
   Widget _buildSubjectsGrid(SemesterTemplate semester) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: GridView.builder(
-        padding: const EdgeInsets.only(bottom: 80),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5,
-          crossAxisSpacing: 12.0,  // Reduced from 20.0
-          mainAxisSpacing: 12.0,   // Reduced from 20.0
-          childAspectRatio: 1.0,   // Reduced from 1.3 to make cards more compact
-        ),
-        itemCount: semester.subjects.length,
-        itemBuilder: (context, index) {
-          final subject = semester.subjects[index];
-          return _buildSubjectCard(context, subject);
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Responsive grid based on screen width
+          int crossAxisCount;
+          if (constraints.maxWidth > 1400) {
+            crossAxisCount = 8;
+          } else if (constraints.maxWidth > 1200) {
+            crossAxisCount = 7;
+          } else if (constraints.maxWidth > 1000) {
+            crossAxisCount = 6;
+          } else if (constraints.maxWidth > 800) {
+            crossAxisCount = 5;
+          } else if (constraints.maxWidth > 600) {
+            crossAxisCount = 4;
+          } else {
+            crossAxisCount = 3;
+          }
+
+          // Sort subjects by name before displaying
+          final sortedSubjects = List<Subject>.from(semester.subjects)
+            ..sort((a, b) => (a.subjectName ?? '').toLowerCase().compareTo((b.subjectName ?? '').toLowerCase()));
+
+          return GridView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 16.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 0.9,  // Slightly taller for better proportions
+            ),
+            itemCount: sortedSubjects.length,
+            itemBuilder: (context, index) {
+              final subject = sortedSubjects[index];
+              return _buildSubjectCard(context, subject);
+            },
+          );
         },
       ),
     );
@@ -192,87 +231,125 @@ class SemesterTemplateScreen extends StatelessWidget {
 
   Widget _buildSubjectCard(BuildContext context, Subject subject) {
     return Card(
-      elevation: 4,
+      elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),  // Reduced from 16
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-
-              builder: (context) => SubjectDetailsScreen(subject: subject),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),  // Reduced from 16
-        child: Container(
-          padding: const EdgeInsets.all(16),  // Reduced from 20
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.primaryColor,
-                Color(0xFF1a2940),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),  // Reduced from 16
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryColor.withOpacity(0.2),
-                blurRadius: 8,  // Reduced from 10
-                offset: const Offset(0, 3),  // Reduced from Offset(0, 4)
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),  // Reduced from 12
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  shape: BoxShape.circle,
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SubjectDetailsScreen(subject: subject),
                 ),
-                child: Icon(
-                  Icons.book,
-                  color: Colors.white,
-                  size: 28,  // Reduced from 32
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.primaryColor.withValues(alpha: 0.8),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),  // Reduced from 16
-              Text(
-                subject.subjectName ?? "NA",
-                style: AppTheme.bodyLarge.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,  // Added to make text slightly smaller
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),  // Reduced from 8
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),  // Reduced padding
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  subject.code ?? "",
-                  style: AppTheme.bodyMedium.copyWith(
-                    color: Colors.white70,
-                    fontSize: 12,  // Added to make text slightly smaller
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
-                  textAlign: TextAlign.center,
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon container with modern design
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.book_outlined,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Subject name with better typography
+                  Text(
+                    subject.subjectName ?? "NA",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      height: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Subject code with modern badge design
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      subject.code ?? "",
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Edit button with modern design
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: IconButton(
+                icon: Icon(
+                  Icons.edit_outlined,
+                  color: Colors.white,
+                  size: 14,
+                ),
+                onPressed: () => _showEditSubjectDialog(context, subject),
+                tooltip: 'Edit Subject',
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(
+                  minWidth: 28,
+                  minHeight: 28,
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -340,16 +417,126 @@ class SemesterTemplateScreen extends StatelessWidget {
                     onPressed: () async {
                       if (subjectNameController.text.isNotEmpty &&
                           subjectCodeController.text.isNotEmpty) {
+                        final navigator = Navigator.of(context);
                         await provider.addSubject(
                           semesterId,
                           subjectNameController.text,
                           subjectCodeController.text,
                         );
-                        Navigator.pop(context);
+                        navigator.pop();
                       }
                     },
                     style: AppTheme.primaryButtonStyle,
                     child: const Text("Add Subject"),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditSubjectDialog(BuildContext context, Subject subject) {
+    final TextEditingController subjectNameController = TextEditingController(text: subject.subjectName ?? '');
+    final TextEditingController subjectCodeController = TextEditingController(text: subject.code ?? '');
+    final provider = Provider.of<SemestersTemplatesProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          width: 400,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.edit_outlined,
+                    color: AppTheme.primaryColor,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Edit Subject",
+                    style: AppTheme.headingMedium.copyWith(
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: subjectNameController,
+                decoration: AppTheme.inputDecoration("Subject Name")
+                    .copyWith(prefixIcon: const Icon(Icons.book_outlined)),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: subjectCodeController,
+                decoration: AppTheme.inputDecoration("Subject Code")
+                    .copyWith(prefixIcon: const Icon(Icons.code)),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      "Cancel",
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (subjectNameController.text.isNotEmpty &&
+                          subjectCodeController.text.isNotEmpty) {
+                        final navigator = Navigator.of(context);
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                        try {
+                          await provider.updateSubject(
+                            subjectId: subject.subjectId!,
+                            name: subjectNameController.text,
+                            code: subjectCodeController.text,
+                          );
+                          navigator.pop();
+
+                          if (context.mounted) {
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Subject updated successfully'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          navigator.pop();
+                          if (context.mounted) {
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Error updating subject: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    },
+                    style: AppTheme.primaryButtonStyle,
+                    child: const Text("Update Subject"),
                   ),
                 ],
               ),

@@ -255,6 +255,53 @@ void setLessonNull(){
     }
   }
 
+  Future<void> updateLesson({
+    required int lessonId,
+    required String name,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/semester/lesson/$lessonId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': name,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Update the lesson in the local list
+        final lessonIndex = _lessons.indexWhere((lesson) => lesson.id == lessonId);
+        if (lessonIndex != -1) {
+          _lessons[lessonIndex] = Lesson(
+            id: _lessons[lessonIndex].id,
+            name: name,
+            subjectId: _lessons[lessonIndex].subjectId,
+            createdAt: _lessons[lessonIndex].createdAt,
+            items: _lessons[lessonIndex].items,
+            subject: _lessons[lessonIndex].subject,
+          );
+
+          // Update selected lesson if it's the one being edited
+          if (_selectedLesson?.id == lessonId) {
+            _selectedLesson = _lessons[lessonIndex];
+          }
+        }
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to update lesson');
+      }
+    } catch (e) {
+      print('Error updating lesson: $e');
+      throw Exception('Error updating lesson: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> uploadLessonItem({
     required int lessonId,
     required String title,

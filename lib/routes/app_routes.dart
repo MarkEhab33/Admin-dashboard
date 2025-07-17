@@ -55,25 +55,12 @@ class AppRoutes {
 
   // Generate routes
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    switch (settings.name) {
-      case dashboard:
-      case students:
-      case studentRequests:
-      case contentManagement:
-      case quizzes:
-      case semesters:
-      case announcements:
-      case AppRoutes.settings:
-        return MaterialPageRoute(
-          builder: (_) => DashboardScreen(initialRoute: settings.name ?? dashboard),
-          settings: settings,
-        );
-      default:
-        return MaterialPageRoute(
-          builder: (_) => DashboardScreen(initialRoute: dashboard),
-          settings: const RouteSettings(name: dashboard),
-        );
-    }
+    // For now, always return the same dashboard to avoid GlobalKey conflicts
+    // The tab switching will be handled by the DashboardProvider state
+    return MaterialPageRoute(
+      builder: (_) => DashboardScreen(),
+      settings: settings,
+    );
   }
 
   // Get tab index from route

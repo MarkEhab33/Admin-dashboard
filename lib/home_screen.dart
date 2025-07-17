@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'Theme.dart';
 import 'l10n/app_localizations.dart';
-import 'routes/app_routes.dart';
+
 
 import 'Content/semesters_content_tab.dart';
 import 'Semesters/Content-management_tab.dart';
@@ -16,9 +16,7 @@ import 'Announcements/announcements_tab.dart';
 import 'Settings/settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final String initialRoute;
-
-  const DashboardScreen({Key? key, this.initialRoute = AppRoutes.dashboard}) : super(key: key);
+  const DashboardScreen({Key? key}) : super(key: key);
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -35,16 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     SettingsScreen(),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    // Set the initial tab based on the route
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<DashboardProvider>(context, listen: false);
-      final initialIndex = AppRoutes.getTabIndex(widget.initialRoute);
-      provider.setIndex(initialIndex);
-    });
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -282,10 +271,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: () {
           // Update the provider state
           provider.setIndex(index);
-
-          // Navigate to the appropriate route to update the URL
-          final route = AppRoutes.getRoute(index);
-          Navigator.pushReplacementNamed(context, route);
 
           // Close drawer if on small screen
           if (MediaQuery.of(context).size.width <= 1200) {
