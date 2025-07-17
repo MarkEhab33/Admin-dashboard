@@ -390,6 +390,54 @@ class SemestersProvider with ChangeNotifier {
       throw Exception('Error updating week: $e');
     }
   }
+
+  Future<void> updateLesson({
+    required int lessonId,
+    required String name,
+    required int subjectId,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/semester/lesson/$lessonId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': name,
+          'subjectId': subjectId,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to update lesson');
+      }
+    } catch (e) {
+      print('Error updating lesson: $e');
+      throw Exception('Error updating lesson: $e');
+    }
+  }
+
+  Future<void> updateLessonItem({
+    required int itemId,
+    required String title,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/semester/lesson/item/$itemId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'title': title,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to update lesson item');
+      }
+    } catch (e) {
+      print('Error updating lesson item: $e');
+      throw Exception('Error updating lesson item: $e');
+    }
+  }
 }
 
 

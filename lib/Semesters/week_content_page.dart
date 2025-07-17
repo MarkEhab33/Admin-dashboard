@@ -377,6 +377,141 @@ class _WeekContentPageState extends State<WeekContentPage> {
     );
   }
 
+  void _showEditLessonDialog(BuildContext context, Lesson lesson) {
+    final lessonNameController = TextEditingController(text: lesson.name);
+    int selectedSubjectId = lesson.subjectId;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.4,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.edit_outlined,
+                    color: AppTheme.primaryColor,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    AppLocalizations.of(context)!.editLessonTitle,
+                    style: AppTheme.headingMedium.copyWith(
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: lessonNameController,
+                decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.enterLessonName),
+              ),
+              const SizedBox(height: 16),
+              Consumer<SemestersProvider>(
+                builder: (context, provider, _) {
+                  return FutureBuilder<List<Subject>>(
+                    future: provider.fetchSemesterSubjects(widget.week.semesterId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      }
+
+                      final subjects = snapshot.data ?? [];
+                      if (subjects.isEmpty) {
+                        return Text(AppLocalizations.of(context)!.noSubjectsFound);
+                      }
+
+                      return DropdownButtonFormField<int>(
+                        value: selectedSubjectId,
+                        decoration: AppTheme.inputDecoration('Subject'),
+                        items: subjects.map((subject) {
+                          return DropdownMenuItem<int>(
+                            value: subject.subjectId,
+                            child: Text(subject.subjectName ?? 'Unnamed Subject'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            selectedSubjectId = value;
+                          }
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      AppLocalizations.of(context)!.cancel,
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (lessonNameController.text.isNotEmpty) {
+                        try {
+                          final provider = Provider.of<SemestersProvider>(context, listen: false);
+                          await provider.updateLesson(
+                            lessonId: lesson.id,
+                            name: lessonNameController.text,
+                            subjectId: selectedSubjectId,
+                          );
+
+                          Navigator.pop(context);
+                          _fetchLessons(); // Refresh the lessons list
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(AppLocalizations.of(context)!.lessonUpdatedSuccessfully),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(e.toString()),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    },
+                    style: AppTheme.primaryButtonStyle,
+                    child: Text(AppLocalizations.of(context)!.update),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuizzesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -953,7 +1088,11 @@ class _WeekContentPageState extends State<WeekContentPage> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => _showEditLessonDialog(context, lesson),
+            color: AppTheme.primaryColor,
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: () => _deleteLessonFromWeek(context, lesson.id),

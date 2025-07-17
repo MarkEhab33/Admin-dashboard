@@ -8,6 +8,7 @@ import '../Models/Subject_Template.dart';
 import '../Models/lesson_item.dart';
 
 import '../provider/subject_provider.dart';
+import '../provider/semesters_provider.dart';
 import '../provider/quiz_provider.dart' as quiz_provider;
 import '../Theme.dart';
 import '../l10n/app_localizations.dart';
@@ -886,6 +887,13 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                     ),
                   ),
                   IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 20),
+                    color: AppTheme.primaryColor,
+                    onPressed: () => _showEditLessonItemDialog(context, item),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.delete_outline, size: 20),
                     color: Colors.red.withAlpha(204),
                     onPressed: () => _showDeleteConfirmation(context, item),
@@ -1380,6 +1388,98 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                   )
                 : Text(AppLocalizations.of(context)!.delete),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditLessonItemDialog(BuildContext context, LessonItem item) {
+    final titleController = TextEditingController(text: item.title);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.edit_outlined,
+              color: AppTheme.primaryColor,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              AppLocalizations.of(context)!.editLessonItemTitle,
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.enterItemTitle),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              AppLocalizations.of(context)!.cancel,
+              style: AppTheme.bodyMedium.copyWith(
+                color: AppTheme.textSecondaryColor,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (titleController.text.isNotEmpty) {
+                // Store context before async operation
+                final currentContext = context;
+                final navigator = Navigator.of(context);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                try {
+                  final provider = Provider.of<SemestersProvider>(currentContext, listen: false);
+                  await provider.updateLessonItem(
+                    itemId: item.id,
+                    title: titleController.text,
+                  );
+
+                  navigator.pop();
+
+                  // Refresh the lesson items
+                  final lessonProvider = Provider.of<LessonProvider>(currentContext, listen: false);
+                  if (lessonProvider.selectedLesson != null) {
+                    await lessonProvider.fetchLessonItems(lessonProvider.selectedLesson!.id);
+                  }
+
+                  if (mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(currentContext)!.lessonItemUpdatedSuccessfully),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text(e.toString()),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            style: AppTheme.primaryButtonStyle,
+            child: Text(AppLocalizations.of(context)!.update),
           ),
         ],
       ),
