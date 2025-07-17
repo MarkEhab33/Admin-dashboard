@@ -3,7 +3,7 @@ class Globals {
   static bool get isWeb => identical(0, 0.0); // Simple web detection
 
   // Configuration constants
-  static const String _devBaseUrl = "https://aripsalin.elkedeseen.com";
+  static const String _baseUrl = "https://aripsalin.elkedeseen.com";
 
   // Base URL configuration
   static String get baseUrl {
@@ -13,30 +13,24 @@ class Globals {
       return envBaseUrl;
     }
 
-    // For web production (when served over HTTPS), use relative URLs
-    // This will work with Netlify redirects
-    if (isWeb && Uri.base.scheme == 'https') {
-      return ""; // Use relative URLs for production (Netlify will proxy)
-    }
-
-    // For development or HTTP environments
-    return _devBaseUrl;
+    // Always use the domain for both development and production
+    // This avoids Netlify redirect issues and ensures direct API communication
+    return _baseUrl;
   }
 
   // Helper method to get the appropriate URL based on current context
   static String getApiUrl(String endpoint) {
-    if (baseUrl.isEmpty) {
-      // For production with Netlify redirects, use relative URLs
-      return endpoint.startsWith('/') ? endpoint : '/$endpoint';
-    }
-    return '$baseUrl$endpoint';
+    // Always return full URL with domain to avoid Netlify redirect issues
+    final String fullEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
+    return '$baseUrl$fullEndpoint';
   }
 
   // Debug information
   static Map<String, dynamic> get debugInfo => {
     'isWeb': isWeb,
     'currentScheme': isWeb ? Uri.base.scheme : 'native',
-    'baseUrl': baseUrl.isEmpty ? 'relative (proxied)' : baseUrl,
+    'baseUrl': baseUrl,
     'currentHost': isWeb ? Uri.base.host : 'native',
+    'apiStrategy': 'Direct domain calls (no proxy)',
   };
 }

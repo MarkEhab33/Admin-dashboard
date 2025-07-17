@@ -9,6 +9,7 @@ import 'dart:ui_web' as ui_web;
 
 import '../Models/question.dart';
 import '../Models/quiz_answer_details.dart';
+import '../widgets/coptic_text_field.dart';
 
 class QuizGradingScreen extends StatefulWidget {
   final int quizAnswerId;
@@ -720,7 +721,7 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
                   ),
                 ),
                 SizedBox(height: 8),
-                Text(
+                CopticText(
                   answer.question,
                   style: TextStyle(
                     color: AppTheme.textPrimaryColor,
@@ -737,7 +738,7 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
                 SizedBox(height: 8),
                 isRecord
                     ? _buildAudioPlayer(answer.userAnswer)
-                    : Text(
+                    : CopticText(
                         answer.userAnswer,
                         style: TextStyle(
                           color: AppTheme.textPrimaryColor,

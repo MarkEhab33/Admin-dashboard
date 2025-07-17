@@ -6,6 +6,7 @@ import '../Theme.dart';
 import 'create_quiz_screen.dart';
 import '../provider/quiz_provider.dart' as quiz_provider;
 import '../l10n/app_localizations.dart';
+import '../widgets/coptic_text_field.dart';
 import 'package:intl/intl.dart';
 
 class QuizzesTab extends StatefulWidget {
@@ -209,7 +210,7 @@ class _QuizzesTabState extends State<QuizzesTab> {
         title: Row(
           children: [
             Expanded(
-              child: Text(quiz.name, style: AppTheme.headingMedium),
+              child: CopticText(quiz.name, style: AppTheme.headingMedium),
             ),
             if (isRecordingQuiz)
               Container(

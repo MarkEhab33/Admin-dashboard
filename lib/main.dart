@@ -16,6 +16,7 @@ import 'package:admin_dashboard/provider/admin_auth_provider.dart';
 import 'package:admin_dashboard/l10n/app_localizations.dart';
 import 'package:admin_dashboard/screens/splash_screen.dart';
 import 'package:admin_dashboard/screens/admin_login_screen.dart';
+import 'package:admin_dashboard/routes/app_routes.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -92,7 +93,8 @@ class MyApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: DashboardScreen(),
+          initialRoute: AppRoutes.dashboard,
+          onGenerateRoute: AppRoutes.generateRoute,
         );
       },
     );

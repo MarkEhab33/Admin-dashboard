@@ -1,0 +1,16 @@
+# Netlify redirects file for SPA routing
+# IMPORTANT: Order matters! More specific rules first, SPA fallback last
+
+# Static assets - serve directly (don't redirect to index.html)
+/favicon.ico  /favicon.ico  200
+/manifest.json  /manifest.json  200
+/assets/*  /assets/:splat  200
+/icons/*  /icons/:splat  200
+/*.js  /:splat  200
+/*.css  /:splat  200
+/*.wasm  /:splat  200
+/*.map  /:splat  200
+
+# SPA Fallback - All other routes go to index.html for client-side routing
+# This ensures that refreshing any page in your app works correctly
+/*    /index.html   200
