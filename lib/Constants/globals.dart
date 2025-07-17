@@ -1,4 +1,5 @@
 class Globals {
+
   // Environment detection
   static bool get isWeb => identical(0, 0.0); // Simple web detection
 
@@ -33,4 +34,5 @@ class Globals {
     'currentHost': isWeb ? Uri.base.host : 'native',
     'apiStrategy': 'Direct domain calls (no proxy)',
   };
+
 }
