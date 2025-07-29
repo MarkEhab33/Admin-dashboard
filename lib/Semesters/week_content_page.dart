@@ -25,6 +25,9 @@ class _WeekContentPageState extends State<WeekContentPage> {
   List<dynamic> _weekQuizzes = [];
   bool _isLoading = true;
   String? _error;
+  Subject? _selectedSubject;
+  List<Subject> _subjects = [];
+  Set<String> _expandedSubjects = {};
 
   @override
   void initState() {
@@ -42,9 +45,60 @@ class _WeekContentPageState extends State<WeekContentPage> {
 
   Future<void> _fetchData() async {
     await Future.wait([
+      _fetchSubjects(),
       _fetchLessons(),
       _fetchQuizzes(),
     ]);
+  }
+
+  Future<void> _fetchSubjects() async {
+    try {
+      final provider = Provider.of<SemestersProvider>(context, listen: false);
+      final allSubjects = await provider.fetchSemesterSubjects(widget.week.semesterId);
+
+      // Filter subjects that have lessons and sort them
+      List<Subject> subjectsWithLessons = [];
+      List<Subject> subjectsWithoutLessons = [];
+
+      for (Subject subject in allSubjects) {
+        try {
+          final lessons = await provider.fetchSubjectLessons(subject.subjectId ?? 0);
+          if (lessons.isNotEmpty) {
+            subjectsWithLessons.add(subject);
+          } else {
+            subjectsWithoutLessons.add(subject);
+          }
+        } catch (e) {
+          // If there's an error fetching lessons, treat as no lessons
+          subjectsWithoutLessons.add(subject);
+        }
+      }
+
+      // Sort subjects with lessons alphabetically
+      subjectsWithLessons.sort((a, b) =>
+        (a.subjectName ?? '').toLowerCase().compareTo((b.subjectName ?? '').toLowerCase()));
+
+      // Sort subjects without lessons alphabetically
+      subjectsWithoutLessons.sort((a, b) =>
+        (a.subjectName ?? '').toLowerCase().compareTo((b.subjectName ?? '').toLowerCase()));
+
+      // Combine: subjects with lessons first, then subjects without lessons
+      final sortedSubjects = [...subjectsWithLessons, ...subjectsWithoutLessons];
+
+      setState(() {
+        _subjects = sortedSubjects;
+        // Set the first subject with lessons as selected by default if available
+        if (subjectsWithLessons.isNotEmpty && _selectedSubject == null) {
+          _selectedSubject = subjectsWithLessons.first;
+        } else if (_subjects.isNotEmpty && _selectedSubject == null) {
+          _selectedSubject = _subjects.first;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    }
   }
 
   Future<void> _fetchLessons() async {
@@ -75,6 +129,10 @@ class _WeekContentPageState extends State<WeekContentPage> {
 
       setState(() {
         _groupedLessons = sortedGroups;
+        // Auto-expand the first subject if no subjects are expanded
+        if (_expandedSubjects.isEmpty && sortedGroups.isNotEmpty) {
+          _expandedSubjects.add(sortedGroups.keys.first);
+        }
         _isLoading = false;
       });
     } catch (e) {
@@ -807,11 +865,21 @@ class _WeekContentPageState extends State<WeekContentPage> {
         const SizedBox(height: 16),
         if (_groupedLessons.isEmpty)
           Center(
-            child: Text(
-              AppLocalizations.of(context)!.noLessonsAssignedToWeek,
-              style: AppTheme.bodyLarge.copyWith(
-                color: AppTheme.textSecondaryColor,
-              ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.book_outlined,
+                  size: 48,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  AppLocalizations.of(context)!.noLessonsAssignedToWeek,
+                  style: AppTheme.bodyLarge.copyWith(
+                    color: AppTheme.textSecondaryColor,
+                  ),
+                ),
+              ],
             ),
           )
         else
@@ -819,7 +887,7 @@ class _WeekContentPageState extends State<WeekContentPage> {
             children: _groupedLessons.entries.map((entry) {
               return Column(
                 children: [
-                  _buildSubjectSection(entry.key, entry.value),
+                  _buildExpandableSubjectSection(entry.key, entry.value),
                   const SizedBox(height: 16),
                 ],
               );
@@ -916,6 +984,135 @@ class _WeekContentPageState extends State<WeekContentPage> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandableSubjectSection(String subjectName, List<Lesson> lessons) {
+    final isExpanded = _expandedSubjects.contains(subjectName);
+    final subject = lessons.first.subject;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Subject Header - Always Visible
+          InkWell(
+            onTap: () {
+              setState(() {
+                if (isExpanded) {
+                  _expandedSubjects.remove(subjectName);
+                } else {
+                  _expandedSubjects.add(subjectName);
+                }
+              });
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isExpanded
+                    ? AppTheme.primaryColor.withValues(alpha: 0.08)
+                    : AppTheme.primaryColor.withValues(alpha: 0.04),
+                borderRadius: isExpanded
+                    ? const BorderRadius.vertical(top: Radius.circular(16))
+                    : BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.subject,
+                      color: AppTheme.primaryColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          subjectName == 'Uncategorized'
+                              ? AppLocalizations.of(context)!.uncategorized
+                              : subjectName,
+                          style: AppTheme.headingMedium.copyWith(
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        if (subject?.code != null)
+                          Text(
+                            'Code: ${subject!.code}',
+                            style: AppTheme.bodyMedium.copyWith(
+                              color: AppTheme.textSecondaryColor,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${lessons.length} ${lessons.length == 1 ? AppLocalizations.of(context)!.singleLesson : AppLocalizations.of(context)!.multipleLessons}',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppTheme.primaryColor,
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Lessons List - Expandable
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            height: isExpanded ? null : 0,
+            child: isExpanded
+                ? ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: lessons.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      color: Colors.grey.withValues(alpha: 0.1),
+                    ),
+                    itemBuilder: (context, index) => _buildLessonTile(lessons[index]),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),

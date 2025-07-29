@@ -256,14 +256,38 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.edit_outlined,
-                      size: 20,
-                      color: AppTheme.textSecondaryColor,
-                    ),
-                    onPressed: () => _showEditLessonDialog(context, lesson),
-                    tooltip: 'Edit Lesson',
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: AppTheme.textSecondaryColor,
+                        ),
+                        onPressed: () => _showEditLessonDialog(context, lesson),
+                        tooltip: 'Edit Lesson',
+                        padding: EdgeInsets.all(4),
+                        constraints: BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: Colors.red.shade400,
+                        ),
+                        onPressed: () => _showDeleteLessonDialog(context, lesson),
+                        tooltip: 'Delete Lesson',
+                        padding: EdgeInsets.all(4),
+                        constraints: BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1565,6 +1589,153 @@ class _SubjectDetailsScreenState extends State<SubjectDetailsScreen> {
       builder: (context) => ChangeNotifierProvider(
         create: (context) => SubcategoryProvider(),
         child: SubcategoriesModal(subject: widget.subject),
+      ),
+    );
+  }
+
+  void _showDeleteLessonDialog(BuildContext context, dynamic lesson) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_outlined,
+              color: Colors.red.shade600,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Delete Lesson',
+              style: AppTheme.headingMedium.copyWith(
+                color: Colors.red.shade600,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to delete "${lesson.name}"?',
+              style: AppTheme.bodyLarge.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.orange.shade600,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Important Safety Check',
+                        style: AppTheme.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This lesson can only be deleted if it contains no:',
+                    style: AppTheme.bodyMedium.copyWith(
+                      fontSize: 13,
+                      color: Colors.orange.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '• Items (PDFs, videos, audio files)\n• Week assignments\n• Quizzes\n• Quiz answers',
+                    style: AppTheme.bodyMedium.copyWith(
+                      fontSize: 13,
+                      color: Colors.orange.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'If the lesson contains any content, you\'ll need to remove it first.',
+              style: AppTheme.bodyMedium.copyWith(
+                color: AppTheme.textSecondaryColor,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: AppTheme.bodyMedium.copyWith(
+                color: AppTheme.textSecondaryColor,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+              try {
+                await Provider.of<LessonProvider>(context, listen: false)
+                    .deleteLesson(lessonId: lesson.id);
+                navigator.pop();
+
+                if (context.mounted) {
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Lesson "${lesson.name}" deleted successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                navigator.pop();
+                if (context.mounted) {
+                  // Parse the error message to show user-friendly content
+                  String errorMessage = e.toString();
+                  if (errorMessage.contains('Exception: ')) {
+                    errorMessage = errorMessage.replaceFirst('Exception: ', '');
+                  }
+
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: Text(errorMessage),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 5), // Longer duration for error messages
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete Lesson'),
+          ),
+        ],
       ),
     );
   }

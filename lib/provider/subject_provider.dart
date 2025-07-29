@@ -302,6 +302,39 @@ void setLessonNull(){
     }
   }
 
+  Future<void> deleteLesson({
+    required int lessonId,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final response = await http.delete(
+        Uri.parse('${Globals.baseUrl}/subject/lesson/$lessonId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Remove the lesson from the local list
+        _lessons.removeWhere((lesson) => lesson.id == lessonId);
+
+        // Clear selected lesson if it's the one being deleted
+        if (_selectedLesson?.id == lessonId) {
+          _selectedLesson = null;
+        }
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to delete lesson');
+      }
+    } catch (e) {
+      print('Error deleting lesson: $e');
+      throw Exception('Error deleting lesson: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> uploadLessonItem({
     required int lessonId,
     required String title,
