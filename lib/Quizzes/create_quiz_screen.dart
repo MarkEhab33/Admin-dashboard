@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:math';
 import '../Models/question.dart';
 import '../Models/quiz.dart';
 import '../Models/subject.dart';
 import '../Models/Subject_Template.dart';
 import '../Theme.dart';
 import '../provider/quiz_provider.dart';
-import '../provider/subject_provider.dart';
 import '../provider/subcategory_provider.dart';
 import '../widgets/subcategory_selector.dart';
 import '../widgets/coptic_text_field.dart';
@@ -41,7 +39,9 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   final _typeController = TextEditingController();
   final _attemptsController = TextEditingController();
   final _timeLimitController = TextEditingController();
-  final _totalGradeController = TextEditingController(text: '40'); // Default total grade
+  final _easyQuestionsController = TextEditingController(text: '3'); // Default easy questions
+  final _mediumQuestionsController = TextEditingController(text: '4'); // Default medium questions
+  final _hardQuestionsController = TextEditingController(text: '2'); // Default hard questions
 
   int? selectedSubjectId;
   int? selectedLessonId;
@@ -56,35 +56,33 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   int _mediumQuestionsCount = 0;
   int _hardQuestionsCount = 0;
 
-  // Required questions per category
-  int _requiredQuestionsPerCategory = 0;
-
   @override
   void initState() {
     super.initState();
     _loadInitialData();
-    _totalGradeController.addListener(_updateRequiredQuestions);
+    _easyQuestionsController.addListener(_updateQuestionCounts);
+    _mediumQuestionsController.addListener(_updateQuestionCounts);
+    _hardQuestionsController.addListener(_updateQuestionCounts);
 
     // Set default values for new quizzes
     if (widget.quizToEdit == null) {
       _typeController.text = 'Week';  // Changed from 'Quiz' to 'Week' to match dropdown options
       _attemptsController.text = '1';
       _timeLimitController.text = '30';
-      _totalGradeController.text = '30';
+      _easyQuestionsController.text = '3';
+      _mediumQuestionsController.text = '4';
+      _hardQuestionsController.text = '2';
     }
   }
 
-  void _updateRequiredQuestions() {
-    if (_totalGradeController.text.isNotEmpty) {
-      try {
-        final totalGrade = int.parse(_totalGradeController.text);
-        setState(() {
-          _requiredQuestionsPerCategory = (totalGrade / 9).ceil();
-        });
-        _updateQuestionCounts();
-      } catch (e) {
-        // Handle parsing error
-      }
+  int _calculateTotalGrade() {
+    try {
+      final easy = int.parse(_easyQuestionsController.text.isEmpty ? '0' : _easyQuestionsController.text);
+      final medium = int.parse(_mediumQuestionsController.text.isEmpty ? '0' : _mediumQuestionsController.text);
+      final hard = int.parse(_hardQuestionsController.text.isEmpty ? '0' : _hardQuestionsController.text);
+      return easy * 1 + medium * 3 + hard * 5;
+    } catch (e) {
+      return 0;
     }
   }
 
@@ -125,7 +123,9 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
 
       _attemptsController.text = quiz.numberOfAttempts.toString();
       _timeLimitController.text = quiz.timeLimit.toString();
-      _totalGradeController.text = quiz.grade.toString();
+      _easyQuestionsController.text = quiz.easyQuestions.toString();
+      _mediumQuestionsController.text = quiz.mediumQuestions.toString();
+      _hardQuestionsController.text = quiz.hardQuestions.toString();
       selectedSubcategory = quiz.subCategory;
       _questions.addAll(quiz.content);
       _updateQuestionCounts();
@@ -140,13 +140,13 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
     _typeController.dispose();
     _attemptsController.dispose();
     _timeLimitController.dispose();
-    _totalGradeController.dispose();
+    _easyQuestionsController.dispose();
+    _mediumQuestionsController.dispose();
+    _hardQuestionsController.dispose();
     super.dispose();
   }
 
-  double _calculateTotalGrade() {
-    return _questions.fold(0.0, (sum, question) => sum + question.grade);
-  }
+
 
   String _getDisplayLessonName() {
     // First check if we have a name passed directly
@@ -204,13 +204,18 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
       }
     }
 
+    // Get required question counts from controllers
+    int requiredEasy = int.tryParse(_easyQuestionsController.text) ?? 0;
+    int requiredMedium = int.tryParse(_mediumQuestionsController.text) ?? 0;
+    int requiredHard = int.tryParse(_hardQuestionsController.text) ?? 0;
+
     return _formKey.currentState?.validate() == true &&
            subjectId != null &&
            lessonId != null &&
            _questions.isNotEmpty &&
-           _easyQuestionsCount >= _requiredQuestionsPerCategory &&
-           _mediumQuestionsCount >= _requiredQuestionsPerCategory &&
-           _hardQuestionsCount >= _requiredQuestionsPerCategory;
+           _easyQuestionsCount >= requiredEasy &&
+           _mediumQuestionsCount >= requiredMedium &&
+           _hardQuestionsCount >= requiredHard;
   }
 
   Future<void> _submitQuiz() async {
@@ -221,7 +226,10 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
       });
 
       try {
-        final totalGrade = int.parse(_totalGradeController.text);
+        final totalGrade = _calculateTotalGrade();
+        final easyQuestions = int.parse(_easyQuestionsController.text);
+        final mediumQuestions = int.parse(_mediumQuestionsController.text);
+        final hardQuestions = int.parse(_hardQuestionsController.text);
 
         // Get the IDs from the widget parameters or from the quiz being edited
         int? subjectId = widget.initialSubjectId;
@@ -254,6 +262,9 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
           isRecord: false, // Regular quizzes are not recording quizzes
           subCategory: selectedSubcategory,
           content: _questions,
+          easyQuestions: easyQuestions,
+          mediumQuestions: mediumQuestions,
+          hardQuestions: hardQuestions,
         );
 
         if (widget.quizToEdit != null) {
@@ -528,27 +539,63 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _timeLimitController,
+                        decoration: AppTheme.inputDecoration('Time Limit (minutes)'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Question Requirements', style: AppTheme.headingMedium),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
                             child: TextFormField(
-                              controller: _timeLimitController,
-                              decoration: AppTheme.inputDecoration('Time Limit (minutes)'),
+                              controller: _easyQuestionsController,
+                              decoration: AppTheme.inputDecoration('Easy Questions (1 pt each)'),
                               keyboardType: TextInputType.number,
-                              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                              validator: (value) {
+                                if (value?.isEmpty ?? true) return 'Required';
+                                try {
+                                  final count = int.parse(value!);
+                                  if (count < 0) return 'Must be non-negative';
+                                } catch (e) {
+                                  return 'Invalid number';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: TextFormField(
-                              controller: _totalGradeController,
-                              decoration: AppTheme.inputDecoration('Total Grade'),
+                              controller: _mediumQuestionsController,
+                              decoration: AppTheme.inputDecoration('Medium Questions (3 pts each)'),
                               keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value?.isEmpty ?? true) return 'Required';
                                 try {
-                                  final grade = int.parse(value!);
-                                  if (grade <= 0) return 'Must be positive';
+                                  final count = int.parse(value!);
+                                  if (count < 0) return 'Must be non-negative';
+                                } catch (e) {
+                                  return 'Invalid number';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _hardQuestionsController,
+                              decoration: AppTheme.inputDecoration('Hard Questions (5 pts each)'),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value?.isEmpty ?? true) return 'Required';
+                                try {
+                                  final count = int.parse(value!);
+                                  if (count < 0) return 'Must be non-negative';
                                 } catch (e) {
                                   return 'Invalid number';
                                 }
@@ -557,6 +604,30 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Total Grade: ${_calculateTotalGrade()} points',
+                                style: AppTheme.bodyMedium.copyWith(
+                                  color: Colors.blue.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -575,31 +646,31 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Questions Requirements', style: AppTheme.headingMedium),
+                      Text('Questions Progress', style: AppTheme.headingMedium),
                       const SizedBox(height: 16),
                       Text(
-                        'Based on the total grade of ${_totalGradeController.text}, you need to add at least $_requiredQuestionsPerCategory questions of each difficulty:',
+                        'Add questions to meet the requirements specified above:',
                         style: AppTheme.bodyMedium,
                       ),
                       const SizedBox(height: 16),
                       _buildQuestionCategoryProgress(
                         'Easy Questions (1 point each)',
                         _easyQuestionsCount,
-                        _requiredQuestionsPerCategory,
+                        int.tryParse(_easyQuestionsController.text) ?? 0,
                         Colors.green,
                       ),
                       const SizedBox(height: 8),
                       _buildQuestionCategoryProgress(
                         'Medium Questions (3 points each)',
                         _mediumQuestionsCount,
-                        _requiredQuestionsPerCategory,
+                        int.tryParse(_mediumQuestionsController.text) ?? 0,
                         Colors.orange,
                       ),
                       const SizedBox(height: 8),
                       _buildQuestionCategoryProgress(
                         'Hard Questions (5 points each)',
                         _hardQuestionsCount,
-                        _requiredQuestionsPerCategory,
+                        int.tryParse(_hardQuestionsController.text) ?? 0,
                         Colors.red,
                       ),
                       const SizedBox(height: 16),
@@ -633,12 +704,10 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
                         children: [
                           Text('Questions (${_questions.length})', style: AppTheme.headingMedium),
                           Text(
-                            'Current Total: ${_calculateTotalGrade()} / ${_totalGradeController.text.isEmpty ? "0" : _totalGradeController.text}',
+                            'Current Total: ${_calculateTotalGrade()} points',
                             style: AppTheme.bodyMedium.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: _calculateTotalGrade() > (int.tryParse(_totalGradeController.text) ?? 0)
-                                  ? Colors.red
-                                  : AppTheme.primaryColor,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
                         ],

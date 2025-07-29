@@ -566,6 +566,9 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
           isRecord: true, // Mark as recording quiz for Tasmi3
           subCategory: selectedSubcategory,
           content: [_recordQuestion!],
+          easyQuestions: 0, // Tasmi3 typically doesn't use difficulty-based selection
+          mediumQuestions: 0,
+          hardQuestions: 1, // Usually one recording question
         );
 
         final quizProvider = Provider.of<QuizProvider>(context, listen: false);

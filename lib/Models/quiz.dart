@@ -12,6 +12,9 @@ class Quiz {
   final bool? isRecord;
   final SubCategory? subCategory;
   final List<Question> content;
+  final int easyQuestions;
+  final int mediumQuestions;
+  final int hardQuestions;
 
   Quiz({
     required this.name,
@@ -24,6 +27,9 @@ class Quiz {
      this.timeLimit,
     this.subCategory,
     required this.content,
+    required this.easyQuestions,
+    required this.mediumQuestions,
+    required this.hardQuestions,
   });
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +43,9 @@ class Quiz {
     if (timeLimit != null) 'timeLimit': timeLimit,
     if (subCategory != null) 'subCategory': subCategory!.toJson(),
     'content': content.map((q) => q.toJson()).toList(),
+    'easyQuestions': easyQuestions,
+    'mediumQuestions': mediumQuestions,
+    'hardQuestions': hardQuestions,
   };
 }
 
@@ -54,6 +63,9 @@ class QuizDetails {
   final List<Question> content;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final int easyQuestions;
+  final int mediumQuestions;
+  final int hardQuestions;
 
   QuizDetails({
     required this.id,
@@ -69,6 +81,9 @@ class QuizDetails {
     required this.content,
     required this.createdAt,
     required this.updatedAt,
+    required this.easyQuestions,
+    required this.mediumQuestions,
+    required this.hardQuestions,
   });
 
   factory QuizDetails.fromJson(Map<String, dynamic> json) {
@@ -90,6 +105,9 @@ class QuizDetails {
           .toList(),
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+      easyQuestions: json['easyQuestions'] ?? 0,
+      mediumQuestions: json['mediumQuestions'] ?? 0,
+      hardQuestions: json['hardQuestions'] ?? 0,
     );
   }
 }
