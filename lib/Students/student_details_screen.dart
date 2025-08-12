@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../Models/student_summary.dart';
 import '../provider/student_provider.dart';
+import '../widgets/password_reset_dialog.dart';
 
 
 class StudentDetailsScreen extends StatefulWidget {
@@ -492,6 +493,17 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                         ),
                       ),
                     ),
+                  SizedBox(width: 20),
+                  TextButton(
+                    onPressed: () => _showPasswordResetDialog(),
+                    child: Text(
+                      AppLocalizations.of(context)!.resetPassword,
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: Colors.orange,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               if (widget.student.churchService.isNotEmpty || widget.student.deaconLevel.isNotEmpty) ...[
@@ -947,6 +959,16 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showPasswordResetDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => PasswordResetDialog(
+        userEmail: widget.student.user.email,
+        userName: widget.student.user.name,
       ),
     );
   }

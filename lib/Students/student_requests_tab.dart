@@ -5,6 +5,7 @@ import '../provider/student_provider.dart';
 import 'student_details_screen.dart';
 import '../Theme.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/password_reset_dialog.dart';
 
 class StudentRequestsTab extends StatefulWidget {
   @override
@@ -262,9 +263,43 @@ class _StudentRequestsTabState extends State<StudentRequestsTab> {
                   ],
                 ),
               ],
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.lock_reset, size: 16),
+                      label: Text(
+                        AppLocalizations.of(context)!.resetPassword,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade50,
+                        foregroundColor: Colors.orange.shade700,
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          side: BorderSide(color: Colors.orange.shade200),
+                        ),
+                      ),
+                      onPressed: () => _showPasswordResetDialog(student),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showPasswordResetDialog(Student student) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => PasswordResetDialog(
+        userEmail: student.user.email,
+        userName: student.user.name,
       ),
     );
   }

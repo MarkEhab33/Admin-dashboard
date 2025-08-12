@@ -315,6 +315,19 @@ abstract class AppLocalizations {
   String get pleaseEnterValue;
   String get selectOption;
 
+  // Password Reset
+  String get resetPassword;
+  String get resetPasswordTitle;
+  String get resetPasswordDescription;
+  String get newPassword;
+  String get confirmNewPassword;
+  String get enterNewPassword;
+  String get confirmPassword;
+  String get passwordsDoNotMatch;
+  String get passwordResetSuccess;
+  String get passwordResetFailed;
+  String get passwordResetInProgress;
+
   // Messages
   String get dataLoadedSuccessfully;
   String get errorLoadingData;
@@ -1173,6 +1186,40 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get selectOption => 'اختر خيار';
 
+  // Password Reset
+  @override
+  String get resetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get resetPasswordTitle => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get resetPasswordDescription => 'أدخل كلمة مرور جديدة للمستخدم';
+
+  @override
+  String get newPassword => 'كلمة المرور الجديدة';
+
+  @override
+  String get confirmNewPassword => 'تأكيد كلمة المرور الجديدة';
+
+  @override
+  String get enterNewPassword => 'أدخل كلمة المرور الجديدة';
+
+  @override
+  String get confirmPassword => 'تأكيد كلمة المرور';
+
+  @override
+  String get passwordsDoNotMatch => 'كلمات المرور غير متطابقة';
+
+  @override
+  String get passwordResetSuccess => 'تم إعادة تعيين كلمة المرور بنجاح';
+
+  @override
+  String get passwordResetFailed => 'فشل في إعادة تعيين كلمة المرور';
+
+  @override
+  String get passwordResetInProgress => 'جاري إعادة تعيين كلمة المرور...';
+
   // Messages
   @override
   String get dataLoadedSuccessfully => 'تم تحميل البيانات بنجاح';
@@ -2004,6 +2051,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unnamed => 'Unnamed';
+
+  // Password Reset
+  @override
+  String get resetPassword => 'Reset Password';
+
+  @override
+  String get resetPasswordTitle => 'Reset Password';
+
+  @override
+  String get resetPasswordDescription => 'Enter a new password for the user';
+
+  @override
+  String get newPassword => 'New Password';
+
+  @override
+  String get confirmNewPassword => 'Confirm New Password';
+
+  @override
+  String get enterNewPassword => 'Enter new password';
+
+  @override
+  String get confirmPassword => 'Confirm Password';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get passwordResetSuccess => 'Password reset successfully';
+
+  @override
+  String get passwordResetFailed => 'Password reset failed';
+
+  @override
+  String get passwordResetInProgress => 'Resetting password...';
+
+
 
   // Grades
   @override
