@@ -128,6 +128,55 @@ abstract class AppLocalizations {
   String get min;
   String get seconds;
 
+  // Quiz Creation
+  String get createRecordQuiz;
+  String get basicInformation;
+  String get recordQuizName;
+  String get totalGrade;
+  String get numberOfAttempts;
+  String get recordingQuestion;
+  String get addQuestion;
+  String get editRecordingQuestion;
+  String get question;
+  String get maxDurationSecondsOptional;
+  String get studentsWillRecordAudio;
+  String get weekLabel;
+  String get finalLabel;
+  String get lessonLabel;
+  String get editQuiz;
+  String get createNewQuiz;
+  String get quizInformation;
+  String get quizName;
+  String get questionRequirements;
+  String get easyQuestions;
+  String get mediumQuestions;
+  String get hardQuestions;
+  String get easyQuestionsDescription;
+  String get mediumQuestionsDescription;
+  String get hardQuestionsDescription;
+  String get questionsProgress;
+  String get addQuestionsToMeetRequirements;
+  String get addEasy;
+  String get addMedium;
+  String get addHard;
+  String get currentTotal;
+  String get noQuestionsAddedYet;
+  String get addQuestionsUsingButtonsAbove;
+  String get questionType;
+  String get option;
+  String get addOption;
+  String get correctAnswerOptional;
+  String get totalGradePoints;
+  String get creatingQuiz;
+  String get updatingQuiz;
+  String get quizCreatedSuccessfully;
+  String get quizUpdatedSuccessfully;
+  String get errorCreatingQuiz;
+  String get errorUpdatingQuiz;
+  String get pleaseAddRequiredQuestions;
+  String get mustBeNonNegative;
+  String get invalidNumber;
+
   // Semesters
   String get semesterOverview;
   String get subjects;
@@ -260,6 +309,16 @@ abstract class AppLocalizations {
   String get deleteMediaConfirmation;
   String get actionCannotBeUndone;
 
+  // Subject Delete
+  String get deleteSubject;
+  String get deleteSubjectTitle;
+  String get deleteSubjectConfirmation;
+  String get subjectDeletedSuccessfully;
+  String get cannotDeleteSubjectWithContent;
+  String get subjectContainsContent;
+  String get deleteContentFirst;
+  String get errorDeletingSubject;
+
   String get addNewSemesterTemplate;
   String get addSemester;
 
@@ -351,6 +410,35 @@ abstract class AppLocalizations {
   String get copticKeyboard;
   String get showCopticKeyboard;
   String get hideCopticKeyboard;
+
+  // CSV Download
+  String get downloadStudentData;
+  String get downloadSemesterStudents;
+  String get email;
+  String get phone;
+  String get address;
+  String get verificationStatus;
+  String get registrationDate;
+  String get verified;
+  String get pending;
+  String get semesterLabel;
+  String get subjectLabel;
+  String get gradeLabel;
+  String get noData;
+  String get studentDataDownloadedSuccessfully;
+  String get failedToDownloadStudentData;
+  String get semesterStudentsDownloadedSuccessfully;
+  String get failedToDownloadSemesterStudents;
+  
+  // Image Download
+  String get downloadImage;
+  String get downloadProfilePicture;
+  String get downloadTazkia;
+  String get downloadIdFront;
+  String get downloadIdBack;
+  String get downloadQualifications;
+  String get imageDownloadedSuccessfully;
+  String get failedToDownloadImage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -1062,6 +1150,31 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get actionCannotBeUndone => 'لا يمكن التراجع عن هذا الإجراء';
 
+  // Subject Delete
+  @override
+  String get deleteSubject => 'حذف المادة';
+
+  @override
+  String get deleteSubjectTitle => 'حذف المادة';
+
+  @override
+  String get deleteSubjectConfirmation => 'هل أنت متأكد من أنك تريد حذف هذه المادة؟ لا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get subjectDeletedSuccessfully => 'تم حذف المادة بنجاح';
+
+  @override
+  String get cannotDeleteSubjectWithContent => 'لا يمكن حذف المادة التي تحتوي على محتوى';
+
+  @override
+  String get subjectContainsContent => 'تحتوي هذه المادة على دروس أو اختبارات. يجب حذف جميع المحتويات أولاً.';
+
+  @override
+  String get deleteContentFirst => 'احذف جميع الدروس والاختبارات أولاً';
+
+  @override
+  String get errorDeletingSubject => 'خطأ في حذف المادة';
+
   @override
   String get addNewSemesterTemplate => 'إضافة قالب فصل دراسي جديد';
 
@@ -1276,6 +1389,225 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hideCopticKeyboard => 'إخفاء لوحة المفاتيح القبطية';
+
+  // CSV Download
+  @override
+  String get downloadStudentData => 'تحميل بيانات الطالب';
+
+  @override
+  String get email => 'البريد الإلكتروني';
+
+  @override
+  String get phone => 'الهاتف';
+
+  @override
+  String get address => 'العنوان';
+
+  @override
+  String get verificationStatus => 'حالة التحقق';
+
+  @override
+  String get registrationDate => 'تاريخ التسجيل';
+
+  @override
+  String get verified => 'محقق';
+
+  @override
+  String get pending => 'في الانتظار';
+
+  @override
+  String get semesterLabel => 'الفصل الدراسي';
+
+  @override
+  String get subjectLabel => 'المادة';
+
+  @override
+  String get gradeLabel => 'الدرجة';
+
+  @override
+  String get noData => 'لا توجد بيانات';
+
+  @override
+  String get studentDataDownloadedSuccessfully => 'تم تحميل بيانات الطالب بنجاح!';
+
+  @override
+  String get failedToDownloadStudentData => 'فشل في تحميل بيانات الطالب';
+
+  @override
+  String get downloadSemesterStudents => 'تحميل بيانات طلاب الفصل الدراسي';
+
+  @override
+  String get semesterStudentsDownloadedSuccessfully => 'تم تحميل بيانات طلاب الفصل الدراسي بنجاح!';
+
+  @override
+  String get failedToDownloadSemesterStudents => 'فشل في تحميل بيانات طلاب الفصل الدراسي';
+  
+  // Image Download
+  @override
+  String get downloadImage => 'تحميل الصورة';
+  
+  @override
+  String get downloadProfilePicture => 'تحميل صورة الملف الشخصي';
+  
+  @override
+  String get downloadTazkia => 'تحميل صورة التزكية';
+  
+  @override
+  String get downloadIdFront => 'تحميل صورة الهوية الأمامية';
+  
+  @override
+  String get downloadIdBack => 'تحميل صورة الهوية الخلفية';
+  
+  @override
+  String get downloadQualifications => 'تحميل صورة المؤهلات';
+  
+  @override
+  String get imageDownloadedSuccessfully => 'تم تحميل الصورة بنجاح!';
+  
+  @override
+  String get failedToDownloadImage => 'فشل في تحميل الصورة';
+
+  // Quiz Creation
+  @override
+  String get createRecordQuiz => 'إنشاء اختبار تسجيل';
+
+  @override
+  String get basicInformation => 'المعلومات الأساسية';
+
+  @override
+  String get recordQuizName => 'اسم اختبار التسجيل';
+
+  @override
+  String get totalGrade => 'الدرجة الإجمالية';
+
+  @override
+  String get numberOfAttempts => 'عدد المحاولات';
+
+  @override
+  String get recordingQuestion => 'سؤال التسجيل';
+
+  @override
+  String get addQuestion => 'إضافة سؤال';
+
+  @override
+  String get editRecordingQuestion => 'تعديل سؤال التسجيل';
+
+  @override
+  String get question => 'السؤال';
+
+  @override
+  String get maxDurationSecondsOptional => 'المدة القصوى (ثوانٍ) - اختياري';
+
+  @override
+  String get studentsWillRecordAudio => 'سيقوم الطلاب بتسجيل إجابات صوتية لهذا السؤال.';
+
+  @override
+  String get weekLabel => 'أسبوع';
+
+  @override
+  String get finalLabel => 'نهائي';
+
+  @override
+  String get lessonLabel => 'الدرس';
+
+  @override
+  String get editQuiz => 'تعديل الاختبار';
+
+  @override
+  String get createNewQuiz => 'إنشاء اختبار جديد';
+
+  @override
+  String get quizInformation => 'معلومات الاختبار';
+
+  @override
+  String get quizName => 'اسم الاختبار';
+
+  @override
+  String get questionRequirements => 'متطلبات الأسئلة';
+
+  @override
+  String get easyQuestions => 'أسئلة سهلة';
+
+  @override
+  String get easyQuestionsDescription => 'أسئلة سهلة (نقطة واحدة لكل سؤال)';
+
+  @override
+  String get mediumQuestions => 'أسئلة متوسطة';
+
+  @override
+  String get mediumQuestionsDescription => 'أسئلة متوسطة (3 نقاط لكل سؤال)';
+
+  @override
+  String get hardQuestions => 'أسئلة صعبة';
+
+  @override
+  String get hardQuestionsDescription => 'أسئلة صعبة (5 نقاط لكل سؤال)';
+
+  @override
+  String get questionsProgress => 'تقدم الأسئلة';
+
+  @override
+  String get addQuestionsToMeetRequirements => 'أضف أسئلة لتلبية المتطلبات المحددة أعلاه:';
+
+  @override
+  String get addEasy => 'إضافة سهل';
+
+  @override
+  String get addMedium => 'إضافة متوسط';
+
+  @override
+  String get addHard => 'إضافة صعب';
+
+  @override
+  String get currentTotal => 'المجموع الحالي';
+
+  @override
+  String get noQuestionsAddedYet => 'لم يتم إضافة أسئلة بعد.';
+
+  @override
+  String get addQuestionsUsingButtonsAbove => 'أضف أسئلة باستخدام الأزرار أعلاه.';
+
+  @override
+  String get questionType => 'نوع السؤال';
+
+  @override
+  String get option => 'خيار';
+
+  @override
+  String get addOption => 'إضافة خيار';
+
+  @override
+  String get correctAnswerOptional => 'الإجابة الصحيحة (اختياري)';
+
+  @override
+  String get totalGradePoints => 'الدرجة الإجمالية: {points} نقطة';
+
+  @override
+  String get creatingQuiz => 'إنشاء الاختبار...';
+
+  @override
+  String get updatingQuiz => 'تحديث الاختبار...';
+
+  @override
+  String get quizCreatedSuccessfully => 'تم إنشاء الاختبار بنجاح!';
+
+  @override
+  String get quizUpdatedSuccessfully => 'تم تحديث الاختبار بنجاح!';
+
+  @override
+  String get errorCreatingQuiz => 'خطأ في إنشاء الاختبار';
+
+  @override
+  String get errorUpdatingQuiz => 'خطأ في تحديث الاختبار';
+
+  @override
+  String get pleaseAddRequiredQuestions => 'يرجى إضافة العدد المطلوب من الأسئلة لكل مستوى صعوبة';
+
+  @override
+  String get mustBeNonNegative => 'يجب أن تكون غير سالبة';
+
+  @override
+  String get invalidNumber => 'رقم غير صحيح';
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -1964,6 +2296,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get actionCannotBeUndone => 'This action cannot be undone';
 
+  // Subject Delete
+  @override
+  String get deleteSubject => 'Delete Subject';
+
+  @override
+  String get deleteSubjectTitle => 'Delete Subject';
+
+  @override
+  String get deleteSubjectConfirmation => 'Are you sure you want to delete this subject? This action cannot be undone.';
+
+  @override
+  String get subjectDeletedSuccessfully => 'Subject deleted successfully';
+
+  @override
+  String get cannotDeleteSubjectWithContent => 'Cannot delete subject with content';
+
+  @override
+  String get subjectContainsContent => 'This subject contains lessons or quizzes. Please delete all content first.';
+
+  @override
+  String get deleteContentFirst => 'Delete all lessons and quizzes first';
+
+  @override
+  String get errorDeletingSubject => 'Error deleting subject';
+
   @override
   String get addNewSemesterTemplate => 'Add New Semester Template';
 
@@ -2180,4 +2537,223 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hideCopticKeyboard => 'Hide Coptic Keyboard';
+
+  // CSV Download
+  @override
+  String get downloadStudentData => 'Download Student Data';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get address => 'Address';
+
+  @override
+  String get verificationStatus => 'Verification Status';
+
+  @override
+  String get registrationDate => 'Registration Date';
+
+  @override
+  String get verified => 'Verified';
+
+  @override
+  String get pending => 'Pending';
+
+  @override
+  String get semesterLabel => 'Semester';
+
+  @override
+  String get subjectLabel => 'Subject';
+
+  @override
+  String get gradeLabel => 'Grade';
+
+  @override
+  String get noData => 'No Data';
+
+  @override
+  String get studentDataDownloadedSuccessfully => 'Student data downloaded successfully!';
+
+  @override
+  String get failedToDownloadStudentData => 'Failed to download student data';
+
+  @override
+  String get downloadSemesterStudents => 'Download Semester Students Data';
+
+  @override
+  String get semesterStudentsDownloadedSuccessfully => 'Semester students data downloaded successfully!';
+
+  @override
+  String get failedToDownloadSemesterStudents => 'Failed to download semester students data';
+  
+  // Image Download
+  @override
+  String get downloadImage => 'Download Image';
+  
+  @override
+  String get downloadProfilePicture => 'Download Profile Picture';
+  
+  @override
+  String get downloadTazkia => 'Download Tazkia';
+  
+  @override
+  String get downloadIdFront => 'Download ID Front';
+  
+  @override
+  String get downloadIdBack => 'Download ID Back';
+  
+  @override
+  String get downloadQualifications => 'Download Qualifications';
+  
+  @override
+  String get imageDownloadedSuccessfully => 'Image downloaded successfully!';
+  
+  @override
+  String get failedToDownloadImage => 'Failed to download image';
+
+  // Quiz Creation
+  @override
+  String get createRecordQuiz => 'Create Record Quiz';
+
+  @override
+  String get basicInformation => 'Basic Information';
+
+  @override
+  String get recordQuizName => 'Record Quiz Name';
+
+  @override
+  String get totalGrade => 'Total Grade';
+
+  @override
+  String get numberOfAttempts => 'Number of Attempts';
+
+  @override
+  String get recordingQuestion => 'Recording Question';
+
+  @override
+  String get addQuestion => 'Add Question';
+
+  @override
+  String get editRecordingQuestion => 'Edit Recording Question';
+
+  @override
+  String get question => 'Question';
+
+  @override
+  String get maxDurationSecondsOptional => 'Max Duration (seconds) - Optional';
+
+  @override
+  String get studentsWillRecordAudio => 'Students will record audio responses to this question.';
+
+  @override
+  String get weekLabel => 'Week';
+
+  @override
+  String get finalLabel => 'Final';
+
+  @override
+  String get lessonLabel => 'Lesson';
+
+  @override
+  String get editQuiz => 'Edit Quiz';
+
+  @override
+  String get createNewQuiz => 'Create New Quiz';
+
+  @override
+  String get quizInformation => 'Quiz Information';
+
+  @override
+  String get quizName => 'Quiz Name';
+
+  @override
+  String get questionRequirements => 'Question Requirements';
+
+  @override
+  String get easyQuestions => 'Easy Questions';
+
+  @override
+  String get easyQuestionsDescription => 'Easy Questions (1 pt each)';
+
+  @override
+  String get mediumQuestions => 'Medium Questions';
+
+  @override
+  String get mediumQuestionsDescription => 'Medium Questions (3 pts each)';
+
+  @override
+  String get hardQuestions => 'Hard Questions';
+
+  @override
+  String get hardQuestionsDescription => 'Hard Questions (5 pts each)';
+
+  @override
+  String get questionsProgress => 'Questions Progress';
+
+  @override
+  String get addQuestionsToMeetRequirements => 'Add questions to meet the requirements specified above:';
+
+  @override
+  String get addEasy => 'Add Easy';
+
+  @override
+  String get addMedium => 'Add Medium';
+
+  @override
+  String get addHard => 'Add Hard';
+
+  @override
+  String get currentTotal => 'Current Total';
+
+  @override
+  String get noQuestionsAddedYet => 'No questions added yet.';
+
+  @override
+  String get addQuestionsUsingButtonsAbove => 'Add questions using the buttons above.';
+
+  @override
+  String get questionType => 'Question Type';
+
+  @override
+  String get option => 'Option';
+
+  @override
+  String get addOption => 'Add Option';
+
+  @override
+  String get correctAnswerOptional => 'Correct Answer (Optional)';
+
+  @override
+  String get totalGradePoints => 'Total Grade: {points} points';
+
+  @override
+  String get creatingQuiz => 'Creating quiz...';
+
+  @override
+  String get updatingQuiz => 'Updating quiz...';
+
+  @override
+  String get quizCreatedSuccessfully => 'Quiz created successfully!';
+
+  @override
+  String get quizUpdatedSuccessfully => 'Quiz updated successfully!';
+
+  @override
+  String get errorCreatingQuiz => 'Error creating quiz';
+
+  @override
+  String get errorUpdatingQuiz => 'Error updating quiz';
+
+  @override
+  String get pleaseAddRequiredQuestions => 'Please add the required number of questions for each difficulty level';
+
+  @override
+  String get mustBeNonNegative => 'Must be non-negative';
+
+  @override
+  String get invalidNumber => 'Invalid number';
 }

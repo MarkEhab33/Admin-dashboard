@@ -7,6 +7,13 @@ import '../l10n/app_localizations.dart';
 import '../Models/student_summary.dart';
 import '../provider/student_provider.dart';
 import '../widgets/password_reset_dialog.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:csv/csv.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
+import 'dart:convert';
 
 
 class StudentDetailsScreen extends StatefulWidget {
@@ -267,17 +274,53 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
               context: context,
               builder: (BuildContext context) {
                 return Dialog(
-                  child: InteractiveViewer(
-                    child: Image.network(
-                      widget.student.user.profilePicture ?? 'https://picsum.photos/200/300',
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 200,
-                          height: 300,
-                          color: Colors.grey.shade200,
-                          child: Icon(Icons.person, size: 100, color: Colors.grey),
-                        );
-                      },
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 600,
+                      maxHeight: 700,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(
+                          child: InteractiveViewer(
+                            child: Image.network(
+                              widget.student.user.profilePicture ?? 'https://picsum.photos/200/300',
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 200,
+                                  height: 300,
+                                  color: Colors.grey.shade200,
+                                  child: Icon(Icons.person, size: 100, color: Colors.grey),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              if (widget.student.user.profilePicture != null && 
+                                  widget.student.user.profilePicture!.isNotEmpty) {
+                                _downloadImage(
+                                  widget.student.user.profilePicture!,
+                                  'profile_${widget.student.user.name}_${DateTime.now().millisecondsSinceEpoch}.jpg'
+                                );
+                              }
+                            },
+                            icon: Icon(Icons.download, color: Colors.white),
+                            label: Text(
+                              AppLocalizations.of(context)!.downloadProfilePicture,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -325,6 +368,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         ),
         SizedBox(height: 20),
         buildVerificationStatus(),
+        SizedBox(height: 20),
+        _buildDownloadButton(),
         if (!widget.student.isVerified) ...[
           SizedBox(height: 20),
           Text(
@@ -371,17 +416,53 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                         context: context,
                         builder: (BuildContext context) {
                           return Dialog(
-                            child: InteractiveViewer(
-                              child: Image.network(
-                                widget.student.tazkia ?? 'https://picsum.photos/200/300',
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 200,
-                                    height: 300,
-                                    color: Colors.grey.shade200,
-                                    child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
-                                  );
-                                },
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 600,
+                                maxHeight: 700,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Expanded(
+                                    child: InteractiveViewer(
+                                      child: Image.network(
+                                        widget.student.tazkia ?? 'https://picsum.photos/200/300',
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 200,
+                                            height: 300,
+                                            color: Colors.grey.shade200,
+                                            child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        if (widget.student.tazkia != null && 
+                                            widget.student.tazkia!.isNotEmpty) {
+                                          _downloadImage(
+                                            widget.student.tazkia!,
+                                            'tazkia_${widget.student.user.name}_${DateTime.now().millisecondsSinceEpoch}.jpg'
+                                          );
+                                        }
+                                      },
+                                      icon: Icon(Icons.download, color: Colors.white),
+                                      label: Text(
+                                        AppLocalizations.of(context)!.downloadTazkia,
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -403,17 +484,53 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                         context: context,
                         builder: (BuildContext context) {
                           return Dialog(
-                            child: InteractiveViewer(
-                              child: Image.network(
-                                widget.student.personalIDFront ?? 'https://picsum.photos/200/300',
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 200,
-                                    height: 300,
-                                    color: Colors.grey.shade200,
-                                    child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
-                                  );
-                                },
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 600,
+                                maxHeight: 700,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Expanded(
+                                    child: InteractiveViewer(
+                                      child: Image.network(
+                                        widget.student.personalIDFront ?? 'https://picsum.photos/200/300',
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 200,
+                                            height: 300,
+                                            color: Colors.grey.shade200,
+                                            child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        if (widget.student.personalIDFront != null && 
+                                            widget.student.personalIDFront!.isNotEmpty) {
+                                          _downloadImage(
+                                            widget.student.personalIDFront!,
+                                            'id_front_${widget.student.user.name}_${DateTime.now().millisecondsSinceEpoch}.jpg'
+                                          );
+                                        }
+                                      },
+                                      icon: Icon(Icons.download, color: Colors.white),
+                                      label: Text(
+                                        AppLocalizations.of(context)!.downloadIdFront,
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -435,17 +552,53 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                         context: context,
                         builder: (BuildContext context) {
                           return Dialog(
-                            child: InteractiveViewer(
-                              child: Image.network(
-                                widget.student.personalIDBack ?? 'https://picsum.photos/200/300',
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 200,
-                                    height: 300,
-                                    color: Colors.grey.shade200,
-                                    child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
-                                  );
-                                },
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 600,
+                                maxHeight: 700,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Expanded(
+                                    child: InteractiveViewer(
+                                      child: Image.network(
+                                        widget.student.personalIDBack ?? 'https://picsum.photos/200/300',
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 200,
+                                            height: 300,
+                                            color: Colors.grey.shade200,
+                                            child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        if (widget.student.personalIDBack != null && 
+                                            widget.student.personalIDBack!.isNotEmpty) {
+                                          _downloadImage(
+                                            widget.student.personalIDBack!,
+                                            'id_back_${widget.student.user.name}_${DateTime.now().millisecondsSinceEpoch}.jpg'
+                                          );
+                                        }
+                                      },
+                                      icon: Icon(Icons.download, color: Colors.white),
+                                      label: Text(
+                                        AppLocalizations.of(context)!.downloadIdBack,
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -468,17 +621,52 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                           context: context,
                           builder: (BuildContext context) {
                             return Dialog(
-                              child: InteractiveViewer(
-                                child: Image.network(
-                                  widget.student.qualifications,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 200,
-                                      height: 300,
-                                      color: Colors.grey.shade200,
-                                      child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
-                                    );
-                                  },
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 600,
+                                  maxHeight: 700,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Expanded(
+                                      child: InteractiveViewer(
+                                        child: Image.network(
+                                          widget.student.qualifications,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              width: 200,
+                                              height: 300,
+                                              color: Colors.grey.shade200,
+                                              child: Icon(Icons.image_not_supported, size: 100, color: Colors.grey),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          if (widget.student.qualifications.isNotEmpty) {
+                                            _downloadImage(
+                                              widget.student.qualifications,
+                                              'qualifications_${widget.student.user.name}_${DateTime.now().millisecondsSinceEpoch}.jpg'
+                                            );
+                                          }
+                                        },
+                                        icon: Icon(Icons.download, color: Colors.white),
+                                        label: Text(
+                                          AppLocalizations.of(context)!.downloadQualifications,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppTheme.primaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
@@ -897,6 +1085,144 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     return 'F';
   }
 
+  Widget _buildDownloadButton() {
+    return Container(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: Icon(Icons.download, color: Colors.white),
+        label: Text(
+          AppLocalizations.of(context)!.downloadStudentData,
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryColor,
+          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        onPressed: _isProcessing ? null : _downloadStudentDataAsCSV,
+      ),
+    );
+  }
+
+  Future<void> _downloadStudentDataAsCSV() async {
+    try {
+      setState(() => _isProcessing = true);
+      
+      // Generate CSV data
+      final csvData = await _generateCSVData();
+      
+      // Handle web platform differently
+      if (kIsWeb) {
+                        // For web, create a download link with proper UTF-8 encoding
+                final bytes = utf8.encode('\uFEFF$csvData'); // Add BOM for better Arabic support
+                final blob = html.Blob([bytes], 'text/csv;charset=utf-8');
+                final url = html.Url.createObjectUrlFromBlob(blob);
+                html.AnchorElement(href: url)
+                  ..setAttribute('download', 'student_${widget.student.user.name}_${widget.student.studentCode}_${DateTime.now().millisecondsSinceEpoch}.csv')
+                  ..click();
+                html.Url.revokeObjectUrl(url);
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.studentDataDownloadedSuccessfully),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        // For mobile/desktop platforms
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = 'student_${widget.student.user.name}_${widget.student.studentCode}_${DateTime.now().millisecondsSinceEpoch}.csv';
+        final file = File('${directory.path}/$fileName');
+        
+                        // Write CSV data to file with BOM for better Arabic support
+                await file.writeAsString('\uFEFF$csvData', encoding: utf8);
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.studentDataDownloadedSuccessfully),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        
+        // Try to open the file location (platform specific)
+        if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+          final uri = Uri.file(directory.path);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri);
+          }
+        }
+      }
+      
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.failedToDownloadStudentData}: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  Future<String> _generateCSVData() async {
+    final List<List<dynamic>> rows = [];
+    
+    // Add header row
+    rows.add([
+      AppLocalizations.of(context)!.studentId,
+      AppLocalizations.of(context)!.studentName,
+      AppLocalizations.of(context)!.email,
+      AppLocalizations.of(context)!.phone,
+      AppLocalizations.of(context)!.dateOfBirth,
+      AppLocalizations.of(context)!.address,
+      AppLocalizations.of(context)!.church,
+      AppLocalizations.of(context)!.churchService,
+      AppLocalizations.of(context)!.deaconLevel,
+      AppLocalizations.of(context)!.academicYear,
+      AppLocalizations.of(context)!.currentSemester,
+      AppLocalizations.of(context)!.verificationStatus,
+      AppLocalizations.of(context)!.registrationDate
+    ]);
+    
+    // Add student data row
+    rows.add([
+      widget.student.studentCode,
+      widget.student.user.name,
+      widget.student.user.email,
+      widget.student.user.phone,
+      DateFormat('yyyy-MM-dd').format(widget.student.user.birthday),
+      widget.student.city,
+      widget.student.church,
+      widget.student.churchService,
+      widget.student.deaconLevel,
+      widget.student.semesters.isNotEmpty ? widget.student.semesters.first.year.toString() : 'N/A',
+      widget.student.semesters.isNotEmpty ? widget.student.semesters.first.name : 'N/A',
+      widget.student.isVerified ? AppLocalizations.of(context)!.verified : AppLocalizations.of(context)!.pending,
+      DateFormat('yyyy-MM-dd').format(DateTime.now()),
+    ]);
+    
+
+    
+    // Convert to CSV string
+    return const ListToCsvConverter().convert(rows);
+  }
+
   Widget _buildVerificationButtons() {
     return Positioned(
       bottom: 0,
@@ -934,8 +1260,8 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
                   ),
                 ),
                 onPressed: _isProcessing
-                  ? null
-                  : () => _showVerificationDialog(context, 'decline'),
+                    ? null
+                    : () => _showVerificationDialog(context, 'decline'),
               ),
             ),
             SizedBox(width: 16),
@@ -971,5 +1297,53 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
         userName: widget.student.user.name,
       ),
     );
+  }
+
+  // Image download helper method
+  Future<void> _downloadImage(String imageUrl, String fileName) async {
+    try {
+      if (kIsWeb) {
+        // For web, fetch the image as a blob and create a download link
+        final response = await html.HttpRequest.request(
+          imageUrl,
+          responseType: 'blob',
+        );
+        
+        if (response.status == 200) {
+          final blob = response.response as html.Blob;
+          final url = html.Url.createObjectUrlFromBlob(blob);
+          
+          html.AnchorElement(href: url)
+            ..download = fileName
+            ..click();
+          
+          html.Url.revokeObjectUrl(url);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.imageDownloadedSuccessfully),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          throw Exception('Failed to fetch image: ${response.status}');
+        }
+      } else {
+        // For mobile/desktop, show a message that this feature is not available
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Image download is only available on web platform'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${AppLocalizations.of(context)!.failedToDownloadImage}: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

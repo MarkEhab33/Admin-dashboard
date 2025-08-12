@@ -9,7 +9,13 @@ import '../Theme.dart';
 import '../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'week_content_page.dart';
-
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:csv/csv.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart';
+import 'dart:convert';
 
 import '../provider/semesters_provider.dart';
 import '../provider/student_provider.dart';
@@ -127,11 +133,22 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                         AppLocalizations.of(context)!.students,
                         style: AppTheme.headingMedium,
                       ),
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddStudentDialog(context),
-                        icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                        label: Text(AppLocalizations.of(context)!.addStudent),
-                        style: AppTheme.primaryButtonStyle,
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => _downloadSemesterStudentsAsCSV(),
+                            icon: const Icon(Icons.download, size: 18, color: Colors.white),
+                            label: Text(AppLocalizations.of(context)!.downloadSemesterStudents),
+                            style: AppTheme.primaryButtonStyle,
+                          ),
+                          const SizedBox(width: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => _showAddStudentDialog(context),
+                            icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                            label: Text(AppLocalizations.of(context)!.addStudent),
+                            style: AppTheme.primaryButtonStyle,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -313,6 +330,99 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     } catch (e) {
       return AppLocalizations.of(context)!.invalidDate;
     }
+  }
+
+  Future<void> _downloadSemesterStudentsAsCSV() async {
+    try {
+      final csvData = _generateSemesterStudentsCSV();
+      
+      if (kIsWeb) {
+        // For web, create a download link with proper UTF-8 encoding
+        final bytes = utf8.encode('\uFEFF$csvData'); // Add BOM for better Arabic support
+        final blob = html.Blob([bytes], 'text/csv;charset=utf-8');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        html.AnchorElement(href: url)
+          ..setAttribute('download', '${widget.semester.name}_طلاب_${DateTime.now().millisecondsSinceEpoch}.csv')
+          ..click();
+        html.Url.revokeObjectUrl(url);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.semesterStudentsDownloadedSuccessfully),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        // For mobile/desktop platforms
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = '${widget.semester.name}_طلاب_${DateTime.now().millisecondsSinceEpoch}.csv';
+        final file = File('${directory.path}/$fileName');
+        
+        // Write CSV data to file with BOM for better Arabic support
+        await file.writeAsString('\uFEFF$csvData', encoding: utf8);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.semesterStudentsDownloadedSuccessfully),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Open the file location
+        final uri = Uri.file(directory.path);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${AppLocalizations.of(context)!.failedToDownloadSemesterStudents}: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String _generateSemesterStudentsCSV() {
+    final rows = <List<dynamic>>[];
+    
+    // Add header row
+    rows.add([
+      AppLocalizations.of(context)!.studentId,
+      AppLocalizations.of(context)!.studentName,
+      AppLocalizations.of(context)!.email,
+      AppLocalizations.of(context)!.phone,
+      AppLocalizations.of(context)!.dateOfBirth,
+      AppLocalizations.of(context)!.address,
+      AppLocalizations.of(context)!.church,
+      AppLocalizations.of(context)!.churchService,
+      AppLocalizations.of(context)!.deaconLevel,
+      AppLocalizations.of(context)!.academicYear,
+      AppLocalizations.of(context)!.verificationStatus,
+      AppLocalizations.of(context)!.registrationDate
+    ]);
+    
+    // Add student data rows
+    for (final student in widget.semester.students) {
+      rows.add([
+        student.studentCode,
+        student.user.name,
+        student.user.email,
+        student.user.phone,
+        DateFormat('yyyy-MM-dd').format(student.user.birthday),
+        student.city,
+        student.church,
+        student.churchService,
+        student.deaconLevel,
+        student.semesters.isNotEmpty ? student.semesters.first.year.toString() : 'N/A',
+        student.isVerified ? AppLocalizations.of(context)!.verified : AppLocalizations.of(context)!.pending,
+        DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      ]);
+    }
+    
+    // Convert to CSV string
+    return const ListToCsvConverter().convert(rows);
   }
 
   Widget _buildStudentsList() {

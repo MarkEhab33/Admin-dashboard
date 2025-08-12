@@ -57,6 +57,7 @@ dependencies:
   data_table_2: ^2.6.0
   percent_indicator: ^4.2.5
   # timeago removed due to dependency conflict with intl
+  csv: ^5.1.1
 
 
 dev_dependencies:

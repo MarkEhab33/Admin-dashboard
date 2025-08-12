@@ -141,6 +141,29 @@ class SemestersTemplatesProvider with ChangeNotifier {
     }
   }
 
+  Future<void> deleteSubject(int subjectId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${Globals.baseUrl}/subject/$subjectId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Remove the subject from the local list
+        if (_selectedSemester != null) {
+          _selectedSemester!.subjects.removeWhere((subject) => subject.subjectId == subjectId);
+          notifyListeners();
+        }
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to delete subject');
+      }
+    } catch (e) {
+      print('Error deleting subject: $e');
+      throw Exception('Error deleting subject: $e');
+    }
+  }
+
 
   void setSelectedSemester(SemesterTemplate semester) {
     _selectedSemester = semester;

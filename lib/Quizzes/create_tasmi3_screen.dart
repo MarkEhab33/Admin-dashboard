@@ -8,6 +8,7 @@ import '../provider/subcategory_provider.dart';
 import '../widgets/subcategory_selector.dart';
 import '../widgets/coptic_text_field.dart';
 import '../Theme.dart';
+import '../l10n/app_localizations.dart';
 
 class CreateTasmi3Screen extends StatefulWidget {
   final int initialSubjectId;
@@ -40,10 +41,10 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
   void initState() {
     super.initState();
     // Set default values
-    _nameController.text = 'Tasmi3 - ${widget.lessonName}';
+    _nameController.text = '${widget.lessonName}';
     _gradeController.text = '10';
     _attemptsController.text = '1';
-    _typeController.text = 'Week'; // Default to Week
+    // Don't set default value here - let the dropdown handle it
   }
 
   @override
@@ -59,7 +60,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create Tasmi3'),
+        title: Text(AppLocalizations.of(context)!.createRecordQuiz),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -135,7 +136,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Create Tasmi3',
+                      AppLocalizations.of(context)!.createRecordQuiz,
                       style: AppTheme.headingLarge.copyWith(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
@@ -167,7 +168,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Tasmi3 allows students to record audio responses. Only one recording question is allowed per Tasmi3, with no time limit.',
+                    'Record Quiz allows students to record audio responses. Only one recording question is allowed per Record Quiz, with no time limit.',
                     style: AppTheme.bodyMedium.copyWith(
                       color: Colors.green.shade700,
                       fontSize: 13,
@@ -201,7 +202,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Basic Information',
+            AppLocalizations.of(context)!.basicInformation,
             style: AppTheme.headingMedium.copyWith(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.bold,
@@ -210,8 +211,8 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _nameController,
-            decoration: AppTheme.inputDecoration('Tasmi3 Name'),
-            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+            decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.recordQuizName),
+            validator: (value) => value?.isEmpty ?? true ? AppLocalizations.of(context)!.required : null,
           ),
           const SizedBox(height: 16),
           Row(
@@ -219,18 +220,18 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
               Expanded(
                 child: TextFormField(
                   controller: _gradeController,
-                  decoration: AppTheme.inputDecoration('Total Grade'),
+                  decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.totalGrade),
                   keyboardType: TextInputType.number,
-                  validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                  validator: (value) => value?.isEmpty ?? true ? AppLocalizations.of(context)!.required : null,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: TextFormField(
                   controller: _attemptsController,
-                  decoration: AppTheme.inputDecoration('Number of Attempts'),
+                  decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.numberOfAttempts),
                   keyboardType: TextInputType.number,
-                  validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                  validator: (value) => value?.isEmpty ?? true ? AppLocalizations.of(context)!.required : null,
                 ),
               ),
             ],
@@ -240,16 +241,17 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: _typeController.text.isNotEmpty ? _typeController.text : 'Week',
-                  decoration: AppTheme.inputDecoration('Quiz Type'),
-                  items: const [
+                  value: _typeController.text.isNotEmpty ? _typeController.text : null,
+                  decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.quizType),
+                  hint: Text(AppLocalizations.of(context)!.weekLabel),
+                  items: [
                     DropdownMenuItem<String>(
-                      value: 'Week',
-                      child: Text('Week'),
+                      value: AppLocalizations.of(context)!.weekLabel,
+                      child: Text(AppLocalizations.of(context)!.weekLabel),
                     ),
                     DropdownMenuItem<String>(
-                      value: 'Final',
-                      child: Text('Final'),
+                      value: AppLocalizations.of(context)!.finalLabel,
+                      child: Text(AppLocalizations.of(context)!.finalLabel),
                     ),
                   ],
                   onChanged: (value) {
@@ -259,14 +261,14 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
                       });
                     }
                   },
-                  validator: (value) => value == null ? 'Required' : null,
+                  validator: (value) => value == null ? AppLocalizations.of(context)!.required : null,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: TextFormField(
                   initialValue: widget.lessonName,
-                  decoration: AppTheme.inputDecoration('Lesson'),
+                  decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.lessonLabel),
                   enabled: false,
                 ),
               ),
@@ -313,7 +315,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recording Question',
+                AppLocalizations.of(context)!.recordingQuestion,
                 style: AppTheme.headingMedium.copyWith(
                   color: AppTheme.primaryColor,
                   fontWeight: FontWeight.bold,
@@ -323,7 +325,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
                 ElevatedButton.icon(
                   onPressed: _addRecordQuestion,
                   icon: const Icon(Icons.mic_outlined, size: 18),
-                  label: const Text('Add Question'),
+                  label: Text(AppLocalizations.of(context)!.addQuestion),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -404,14 +406,14 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Recording Question',
+                      AppLocalizations.of(context)!.recordingQuestion,
                       style: AppTheme.bodyMedium.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.green.shade700,
                       ),
                     ),
                     Text(
-                      'Grade: ${_recordQuestion!.grade.toInt()} points',
+                      '${AppLocalizations.of(context)!.grade}: ${_recordQuestion!.grade.toInt()} ${AppLocalizations.of(context)!.points}',
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.textSecondaryColor,
                         fontSize: 12,
@@ -483,7 +485,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
               ),
             ),
             child: Text(
-              'Cancel',
+              AppLocalizations.of(context)!.cancel,
               style: AppTheme.bodyLarge.copyWith(
                 color: AppTheme.primaryColor,
                 fontWeight: FontWeight.bold,
@@ -504,7 +506,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
               ),
             ),
             child: Text(
-              'Create Tasmi3',
+              AppLocalizations.of(context)!.createRecordQuiz,
               style: AppTheme.bodyLarge.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -561,7 +563,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
           subjectId: widget.initialSubjectId,
           lessonId: widget.initialLessonId,
           grade: int.parse(_gradeController.text),
-          type: _typeController.text, // Use selected quiz type (Week or Final)
+          type: _typeController.text.isNotEmpty ? _typeController.text : AppLocalizations.of(context)!.weekLabel,
           numberOfAttempts: int.parse(_attemptsController.text),
           isRecord: true, // Mark as recording quiz for Tasmi3
           subCategory: selectedSubcategory,
@@ -576,8 +578,8 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tasmi3 created successfully!'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.quizCreatedSuccessfully),
               backgroundColor: Colors.green,
             ),
           );
@@ -587,7 +589,7 @@ class _CreateTasmi3ScreenState extends State<CreateTasmi3Screen> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error creating Tasmi3: $e'),
+              content: Text('${AppLocalizations.of(context)!.errorCreatingQuiz}: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -641,7 +643,7 @@ class _TasmiQuestionDialogState extends State<TasmiQuestionDialog> {
         children: [
           const Icon(Icons.mic, color: Colors.green),
           const SizedBox(width: 8),
-          Text(widget.existingQuestion != null ? 'Edit Recording Question' : 'Add Recording Question'),
+          Text(widget.existingQuestion != null ? AppLocalizations.of(context)!.editRecordingQuestion : AppLocalizations.of(context)!.addQuestion),
         ],
       ),
       content: SingleChildScrollView(
@@ -652,14 +654,14 @@ class _TasmiQuestionDialogState extends State<TasmiQuestionDialog> {
             children: [
               QuizCopticTextField(
                 controller: _questionController,
-                labelText: 'Question',
+                labelText: AppLocalizations.of(context)!.question,
                 maxLines: 3,
-                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+                validator: (value) => value?.isEmpty ?? true ? AppLocalizations.of(context)!.required : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _maxDurationController,
-                decoration: AppTheme.inputDecoration('Max Duration (seconds) - Optional'),
+                decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.maxDurationSecondsOptional),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16),
@@ -675,7 +677,7 @@ class _TasmiQuestionDialogState extends State<TasmiQuestionDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Students will record audio responses to this question.',
+                        AppLocalizations.of(context)!.studentsWillRecordAudio,
                         style: AppTheme.bodyMedium.copyWith(
                           color: Colors.green.shade700,
                           fontSize: 12,
@@ -692,7 +694,7 @@ class _TasmiQuestionDialogState extends State<TasmiQuestionDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
         ElevatedButton(
           onPressed: _saveQuestion,
@@ -700,7 +702,7 @@ class _TasmiQuestionDialogState extends State<TasmiQuestionDialog> {
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
           ),
-          child: const Text('Save'),
+          child: Text(AppLocalizations.of(context)!.save),
         ),
       ],
     );

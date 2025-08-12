@@ -89,7 +89,7 @@ class SemesterTemplateScreen extends StatelessWidget {
         onPressed: () => _showAddSubjectDialog(context, semesterProvider, semester.id),
         backgroundColor: AppTheme.primaryColor,
         icon: const Icon(Icons.add),
-        label: const Text("Add Subject"),
+        label: Text("${AppLocalizations.of(context)!.add} ${AppLocalizations.of(context)!.subject}"),
       ),
     );
   }
@@ -322,31 +322,61 @@ class SemesterTemplateScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Edit button with modern design
+          // Action buttons with modern design
           Positioned(
             top: 6,
             right: 6,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                icon: Icon(
-                  Icons.edit_outlined,
-                  color: Colors.white,
-                  size: 14,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Delete button
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                    onPressed: () => _showDeleteSubjectDialog(context, subject),
+                    tooltip: AppLocalizations.of(context)!.deleteSubject,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
+                  ),
                 ),
-                onPressed: () => _showEditSubjectDialog(context, subject),
-                tooltip: 'Edit Subject',
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(
-                  minWidth: 28,
-                  minHeight: 28,
+                const SizedBox(width: 4),
+                // Edit button
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                    onPressed: () => _showEditSubjectDialog(context, subject),
+                    tooltip: AppLocalizations.of(context)!.edit,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -380,7 +410,7 @@ class SemesterTemplateScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    "Add New Subject",
+                    "${AppLocalizations.of(context)!.add} Subject",
                     style: AppTheme.headingMedium.copyWith(
                       color: AppTheme.primaryColor,
                     ),
@@ -406,7 +436,7 @@ class SemesterTemplateScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      "Cancel",
+                      AppLocalizations.of(context)!.cancel,
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.textSecondaryColor,
                       ),
@@ -427,7 +457,7 @@ class SemesterTemplateScreen extends StatelessWidget {
                       }
                     },
                     style: AppTheme.primaryButtonStyle,
-                    child: const Text("Add Subject"),
+                    child: Text("${AppLocalizations.of(context)!.add} Subject"),
                   ),
                 ],
               ),
@@ -465,7 +495,7 @@ class SemesterTemplateScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    "Edit Subject",
+                    "${AppLocalizations.of(context)!.edit} Subject",
                     style: AppTheme.headingMedium.copyWith(
                       color: AppTheme.primaryColor,
                     ),
@@ -492,7 +522,7 @@ class SemesterTemplateScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      "Cancel",
+                      AppLocalizations.of(context)!.cancel,
                       style: AppTheme.bodyMedium.copyWith(
                         color: AppTheme.textSecondaryColor,
                       ),
@@ -536,7 +566,233 @@ class SemesterTemplateScreen extends StatelessWidget {
                       }
                     },
                     style: AppTheme.primaryButtonStyle,
-                    child: const Text("Update Subject"),
+                    child: Text("${AppLocalizations.of(context)!.update} Subject"),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteSubjectDialog(BuildContext context, Subject subject) {
+    final provider = Provider.of<SemestersTemplatesProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          width: 400,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with warning icon
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.warning_outlined,
+                      color: Colors.red,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.deleteSubjectTitle,
+                          style: AppTheme.headingMedium.copyWith(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subject.subjectName ?? "Unknown Subject",
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: AppTheme.textSecondaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Warning message
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.red.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppLocalizations.of(context)!.confirm,
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppLocalizations.of(context)!.deleteSubjectConfirmation,
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_outlined,
+                            color: Colors.orange,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              AppLocalizations.of(context)!.subjectContainsContent,
+                              style: AppTheme.bodyMedium.copyWith(
+                                color: Colors.orange.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Action buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      AppLocalizations.of(context)!.cancel,
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final navigator = Navigator.of(context);
+                      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                      try {
+                        await provider.deleteSubject(subject.subjectId!);
+                        navigator.pop();
+
+                        if (context.mounted) {
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(context)!.subjectDeletedSuccessfully,
+                              ),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        navigator.pop();
+                        if (context.mounted) {
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '${AppLocalizations.of(context)!.errorDeletingSubject}: $e',
+                              ),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppLocalizations.of(context)!.delete,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
