@@ -58,6 +58,7 @@ dependencies:
   percent_indicator: ^4.2.5
   # timeago removed due to dependency conflict with intl
   csv: ^5.1.1
+  go_router: ^14.6.2
 
 
 dev_dependencies:
