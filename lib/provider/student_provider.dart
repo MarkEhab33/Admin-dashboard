@@ -162,4 +162,66 @@ class StudentsProvider with ChangeNotifier {
     }
     return null;
   }
+
+  /// Update student profile with user and student data including documents
+  Future<Student> updateStudentProfile(int userId, Map<String, dynamic> profileData) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/user/profile/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(profileData),
+      );
+
+      print('Update profile response: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData['data'] != null) {
+          final updatedStudent = Student.fromJson(responseData['data']);
+
+          // Update the student in the local list
+          final index = _students.indexWhere((s) => s.id == updatedStudent.id);
+          if (index != -1) {
+            _students[index] = updatedStudent;
+            notifyListeners();
+          }
+
+          return updatedStudent;
+        } else {
+          throw Exception('No data returned from server');
+        }
+      } else {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to update profile: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error updating student profile: $e');
+      throw Exception('Error updating student profile: $e');
+    }
+  }
+
+  /// Update profile picture URL
+  Future<void> updateProfilePicture(int userId, String profilePictureUrl) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/user/profile-picture/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'profilePicture': profilePictureUrl,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to update profile picture');
+      }
+    } catch (e) {
+      throw Exception('Error updating profile picture: $e');
+    }
+  }
 }

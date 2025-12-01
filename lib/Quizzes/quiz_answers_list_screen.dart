@@ -1,7 +1,7 @@
 import 'package:admin_dashboard/Models/quiz_answer.dart';
 import 'package:admin_dashboard/Quizzes/quiz_grading_screen.dart';
 import 'package:admin_dashboard/Theme.dart';
-import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
+import 'package:admin_dashboard/provider/quiz_answer_provider.dart' show QuizAnswerProvider, BulkGradeResult;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -74,6 +74,16 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
         title: Text('Quiz Submissions: ${widget.quizName}'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
+        actions: [
+          // Bulk Grade Button
+          Tooltip(
+            message: AppLocalizations.of(context)!.addBulkGrades,
+            child: IconButton(
+              icon: Icon(Icons.add_chart),
+              onPressed: () => _showBulkGradeDialog(),
+            ),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -889,6 +899,406 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
         );
       }
     }
+  }
+
+  void _showBulkGradeDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return _BulkGradeDialog(
+          quizId: widget.quizId,
+          quizName: widget.quizName,
+          semesterId: widget.semesterId,
+          onSuccess: () {
+            // Refresh the list after bulk grading
+            _loadQuizAnswers();
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Dialog for adding bulk grades to all students for a quiz
+class _BulkGradeDialog extends StatefulWidget {
+  final int quizId;
+  final String quizName;
+  final int? semesterId;
+  final VoidCallback onSuccess;
+
+  const _BulkGradeDialog({
+    Key? key,
+    required this.quizId,
+    required this.quizName,
+    this.semesterId,
+    required this.onSuccess,
+  }) : super(key: key);
+
+  @override
+  _BulkGradeDialogState createState() => _BulkGradeDialogState();
+}
+
+class _BulkGradeDialogState extends State<_BulkGradeDialog> {
+  final TextEditingController _gradeController = TextEditingController();
+  bool _isSubmitting = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _gradeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.add_chart, color: AppTheme.primaryColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              AppLocalizations.of(context)!.addBulkGrades,
+              style: AppTheme.headingMedium.copyWith(
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Info section
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(context)!.bulkGradeInfo,
+                          style: TextStyle(
+                            color: Colors.blue.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    AppLocalizations.of(context)!.bulkGradeDescription,
+                    style: TextStyle(
+                      color: Colors.blue.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Quiz info
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${AppLocalizations.of(context)!.quiz}: ${widget.quizName}',
+                    style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  if (widget.semesterId != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${AppLocalizations.of(context)!.semester} ID: ${widget.semesterId}',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Grade input
+            Text(
+              AppLocalizations.of(context)!.gradesToAdd,
+              style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _gradeController,
+              keyboardType: TextInputType.numberWithOptions(signed: true),
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context)!.enterGradesToAdd,
+                helperText: AppLocalizations.of(context)!.gradeRangeHelper,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                prefixIcon: Icon(Icons.exposure, color: AppTheme.primaryColor),
+                suffixText: AppLocalizations.of(context)!.points,
+                errorText: _errorMessage,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              AppLocalizations.of(context)!.bulkGradeNote,
+              style: TextStyle(
+                color: Colors.orange.shade700,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              AppLocalizations.of(context)!.bulkGradeNegativeNote,
+              style: TextStyle(
+                color: Colors.blue.shade700,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+          child: Text(
+            AppLocalizations.of(context)!.cancel,
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: _isSubmitting ? null : _submitBulkGrade,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          child: _isSubmitting
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(AppLocalizations.of(context)!.addGrades),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _submitBulkGrade() async {
+    // Validate input
+    final gradeText = _gradeController.text.trim();
+    if (gradeText.isEmpty) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.pleaseEnterGrade;
+      });
+      return;
+    }
+
+    int? gradesToAdd;
+    try {
+      gradesToAdd = int.parse(gradeText);
+    } catch (e) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.invalidGradeFormat;
+      });
+      return;
+    }
+
+    if (gradesToAdd == 0) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.gradeCannotBeZero;
+      });
+      return;
+    }
+
+    if (gradesToAdd < -100 || gradesToAdd > 100) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.gradeMustBeBetweenRange;
+      });
+      return;
+    }
+
+    // Check if semester ID is available
+    if (widget.semesterId == null) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.semesterIdRequired;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final provider = Provider.of<QuizAnswerProvider>(context, listen: false);
+      final result = await provider.addBulkGrades(
+        semesterId: widget.semesterId!,
+        quizId: widget.quizId,
+        gradesToAdd: gradesToAdd,
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop();
+
+        // Show success dialog with results
+        _showBulkGradeResultDialog(result);
+
+        // Call the success callback to refresh the list
+        widget.onSuccess();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  void _showBulkGradeResultDialog(BulkGradeResult result) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              const SizedBox(width: 8),
+              Text(
+                AppLocalizations.of(context)!.bulkGradeSuccess,
+                style: AppTheme.headingMedium.copyWith(color: Colors.green),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  result.message,
+                  style: AppTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${AppLocalizations.of(context)!.studentsUpdated}: ${result.updatedCount}',
+                        style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        '${AppLocalizations.of(context)!.gradesAdded}: +${result.gradesToAdd}',
+                        style: AppTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                if (result.updatedStudents.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    AppLocalizations.of(context)!.updatedStudentsList,
+                    style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    constraints: BoxConstraints(maxHeight: 200),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: result.updatedStudents.length,
+                      itemBuilder: (context, index) {
+                        final student = result.updatedStudents[index];
+                        return ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: AppTheme.primaryColor.withAlpha(50),
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            student.studentName,
+                            style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w500),
+                          ),
+                          subtitle: Text(
+                            'Code: ${student.studentCode}',
+                            style: TextStyle(fontSize: 11),
+                          ),
+                          trailing: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${student.newGrade}',
+                              style: TextStyle(
+                                color: Colors.green.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(AppLocalizations.of(context)!.ok),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

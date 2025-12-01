@@ -450,4 +450,320 @@ class QuizAnswerProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Add bulk grades to all students who answered a specific quiz in a semester
+  /// Returns the result with updated count and student details
+  Future<BulkGradeResult> addBulkGrades({
+    required int semesterId,
+    required int quizId,
+    required int gradesToAdd,
+  }) async {
+    try {
+      _isLoading = true;
+      _error = '';
+      notifyListeners();
+
+      print('Adding bulk grades - Semester: $semesterId, Quiz: $quizId, Grades: $gradesToAdd');
+
+      final response = await http.post(
+        Uri.parse('${Globals.baseUrl}/quiz-answers/bulk-grades'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'semesterId': semesterId,
+          'quizId': quizId,
+          'gradesToAdd': gradesToAdd,
+        }),
+      );
+
+      print('Bulk grade response status: ${response.statusCode}');
+      print('Bulk grade response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        print('Bulk grade result: ${data['message']}');
+
+        final result = BulkGradeResult.fromJson(data);
+
+        // Refresh the quiz answers summary if currently viewing this quiz
+        if (_quizAnswersSummary != null) {
+          await fetchQuizAnswersSummary(
+            quizId: quizId,
+            semesterId: semesterId,
+          );
+        }
+
+        _error = '';
+        return result;
+      } else {
+        final errorData = json.decode(response.body);
+        _error = errorData['message'] ?? 'Failed to add bulk grades';
+        print('Error adding bulk grades: $_error');
+        throw Exception(_error);
+      }
+    } catch (e) {
+      _error = 'Exception adding bulk grades: $e';
+      print('Exception: $_error');
+      throw Exception(_error);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Grade a quiz answer with manual override (even for auto-graded quizzes)
+  /// Validates that grade doesn't exceed maxGrade
+  /// Optionally accepts a comment
+  Future<bool> gradeQuizAnswerManual(int quizAnswerId, int grade, int maxGrade, {String? comment}) async {
+    try {
+      // Validate grade doesn't exceed max
+      if (grade > maxGrade) {
+        _error = 'Grade cannot exceed maximum grade ($maxGrade)';
+        notifyListeners();
+        return false;
+      }
+
+      if (grade < 0) {
+        _error = 'Grade cannot be negative';
+        notifyListeners();
+        return false;
+      }
+
+      _isLoading = true;
+      _error = '';
+      notifyListeners();
+
+      print('Manual grading quiz answer ID: $quizAnswerId with grade: $grade (max: $maxGrade), comment: $comment');
+
+      // Build request body
+      final Map<String, dynamic> requestBody = {'grade': grade};
+      if (comment != null) {
+        requestBody['comment'] = comment;
+      }
+
+      final response = await http.put(
+        Uri.parse('${Globals.baseUrl}/quiz-answers/$quizAnswerId/grade'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(requestBody),
+      );
+
+      print('Manual grade response status: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Manual grade result: ${data['message']}');
+
+        // Update current quiz answer if it's the one being graded
+        if (_currentQuizAnswer != null && _currentQuizAnswer!.id == quizAnswerId) {
+          _currentQuizAnswer = QuizAnswerDetails(
+            id: _currentQuizAnswer!.id,
+            quizId: _currentQuizAnswer!.quizId,
+            quizName: _currentQuizAnswer!.quizName,
+            quizType: _currentQuizAnswer!.quizType,
+            studentId: _currentQuizAnswer!.studentId,
+            studentName: _currentQuizAnswer!.studentName,
+            studentCode: _currentQuizAnswer!.studentCode,
+            studentEmail: _currentQuizAnswer!.studentEmail,
+            semesterId: _currentQuizAnswer!.semesterId,
+            semesterName: _currentQuizAnswer!.semesterName,
+            lessonId: _currentQuizAnswer!.lessonId,
+            lessonName: _currentQuizAnswer!.lessonName,
+            weekId: _currentQuizAnswer!.weekId,
+            weekNumber: _currentQuizAnswer!.weekNumber,
+            subjectId: _currentQuizAnswer!.subjectId,
+            subjectName: _currentQuizAnswer!.subjectName,
+            timeTaken: _currentQuizAnswer!.timeTaken,
+            timeLimit: _currentQuizAnswer!.timeLimit,
+            attemptNumber: _currentQuizAnswer!.attemptNumber,
+            maxAttempts: _currentQuizAnswer!.maxAttempts,
+            submissionDate: _currentQuizAnswer!.submissionDate,
+            autoGraded: false, // Mark as manually graded
+            grade: data['data']['grade'],
+            finalGrade: _currentQuizAnswer!.finalGrade,
+            comment: data['data']['comment'] ?? comment,
+            answers: _currentQuizAnswer!.answers,
+          );
+        }
+
+        _error = '';
+        return true;
+      } else {
+        final errorData = json.decode(response.body);
+        // Handle error message which can be string or array
+        final message = errorData['message'];
+        if (message is List) {
+          _error = message.join(', ');
+        } else {
+          _error = message?.toString() ?? 'Failed to grade quiz answer';
+        }
+        print('Error grading quiz answer: $_error');
+        return false;
+      }
+    } catch (e) {
+      _error = 'Exception grading quiz answer: $e';
+      print('Exception: $_error');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Update/add a comment on a quiz answer
+  /// Endpoint: POST /quiz-answers/:id/comment
+  Future<bool> updateQuizAnswerComment(int quizAnswerId, String comment) async {
+    try {
+      _isLoading = true;
+      _error = '';
+      notifyListeners();
+
+      print('Updating comment for quiz answer ID: $quizAnswerId');
+
+      final response = await http.post(
+        Uri.parse('${Globals.baseUrl}/quiz-answers/$quizAnswerId/comment'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'quizAnswerId': quizAnswerId,
+          'comment': comment,
+        }),
+      );
+
+      print('Update comment response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        print('Update comment result: ${data['message']}');
+
+        // Update current quiz answer if it's the one being updated
+        if (_currentQuizAnswer != null && _currentQuizAnswer!.id == quizAnswerId) {
+          _currentQuizAnswer = QuizAnswerDetails(
+            id: _currentQuizAnswer!.id,
+            quizId: _currentQuizAnswer!.quizId,
+            quizName: _currentQuizAnswer!.quizName,
+            quizType: _currentQuizAnswer!.quizType,
+            studentId: _currentQuizAnswer!.studentId,
+            studentName: _currentQuizAnswer!.studentName,
+            studentCode: _currentQuizAnswer!.studentCode,
+            studentEmail: _currentQuizAnswer!.studentEmail,
+            semesterId: _currentQuizAnswer!.semesterId,
+            semesterName: _currentQuizAnswer!.semesterName,
+            lessonId: _currentQuizAnswer!.lessonId,
+            lessonName: _currentQuizAnswer!.lessonName,
+            weekId: _currentQuizAnswer!.weekId,
+            weekNumber: _currentQuizAnswer!.weekNumber,
+            subjectId: _currentQuizAnswer!.subjectId,
+            subjectName: _currentQuizAnswer!.subjectName,
+            timeTaken: _currentQuizAnswer!.timeTaken,
+            timeLimit: _currentQuizAnswer!.timeLimit,
+            attemptNumber: _currentQuizAnswer!.attemptNumber,
+            maxAttempts: _currentQuizAnswer!.maxAttempts,
+            submissionDate: _currentQuizAnswer!.submissionDate,
+            autoGraded: _currentQuizAnswer!.autoGraded,
+            grade: _currentQuizAnswer!.grade,
+            finalGrade: _currentQuizAnswer!.finalGrade,
+            comment: data['data']?['comment'] ?? comment,
+            answers: _currentQuizAnswer!.answers,
+          );
+        }
+
+        _error = '';
+        return true;
+      } else {
+        final errorData = json.decode(response.body);
+        // Handle error message which can be string or array
+        final message = errorData['message'];
+        if (message is List) {
+          _error = message.join(', ');
+        } else {
+          _error = message?.toString() ?? 'Failed to update comment';
+        }
+        print('Error updating comment: $_error');
+        return false;
+      }
+    } catch (e) {
+      _error = 'Exception updating comment: $e';
+      print('Exception: $_error');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+
+/// Model class for bulk grade operation result
+class BulkGradeResult {
+  final String message;
+  final int updatedCount;
+  final int quizId;
+  final String? quizName;
+  final int semesterId;
+  final String? semesterName;
+  final int gradesToAdd;
+  final int? maxQuizGrade;
+  final List<UpdatedStudentGrade> updatedStudents;
+
+  BulkGradeResult({
+    required this.message,
+    required this.updatedCount,
+    required this.quizId,
+    this.quizName,
+    required this.semesterId,
+    this.semesterName,
+    required this.gradesToAdd,
+    this.maxQuizGrade,
+    required this.updatedStudents,
+  });
+
+  factory BulkGradeResult.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>?;
+
+    List<UpdatedStudentGrade> students = [];
+    if (data != null && data['updatedStudents'] != null) {
+      students = (data['updatedStudents'] as List)
+          .map((s) => UpdatedStudentGrade.fromJson(s))
+          .toList();
+    }
+
+    return BulkGradeResult(
+      message: json['message'] ?? '',
+      updatedCount: data?['updatedCount'] ?? 0,
+      quizId: data?['quizId'] ?? 0,
+      quizName: data?['quizName'],
+      semesterId: data?['semesterId'] ?? 0,
+      semesterName: data?['semesterName'],
+      gradesToAdd: data?['gradesToAdd'] ?? 0,
+      maxQuizGrade: data?['maxQuizGrade'],
+      updatedStudents: students,
+    );
+  }
+}
+
+/// Model class for updated student grade in bulk operation
+class UpdatedStudentGrade {
+  final int quizAnswerId;
+  final String studentCode;
+  final String studentName;
+  final int newGrade;
+
+  UpdatedStudentGrade({
+    required this.quizAnswerId,
+    required this.studentCode,
+    required this.studentName,
+    required this.newGrade,
+  });
+
+  factory UpdatedStudentGrade.fromJson(Map<String, dynamic> json) {
+    return UpdatedStudentGrade(
+      quizAnswerId: json['quizAnswerId'] ?? 0,
+      studentCode: json['studentCode'] ?? '',
+      studentName: json['studentName'] ?? '',
+      newGrade: json['newGrade'] ?? 0,
+    );
+  }
 }

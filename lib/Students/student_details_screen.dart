@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../Models/student_summary.dart';
 import '../provider/student_provider.dart';
 import '../widgets/password_reset_dialog.dart';
+import '../services/cloudinary_service.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
@@ -30,9 +31,13 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
   bool _isLoadingGrades = false;
   String _gradesError = '';
 
+  // Current student data (can be updated after edit)
+  late Student _currentStudent;
+
   @override
   void initState() {
     super.initState();
+    _currentStudent = widget.student;
     if (widget.student.isVerified) {
       _loadStudentGrades();
     }
@@ -201,6 +206,13 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           style: AppTheme.headingMedium.copyWith(color: Colors.white)
         ),
         backgroundColor: AppTheme.primaryColor,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit, color: Colors.white),
+            tooltip: AppLocalizations.of(context)!.editStudent,
+            onPressed: _isProcessing ? null : () => _showEditStudentDialog(context),
+          ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -1299,6 +1311,23 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
     );
   }
 
+  void _showEditStudentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return _EditStudentDialog(
+          student: _currentStudent,
+          onSave: (updatedStudent) {
+            setState(() {
+              _currentStudent = updatedStudent;
+            });
+          },
+        );
+      },
+    );
+  }
+
   // Image download helper method
   Future<void> _downloadImage(String imageUrl, String fileName) async {
     try {
@@ -1344,6 +1373,613 @@ class _StudentDetailsScreenState extends State<StudentDetailsScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+}
+
+// Edit Student Dialog Widget
+class _EditStudentDialog extends StatefulWidget {
+  final Student student;
+  final Function(Student) onSave;
+
+  const _EditStudentDialog({
+    required this.student,
+    required this.onSave,
+  });
+
+  @override
+  _EditStudentDialogState createState() => _EditStudentDialogState();
+}
+
+class _EditStudentDialogState extends State<_EditStudentDialog> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+  bool _isUploadingDocument = false;
+  String _uploadingDocumentType = '';
+
+  // Form controllers
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _addressController;
+  late TextEditingController _cityController;
+  late TextEditingController _churchController;
+  late TextEditingController _churchServiceController;
+  late TextEditingController _deaconLevelController;
+  late TextEditingController _abEle3trafController;
+  late TextEditingController _nationalityController;
+
+  // Document URLs (can be updated via upload)
+  late String _profilePictureUrl;
+  late String _personalIDFrontUrl;
+  late String _personalIDBackUrl;
+  late String _tazkiaUrl;
+  late String _qualificationsUrl;
+
+  // Selected gender
+  late String _selectedGender;
+
+  // Birthday
+  late DateTime _birthday;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with current student data
+    _nameController = TextEditingController(text: widget.student.user.name);
+    _phoneController = TextEditingController(text: widget.student.user.phone);
+    _addressController = TextEditingController(text: widget.student.user.address);
+    _cityController = TextEditingController(text: widget.student.city);
+    _churchController = TextEditingController(text: widget.student.church);
+    _churchServiceController = TextEditingController(text: widget.student.churchService);
+    _deaconLevelController = TextEditingController(text: widget.student.deaconLevel);
+    _abEle3trafController = TextEditingController(text: widget.student.abEle3traf);
+    _nationalityController = TextEditingController(text: widget.student.user.nationality);
+
+    _profilePictureUrl = widget.student.user.profilePicture;
+    _personalIDFrontUrl = widget.student.personalIDFront ?? '';
+    _personalIDBackUrl = widget.student.personalIDBack ?? '';
+    _tazkiaUrl = widget.student.tazkia ?? '';
+    _qualificationsUrl = widget.student.qualifications;
+
+    _selectedGender = widget.student.user.gender;
+    _birthday = widget.student.user.birthday;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _cityController.dispose();
+    _churchController.dispose();
+    _churchServiceController.dispose();
+    _deaconLevelController.dispose();
+    _abEle3trafController.dispose();
+    _nationalityController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 700,
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.edit, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text(
+                    localizations.editStudentProfile,
+                    style: AppTheme.headingMedium.copyWith(color: Colors.white),
+                  ),
+                  Spacer(),
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.white),
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            // Form content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Picture Section
+                      _buildSectionTitle(localizations.uploadProfilePicture),
+                      _buildDocumentUploadField(
+                        label: localizations.uploadProfilePicture,
+                        currentUrl: _profilePictureUrl,
+                        documentType: 'profilePicture',
+                        onUpload: (url) => setState(() => _profilePictureUrl = url),
+                      ),
+                      SizedBox(height: 24),
+
+                      // Personal Information
+                      _buildSectionTitle(localizations.personalInformation),
+                      _buildTextField(
+                        controller: _nameController,
+                        label: localizations.studentName,
+                        validator: (value) => value?.isEmpty == true ? localizations.pleaseEnterUsername : null,
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _phoneController,
+                              label: localizations.phone,
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _nationalityController,
+                              label: localizations.nationality,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDateField(
+                              label: localizations.dateOfBirth,
+                              value: _birthday,
+                              onChanged: (date) => setState(() => _birthday = date),
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: _buildGenderDropdown(localizations),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _addressController,
+                        label: localizations.address,
+                      ),
+                      SizedBox(height: 24),
+
+                      // Location Information
+                      _buildSectionTitle(localizations.church),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _cityController,
+                              label: localizations.city,
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _churchController,
+                              label: localizations.church,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _churchServiceController,
+                              label: localizations.churchService,
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _deaconLevelController,
+                              label: localizations.deaconLevel,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _abEle3trafController,
+                        label: localizations.abEle3traf,
+                      ),
+                      SizedBox(height: 24),
+
+                      // Documents Section
+                      _buildSectionTitle(localizations.uploadNewDocument),
+                      _buildDocumentUploadField(
+                        label: localizations.uploadIdFront,
+                        currentUrl: _personalIDFrontUrl,
+                        documentType: 'personalIDFront',
+                        onUpload: (url) => setState(() => _personalIDFrontUrl = url),
+                      ),
+                      SizedBox(height: 12),
+                      _buildDocumentUploadField(
+                        label: localizations.uploadIdBack,
+                        currentUrl: _personalIDBackUrl,
+                        documentType: 'personalIDBack',
+                        onUpload: (url) => setState(() => _personalIDBackUrl = url),
+                      ),
+                      SizedBox(height: 12),
+                      _buildDocumentUploadField(
+                        label: localizations.uploadTazkia,
+                        currentUrl: _tazkiaUrl,
+                        documentType: 'tazkia',
+                        onUpload: (url) => setState(() => _tazkiaUrl = url),
+                      ),
+                      SizedBox(height: 12),
+                      _buildDocumentUploadField(
+                        label: localizations.uploadQualifications,
+                        currentUrl: _qualificationsUrl,
+                        documentType: 'qualifications',
+                        onUpload: (url) => setState(() => _qualificationsUrl = url),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Action buttons
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.grey.shade300)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
+                    child: Text(localizations.cancel),
+                  ),
+                  SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _saveProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            localizations.updateProfile,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: AppTheme.headingMedium.copyWith(
+          color: AppTheme.primaryColor,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? Function(String?)? validator,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      validator: validator,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+    );
+  }
+
+  Widget _buildDateField({
+    required String label,
+    required DateTime value,
+    required Function(DateTime) onChanged,
+  }) {
+    return InkWell(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: value,
+          firstDate: DateTime(1900),
+          lastDate: DateTime.now(),
+        );
+        if (picked != null) {
+          onChanged(picked);
+        }
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(DateFormat('yyyy-MM-dd').format(value)),
+            Icon(Icons.calendar_today, size: 20, color: AppTheme.primaryColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenderDropdown(AppLocalizations localizations) {
+    return DropdownButtonFormField<String>(
+      value: _selectedGender.isNotEmpty ? _selectedGender : null,
+      decoration: InputDecoration(
+        labelText: localizations.gender,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      items: [
+        DropdownMenuItem(value: 'male', child: Text(localizations.male)),
+        DropdownMenuItem(value: 'female', child: Text(localizations.female)),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _selectedGender = value);
+        }
+      },
+    );
+  }
+
+  Widget _buildDocumentUploadField({
+    required String label,
+    required String currentUrl,
+    required String documentType,
+    required Function(String) onUpload,
+  }) {
+    final localizations = AppLocalizations.of(context)!;
+    final bool isUploading = _isUploadingDocument && _uploadingDocumentType == documentType;
+
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          // Preview thumbnail
+          if (currentUrl.isNotEmpty)
+            GestureDetector(
+              onTap: () => _showImagePreview(currentUrl),
+              child: Container(
+                width: 50,
+                height: 50,
+                margin: EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(
+                    image: NetworkImage(currentUrl),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppTheme.bodyMedium),
+                SizedBox(height: 4),
+                Text(
+                  currentUrl.isNotEmpty ? 'Document uploaded' : 'No document',
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: currentUrl.isNotEmpty ? Colors.green : Colors.grey,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isUploading)
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            ElevatedButton.icon(
+              onPressed: () => _uploadDocument(documentType, onUpload),
+              icon: Icon(Icons.upload, size: 18),
+              label: Text(localizations.selectFile),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showImagePreview(String url) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InteractiveViewer(
+              child: Image.network(
+                url,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 300,
+                  height: 300,
+                  color: Colors.grey.shade200,
+                  child: Icon(Icons.image_not_supported, size: 50),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLocalizations.of(context)!.close),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _uploadDocument(String documentType, Function(String) onUpload) async {
+    try {
+      // Create file input element
+      final uploadInput = html.FileUploadInputElement();
+      uploadInput.accept = 'image/*';
+      uploadInput.click();
+
+      await uploadInput.onChange.first;
+
+      if (uploadInput.files?.isNotEmpty == true) {
+        final file = uploadInput.files!.first;
+
+        setState(() {
+          _isUploadingDocument = true;
+          _uploadingDocumentType = documentType;
+        });
+
+        // Use CloudinaryService for upload
+        final cloudinaryService = CloudinaryService();
+        final url = await cloudinaryService.uploadImageFile(file);
+
+        onUpload(url);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Document uploaded successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload document: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingDocument = false;
+          _uploadingDocumentType = '';
+        });
+      }
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final provider = Provider.of<StudentsProvider>(context, listen: false);
+      final localizations = AppLocalizations.of(context)!;
+
+      // Build profile update data according to API spec
+      final profileData = {
+        'name': _nameController.text,
+        'birthday': DateFormat('yyyy-MM-dd').format(_birthday),
+        'nationality': _nationalityController.text,
+        'Address': _addressController.text,
+        'gender': _selectedGender,
+        'phone': _phoneController.text,
+        'city': _cityController.text,
+        'church': _churchController.text,
+        'AbEle3traf': _abEle3trafController.text,
+        'deaconLevel': _deaconLevelController.text,
+        'churchService': _churchServiceController.text,
+        'qualifications': _qualificationsUrl,
+        'personalIDFront': _personalIDFrontUrl,
+        'personalIDBack': _personalIDBackUrl,
+        'Tazkia': _tazkiaUrl,
+        'profilePicture': _profilePictureUrl,
+      };
+
+      final updatedStudent = await provider.updateStudentProfile(
+        widget.student.user.id,
+        profileData,
+      );
+
+      if (mounted) {
+        widget.onSave(updatedStudent);
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(localizations.profileUpdatedSuccessfully),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.failedToUpdateProfile}: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }

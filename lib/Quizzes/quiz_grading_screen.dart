@@ -25,10 +25,15 @@ class QuizGradingScreen extends StatefulWidget {
 
 class _QuizGradingScreenState extends State<QuizGradingScreen> {
   final TextEditingController _gradeController = TextEditingController();
+  final TextEditingController _manualGradeController = TextEditingController();
+  final TextEditingController _commentController = TextEditingController();
   // Map to store individual question grades
   final Map<int, TextEditingController> _questionGradeControllers = {};
   int? _maxGrade;
   bool _isSubmitting = false;
+  bool _isManualGradeMode = false;
+  bool _isCommentEditing = false;
+  bool _isSavingComment = false;
 
   @override
   void initState() {
@@ -47,6 +52,8 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
   @override
   void dispose() {
     _gradeController.dispose();
+    _manualGradeController.dispose();
+    _commentController.dispose();
     _questionGradeControllers.values.forEach((controller) => controller.dispose());
     super.dispose();
   }
@@ -379,99 +386,626 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
   }
 
   Widget _buildGradingSection(QuizAnswerDetails quizAnswer, QuizAnswerProvider provider) {
+    // Initialize manual grade controller with current grade if available
+    if (quizAnswer.grade != null && _manualGradeController.text.isEmpty) {
+      _manualGradeController.text = quizAnswer.grade.toString();
+    }
+
+    return Column(
+      children: [
+        // Quick Direct Grade Card - Always visible and prominent
+        _buildQuickGradeCard(quizAnswer, provider),
+        SizedBox(height: 16),
+
+        // Comment Section Card
+        _buildCommentCard(quizAnswer, provider),
+        SizedBox(height: 16),
+
+        // Detailed Grading Card (from individual answers)
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.calculate, color: AppTheme.primaryColor, size: 24),
+                    SizedBox(width: 8),
+                    Text(
+                      AppLocalizations.of(context)!.calculateFromAnswers,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  AppLocalizations.of(context)!.calculateFromAnswersDescription,
+                  style: TextStyle(
+                    color: AppTheme.textSecondaryColor,
+                    fontSize: 12,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: TextFormField(
+                          controller: _gradeController,
+                          decoration: InputDecoration(
+                            labelText: 'Total Grade',
+                            hintText: 'Out of ${quizAnswer.finalGrade}',
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            labelStyle: TextStyle(color: AppTheme.primaryColor),
+                          ),
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          readOnly: true,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _submitGrades(quizAnswer, provider),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isSubmitting
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              'Submit',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => _calculateTotalGrade(quizAnswer),
+                  icon: Icon(Icons.calculate),
+                  label: Text('Calculate Total Grade'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade200,
+                    foregroundColor: AppTheme.textPrimaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Quick Grade Card - Direct grade entry without calculating from answers
+  Widget _buildQuickGradeCard(QuizAnswerDetails quizAnswer, QuizAnswerProvider provider) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      color: Colors.green.shade50,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [Colors.green.shade50, Colors.green.shade100],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade600,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.edit_note, color: Colors.white, size: 28),
+                  ),
+                  SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.quickGrade,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade800,
+                        ),
+                      ),
+                      Text(
+                        AppLocalizations.of(context)!.quickGradeDescription,
+                        style: TextStyle(
+                          color: Colors.green.shade700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+
+              // Current grade display
+              if (quizAnswer.grade != null)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  margin: EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.green.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        '${AppLocalizations.of(context)!.currentGrade}: ',
+                        style: TextStyle(color: Colors.green.shade700),
+                      ),
+                      Text(
+                        '${quizAnswer.grade} / ${quizAnswer.finalGrade}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade800,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Spacer(),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: quizAnswer.autoGraded ? Colors.blue.shade100 : Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          quizAnswer.autoGraded
+                            ? AppLocalizations.of(context)!.autoGraded
+                            : AppLocalizations.of(context)!.manuallyGraded,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: quizAnswer.autoGraded ? Colors.blue.shade700 : Colors.orange.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Grade input
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green.shade400, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextFormField(
+                        controller: _manualGradeController,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.enterGrade,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          labelStyle: TextStyle(color: Colors.green.shade700),
+                          suffixText: '/ ${quizAnswer.finalGrade}',
+                          suffixStyle: TextStyle(
+                            color: Colors.green.shade600,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    flex: 1,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _submitManualGrade(quizAnswer, provider),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: _isSubmitting
+                          ? SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.save, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  AppLocalizations.of(context)!.saveGrade,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Text(
+                AppLocalizations.of(context)!.quickGradeNote,
+                style: TextStyle(
+                  color: Colors.green.shade700,
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Comment Card - Shows and allows editing of instructor comments
+  Widget _buildCommentCard(QuizAnswerDetails quizAnswer, QuizAnswerProvider provider) {
+    // Initialize comment controller with current comment if available and not editing
+    if (!_isCommentEditing && quizAnswer.comment != null && _commentController.text.isEmpty) {
+      _commentController.text = quizAnswer.comment!;
+    }
+
+    final hasComment = quizAnswer.comment != null && quizAnswer.comment!.isNotEmpty;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Grade Submission',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimaryColor,
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'The total grade is calculated based on individual question grades. For MCQ questions, full points are awarded for correct answers and zero for incorrect ones. For text questions, please assign appropriate grades.',
-              style: TextStyle(
-                color: AppTheme.textSecondaryColor,
-              ),
-            ),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [Colors.blue.shade50, Colors.blue.shade100],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade600,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.comment, color: Colors.white, size: 20),
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        AppLocalizations.of(context)!.instructorComment,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (!_isCommentEditing)
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _isCommentEditing = true;
+                          if (quizAnswer.comment != null) {
+                            _commentController.text = quizAnswer.comment!;
+                          }
+                        });
+                      },
+                      icon: Icon(
+                        hasComment ? Icons.edit : Icons.add,
+                        size: 18,
+                        color: Colors.blue.shade700,
+                      ),
+                      label: Text(
+                        hasComment
+                            ? AppLocalizations.of(context)!.editComment
+                            : AppLocalizations.of(context)!.addComment,
+                        style: TextStyle(color: Colors.blue.shade700),
+                      ),
                     ),
-                    child: TextFormField(
-                      controller: _gradeController,
-                      decoration: InputDecoration(
-                        labelText: 'Total Grade',
-                        hintText: 'Out of ${quizAnswer.finalGrade}',
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        labelStyle: TextStyle(color: AppTheme.primaryColor),
-                      ),
-                      keyboardType: TextInputType.number,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      readOnly: true,
+                ],
+              ),
+              SizedBox(height: 12),
+              if (_isCommentEditing) ...[
+                // Editing mode
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade300),
+                  ),
+                  child: TextField(
+                    controller: _commentController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context)!.commentPlaceholder,
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(12),
                     ),
                   ),
                 ),
-                SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: _isSubmitting 
-                      ? null 
-                      : () => _submitGrades(quizAnswer, provider),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _isCommentEditing = false;
+                          // Reset to original comment
+                          _commentController.text = quizAnswer.comment ?? '';
+                        });
+                      },
+                      child: Text(AppLocalizations.of(context)!.cancel),
                     ),
-                    elevation: 0,
-                  ),
-                  child: _isSubmitting
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          'Submit',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: _isSavingComment
+                          ? null
+                          : () => _saveComment(quizAnswer, provider),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade600,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                      ),
+                      icon: _isSavingComment
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Icon(Icons.save, size: 18),
+                      label: Text(AppLocalizations.of(context)!.saveComment),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                // Display mode
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Text(
+                    hasComment
+                        ? quizAnswer.comment!
+                        : AppLocalizations.of(context)!.noComment,
+                    style: TextStyle(
+                      color: hasComment ? Colors.grey.shade800 : Colors.grey.shade500,
+                      fontStyle: hasComment ? FontStyle.normal : FontStyle.italic,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
               ],
-            ),
-            SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => _calculateTotalGrade(quizAnswer),
-              icon: Icon(Icons.calculate),
-              label: Text('Calculate Total Grade'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey.shade200,
-                foregroundColor: AppTheme.textPrimaryColor,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _saveComment(QuizAnswerDetails quizAnswer, QuizAnswerProvider provider) async {
+    final comment = _commentController.text.trim();
+
+    setState(() {
+      _isSavingComment = true;
+    });
+
+    try {
+      final success = await provider.updateQuizAnswerComment(quizAnswer.id, comment);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.commentSavedSuccessfully),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() {
+          _isCommentEditing = false;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.error.isNotEmpty
+                ? provider.error
+                : AppLocalizations.of(context)!.failedToSaveComment),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isSavingComment = false;
+      });
+    }
+  }
+
+  Future<void> _submitManualGrade(QuizAnswerDetails quizAnswer, QuizAnswerProvider provider) async {
+    final gradeText = _manualGradeController.text.trim();
+
+    if (gradeText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.pleaseEnterGrade),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    int? grade;
+    try {
+      grade = int.parse(gradeText);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.invalidGradeFormat),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (grade < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.gradeCannotBeNegative),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (grade > quizAnswer.finalGrade) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${AppLocalizations.of(context)!.gradeCannotExceedMax} (${quizAnswer.finalGrade})'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final success = await provider.gradeQuizAnswerManual(
+        quizAnswer.id,
+        grade,
+        quizAnswer.finalGrade,
+      );
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.gradeUpdatedSuccessfully),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Refresh the data
+          await provider.fetchQuizAnswerDetails(quizAnswer.id);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(provider.error.isNotEmpty ? provider.error : AppLocalizations.of(context)!.failedToUpdateGrade),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.errorUpdatingGrade}: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   void _calculateTotalGrade(QuizAnswerDetails quizAnswer) {

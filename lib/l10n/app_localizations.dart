@@ -473,6 +473,62 @@ abstract class AppLocalizations {
   String get female;
   String get abEle3traf;
   String get city;
+
+  // Bulk Grading
+  String get addBulkGrades;
+  String get bulkGradeInfo;
+  String get bulkGradeDescription;
+  String get quiz;
+  String get gradesToAdd;
+  String get enterGradesToAdd;
+  String get gradeRangeHelper;
+  String get bulkGradeNote;
+  String get bulkGradeNegativeNote;
+  String get addGrades;
+  String get gradeCannotBeZero;
+  String get gradeMustBeBetweenRange;
+  String get semesterIdRequired;
+  String get bulkGradeSuccess;
+  String get studentsUpdated;
+  String get gradesAdded;
+  String get updatedStudentsList;
+  String get ok;
+
+  // Manual Grade Override
+  String get manualGradeOverride;
+  String get manualGradeEntry;
+  String get manualGradeDescription;
+  String get enterGrade;
+  String get maxGrade;
+  String get saveGrade;
+  String get pleaseEnterGrade;
+  String get invalidGradeFormat;
+  String get gradeCannotBeNegative;
+  String get gradeCannotExceedMax;
+  String get gradeUpdatedSuccessfully;
+  String get failedToUpdateGrade;
+  String get errorUpdatingGrade;
+
+  // Quick Grade (Direct Grade Entry)
+  String get quickGrade;
+  String get quickGradeDescription;
+  String get quickGradeNote;
+  String get currentGrade;
+  String get autoGraded;
+  String get manuallyGraded;
+  String get calculateFromAnswers;
+  String get calculateFromAnswersDescription;
+
+  // Quiz Answer Comments
+  String get comment;
+  String get addComment;
+  String get editComment;
+  String get saveComment;
+  String get commentPlaceholder;
+  String get commentSavedSuccessfully;
+  String get failedToSaveComment;
+  String get noComment;
+  String get instructorComment;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -1728,6 +1784,154 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get searchByStudentName => 'البحث باسم الطالب';
+
+  // Bulk Grading
+  @override
+  String get addBulkGrades => 'إضافة درجات جماعية';
+
+  @override
+  String get bulkGradeInfo => 'إضافة درجات لجميع الطلاب';
+
+  @override
+  String get bulkGradeDescription => 'سيتم إضافة الدرجات المحددة لجميع الطلاب الذين أجابوا على هذا الاختبار في الفصل الدراسي المحدد';
+
+  @override
+  String get quiz => 'الاختبار';
+
+  @override
+  String get gradesToAdd => 'الدرجات المراد إضافتها';
+
+  @override
+  String get enterGradesToAdd => 'أدخل عدد الدرجات';
+
+  @override
+  String get gradeRangeHelper => 'النطاق: -100 إلى 100 (القيم السالبة للخصم)';
+
+  @override
+  String get bulkGradeNote => 'ملاحظة: لن تتجاوز الدرجة النهائية الحد الأقصى للاختبار';
+
+  @override
+  String get bulkGradeNegativeNote => 'استخدم قيم سالبة لخصم الدرجات (الحد الأدنى صفر)';
+
+  @override
+  String get addGrades => 'إضافة الدرجات';
+
+  @override
+  String get gradeCannotBeZero => 'لا يمكن أن تكون الدرجة صفر';
+
+  @override
+  String get gradeMustBeBetweenRange => 'يجب أن تكون الدرجة بين -100 و 100';
+
+  @override
+  String get semesterIdRequired => 'معرف الفصل الدراسي مطلوب';
+
+  @override
+  String get bulkGradeSuccess => 'تم إضافة الدرجات بنجاح';
+
+  @override
+  String get studentsUpdated => 'الطلاب المحدثون';
+
+  @override
+  String get gradesAdded => 'الدرجات المضافة';
+
+  @override
+  String get updatedStudentsList => 'قائمة الطلاب المحدثين';
+
+  @override
+  String get ok => 'موافق';
+
+  // Manual Grade Override
+  @override
+  String get manualGradeOverride => 'تعديل الدرجة يدوياً';
+
+  @override
+  String get manualGradeEntry => 'إدخال الدرجة يدوياً';
+
+  @override
+  String get manualGradeDescription => 'يمكنك تعديل الدرجة يدوياً حتى للاختبارات المصححة تلقائياً';
+
+  @override
+  String get enterGrade => 'أدخل الدرجة';
+
+  @override
+  String get maxGrade => 'الدرجة القصوى';
+
+  @override
+  String get saveGrade => 'حفظ الدرجة';
+
+  @override
+  String get pleaseEnterGrade => 'يرجى إدخال الدرجة';
+
+  @override
+  String get invalidGradeFormat => 'صيغة الدرجة غير صحيحة';
+
+  @override
+  String get gradeCannotBeNegative => 'لا يمكن أن تكون الدرجة سالبة';
+
+  @override
+  String get gradeCannotExceedMax => 'لا يمكن أن تتجاوز الدرجة الحد الأقصى';
+
+  @override
+  String get gradeUpdatedSuccessfully => 'تم تحديث الدرجة بنجاح';
+
+  @override
+  String get failedToUpdateGrade => 'فشل في تحديث الدرجة';
+
+  @override
+  String get errorUpdatingGrade => 'خطأ في تحديث الدرجة';
+
+  // Quick Grade (Direct Grade Entry)
+  @override
+  String get quickGrade => 'تقييم سريع';
+
+  @override
+  String get quickGradeDescription => 'أدخل الدرجة مباشرة بدون حساب من الإجابات';
+
+  @override
+  String get quickGradeNote => 'ملاحظة: هذه الدرجة ستحل محل أي درجة موجودة بما في ذلك التصحيح التلقائي';
+
+  @override
+  String get currentGrade => 'الدرجة الحالية';
+
+  @override
+  String get autoGraded => 'تصحيح تلقائي';
+
+  @override
+  String get manuallyGraded => 'تصحيح يدوي';
+
+  @override
+  String get calculateFromAnswers => 'حساب من الإجابات';
+
+  @override
+  String get calculateFromAnswersDescription => 'احسب الدرجة من إجابات الأسئلة الفردية';
+
+  // Quiz Answer Comments
+  @override
+  String get comment => 'تعليق';
+
+  @override
+  String get addComment => 'إضافة تعليق';
+
+  @override
+  String get editComment => 'تعديل التعليق';
+
+  @override
+  String get saveComment => 'حفظ التعليق';
+
+  @override
+  String get commentPlaceholder => 'اكتب تعليقك هنا...';
+
+  @override
+  String get commentSavedSuccessfully => 'تم حفظ التعليق بنجاح';
+
+  @override
+  String get failedToSaveComment => 'فشل في حفظ التعليق';
+
+  @override
+  String get noComment => 'لا يوجد تعليق';
+
+  @override
+  String get instructorComment => 'تعليق المصحح';
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -2962,4 +3166,152 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchByStudentName => 'Search by student name';
+
+  // Bulk Grading
+  @override
+  String get addBulkGrades => 'Add Bulk Grades';
+
+  @override
+  String get bulkGradeInfo => 'Add grades to all students';
+
+  @override
+  String get bulkGradeDescription => 'The specified grades will be added to all students who answered this quiz in the selected semester';
+
+  @override
+  String get quiz => 'Quiz';
+
+  @override
+  String get gradesToAdd => 'Grades to Add';
+
+  @override
+  String get enterGradesToAdd => 'Enter number of grades';
+
+  @override
+  String get gradeRangeHelper => 'Range: -100 to 100 (negative values for deductions)';
+
+  @override
+  String get bulkGradeNote => 'Note: Final grade will not exceed the quiz maximum grade';
+
+  @override
+  String get bulkGradeNegativeNote => 'Use negative values to deduct grades (minimum is 0)';
+
+  @override
+  String get addGrades => 'Add Grades';
+
+  @override
+  String get gradeCannotBeZero => 'Grade cannot be zero';
+
+  @override
+  String get gradeMustBeBetweenRange => 'Grade must be between -100 and 100';
+
+  @override
+  String get semesterIdRequired => 'Semester ID is required';
+
+  @override
+  String get bulkGradeSuccess => 'Grades added successfully';
+
+  @override
+  String get studentsUpdated => 'Students Updated';
+
+  @override
+  String get gradesAdded => 'Grades Added';
+
+  @override
+  String get updatedStudentsList => 'Updated Students List';
+
+  @override
+  String get ok => 'OK';
+
+  // Manual Grade Override
+  @override
+  String get manualGradeOverride => 'Manual Grade Override';
+
+  @override
+  String get manualGradeEntry => 'Manual Grade Entry';
+
+  @override
+  String get manualGradeDescription => 'You can manually override the grade even for auto-graded quizzes';
+
+  @override
+  String get enterGrade => 'Enter Grade';
+
+  @override
+  String get maxGrade => 'Max Grade';
+
+  @override
+  String get saveGrade => 'Save Grade';
+
+  @override
+  String get pleaseEnterGrade => 'Please enter a grade';
+
+  @override
+  String get invalidGradeFormat => 'Invalid grade format';
+
+  @override
+  String get gradeCannotBeNegative => 'Grade cannot be negative';
+
+  @override
+  String get gradeCannotExceedMax => 'Grade cannot exceed maximum';
+
+  @override
+  String get gradeUpdatedSuccessfully => 'Grade updated successfully';
+
+  @override
+  String get failedToUpdateGrade => 'Failed to update grade';
+
+  @override
+  String get errorUpdatingGrade => 'Error updating grade';
+
+  // Quick Grade (Direct Grade Entry)
+  @override
+  String get quickGrade => 'Quick Grade';
+
+  @override
+  String get quickGradeDescription => 'Enter grade directly without calculating from answers';
+
+  @override
+  String get quickGradeNote => 'Note: This grade will override any existing grade including auto-grading';
+
+  @override
+  String get currentGrade => 'Current Grade';
+
+  @override
+  String get autoGraded => 'Auto Graded';
+
+  @override
+  String get manuallyGraded => 'Manually Graded';
+
+  @override
+  String get calculateFromAnswers => 'Calculate from Answers';
+
+  @override
+  String get calculateFromAnswersDescription => 'Calculate grade from individual question answers';
+
+  // Quiz Answer Comments
+  @override
+  String get comment => 'Comment';
+
+  @override
+  String get addComment => 'Add Comment';
+
+  @override
+  String get editComment => 'Edit Comment';
+
+  @override
+  String get saveComment => 'Save Comment';
+
+  @override
+  String get commentPlaceholder => 'Write your comment here...';
+
+  @override
+  String get commentSavedSuccessfully => 'Comment saved successfully';
+
+  @override
+  String get failedToSaveComment => 'Failed to save comment';
+
+  @override
+  String get noComment => 'No comment';
+
+  @override
+  String get instructorComment => 'Instructor Comment';
 }

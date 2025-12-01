@@ -23,6 +23,7 @@ class QuizAnswerDetails {
   final bool autoGraded;
   final int? grade;
   final int finalGrade;
+  final String? comment;
   final List<QuizAnswerItem> answers;
 
   QuizAnswerDetails({
@@ -50,6 +51,7 @@ class QuizAnswerDetails {
     required this.autoGraded,
     this.grade,
     required this.finalGrade,
+    this.comment,
     required this.answers,
   });
 
@@ -100,6 +102,7 @@ class QuizAnswerDetails {
         autoGraded: json['autoGraded'],
         grade: json['grade'],
         finalGrade: json['finalGrade'],
+        comment: json['comment'],
         answers: answers,
       );
     } catch (e) {
