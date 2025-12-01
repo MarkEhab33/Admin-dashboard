@@ -439,6 +439,28 @@ abstract class AppLocalizations {
   String get downloadQualifications;
   String get imageDownloadedSuccessfully;
   String get failedToDownloadImage;
+
+  // Student Edit
+  String get editStudent;
+  String get editStudentProfile;
+  String get updateProfile;
+  String get updatingProfile;
+  String get profileUpdatedSuccessfully;
+  String get failedToUpdateProfile;
+  String get uploadNewDocument;
+  String get uploadProfilePicture;
+  String get uploadIdFront;
+  String get uploadIdBack;
+  String get uploadTazkia;
+  String get uploadQualifications;
+  String get selectFile;
+  String get uploading;
+  String get nationality;
+  String get gender;
+  String get male;
+  String get female;
+  String get abEle3traf;
+  String get city;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -1463,9 +1485,70 @@ class AppLocalizationsAr extends AppLocalizations {
   
   @override
   String get imageDownloadedSuccessfully => 'تم تحميل الصورة بنجاح!';
-  
+
   @override
   String get failedToDownloadImage => 'فشل في تحميل الصورة';
+
+  // Student Edit
+  @override
+  String get editStudent => 'تعديل الطالب';
+
+  @override
+  String get editStudentProfile => 'تعديل ملف الطالب';
+
+  @override
+  String get updateProfile => 'تحديث الملف';
+
+  @override
+  String get updatingProfile => 'جاري تحديث الملف...';
+
+  @override
+  String get profileUpdatedSuccessfully => 'تم تحديث الملف بنجاح!';
+
+  @override
+  String get failedToUpdateProfile => 'فشل في تحديث الملف';
+
+  @override
+  String get uploadNewDocument => 'رفع مستند جديد';
+
+  @override
+  String get uploadProfilePicture => 'رفع صورة شخصية';
+
+  @override
+  String get uploadIdFront => 'رفع صورة الهوية الأمامية';
+
+  @override
+  String get uploadIdBack => 'رفع صورة الهوية الخلفية';
+
+  @override
+  String get uploadTazkia => 'رفع التزكية';
+
+  @override
+  String get uploadQualifications => 'رفع المؤهلات';
+
+  @override
+  String get selectFile => 'اختر ملف';
+
+  @override
+  String get uploading => 'جاري الرفع...';
+
+  @override
+  String get nationality => 'الجنسية';
+
+  @override
+  String get gender => 'النوع';
+
+  @override
+  String get male => 'ذكر';
+
+  @override
+  String get female => 'أنثى';
+
+  @override
+  String get abEle3traf => 'أب الاعتراف';
+
+  @override
+  String get city => 'المدينة';
 
   // Quiz Creation
   @override
@@ -2611,9 +2694,70 @@ class AppLocalizationsEn extends AppLocalizations {
   
   @override
   String get imageDownloadedSuccessfully => 'Image downloaded successfully!';
-  
+
   @override
   String get failedToDownloadImage => 'Failed to download image';
+
+  // Student Edit
+  @override
+  String get editStudent => 'Edit Student';
+
+  @override
+  String get editStudentProfile => 'Edit Student Profile';
+
+  @override
+  String get updateProfile => 'Update Profile';
+
+  @override
+  String get updatingProfile => 'Updating profile...';
+
+  @override
+  String get profileUpdatedSuccessfully => 'Profile updated successfully!';
+
+  @override
+  String get failedToUpdateProfile => 'Failed to update profile';
+
+  @override
+  String get uploadNewDocument => 'Upload New Document';
+
+  @override
+  String get uploadProfilePicture => 'Upload Profile Picture';
+
+  @override
+  String get uploadIdFront => 'Upload ID Front';
+
+  @override
+  String get uploadIdBack => 'Upload ID Back';
+
+  @override
+  String get uploadTazkia => 'Upload Tazkia';
+
+  @override
+  String get uploadQualifications => 'Upload Qualifications';
+
+  @override
+  String get selectFile => 'Select File';
+
+  @override
+  String get uploading => 'Uploading...';
+
+  @override
+  String get nationality => 'Nationality';
+
+  @override
+  String get gender => 'Gender';
+
+  @override
+  String get male => 'Male';
+
+  @override
+  String get female => 'Female';
+
+  @override
+  String get abEle3traf => 'Confession Father';
+
+  @override
+  String get city => 'City';
 
   // Quiz Creation
   @override
