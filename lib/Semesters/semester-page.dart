@@ -33,7 +33,9 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
   final TextEditingController _weekNoController = TextEditingController();
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
+  final TextEditingController _studentSearchController = TextEditingController();
   late TabController _tabController;
+  String _studentSearchQuery = '';
 
 
   @override
@@ -48,6 +50,7 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     _weekNoController.dispose();
     _startDateController.dispose();
     _endDateController.dispose();
+    _studentSearchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -153,6 +156,32 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                     ],
                   ),
                   const SizedBox(height: 16),
+                  // Search bar for students
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: TextField(
+                      controller: _studentSearchController,
+                      decoration: AppTheme.inputDecoration(AppLocalizations.of(context)!.searchStudents).copyWith(
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _studentSearchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  setState(() {
+                                    _studentSearchController.clear();
+                                    _studentSearchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _studentSearchQuery = value;
+                        });
+                      },
+                    ),
+                  ),
                   Container(
                     decoration: AppTheme.cardDecoration,
                     child: _buildStudentsList(),
@@ -439,13 +468,61 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
       );
     }
 
+    // Sort students by name before displaying
+    final sortedStudents = List<Student>.from(widget.semester.students)
+      ..sort((a, b) => a.user.name.toLowerCase().compareTo(b.user.name.toLowerCase()));
+
+    // Filter students based on search query
+    final filteredStudents = sortedStudents.where((student) {
+      if (_studentSearchQuery.isEmpty) return true;
+
+      final searchLower = _studentSearchQuery.toLowerCase();
+      return student.user.name.toLowerCase().contains(searchLower) ||
+             student.studentCode.toLowerCase().contains(searchLower);
+    }).toList();
+
+    // Show message if no students match the search
+    if (filteredStudents.isEmpty && _studentSearchQuery.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off,
+                size: 48,
+                color: AppTheme.textSecondaryColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)!.noStudentsFoundInSearch,
+                style: AppTheme.bodyLarge.copyWith(
+                  color: AppTheme.textSecondaryColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context)!.trySearchingWithDifferentTerm,
+                style: AppTheme.bodyMedium.copyWith(
+                  color: AppTheme.textSecondaryColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ListView.separated(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      itemCount: widget.semester.students.length,
+      itemCount: filteredStudents.length,
       separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
-        final student = widget.semester.students[index];
+        final student = filteredStudents[index];
         // Safe way to get initials
         final initials = student.user.name.isNotEmpty
             ? student.user.name.characters.first.toUpperCase()
@@ -551,18 +628,37 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                       );
                     }
 
-                    final students = provider.filteredStudents;
+                    // Get filtered students and exclude those already in the semester
+                    final allFilteredStudents = provider.filteredStudents;
 
-                    if (students.isEmpty) {
+                    // Get list of user IDs already enrolled in this semester
+                    final enrolledUserIds = widget.semester.students
+                        .map((student) => student.user.id)
+                        .toSet();
+
+                    // Filter out students already enrolled in this semester and only show verified students
+                    final availableStudents = allFilteredStudents
+                        .where((student) => !enrolledUserIds.contains(student.user.id) )
+                        .toList();
+
+                    // Sort available students by name
+                    availableStudents.sort((a, b) =>
+                        a.user.name.toLowerCase().compareTo(b.user.name.toLowerCase()));
+
+                    if (availableStudents.isEmpty) {
                       return Center(
-                        child: Text(AppLocalizations.of(context)!.noStudentsFoundInSearch),
+                        child: Text(
+                          allFilteredStudents.isEmpty
+                              ? AppLocalizations.of(context)!.noStudentsFoundInSearch
+                              : AppLocalizations.of(context)!.allMatchingStudentsAlreadyEnrolled,
+                        ),
                       );
                     }
 
                     return ListView.builder(
-                      itemCount: students.length,
+                      itemCount: availableStudents.length,
                       itemBuilder: (context, index) {
-                        final student = students[index];
+                        final student = availableStudents[index];
                         return ListTile(
                           leading: CircleAvatar(
                             backgroundColor: AppTheme.primaryColor,
@@ -577,31 +673,64 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                           subtitle: Text(student.studentCode),
                           onTap: () async {
                             try {
+                              // Debug: Print student information
+                              print('Selected student: ${student.user.name}');
+                              print('Student ID: ${student.id}');
+                              print('User ID: ${student.user.id}');
+                              print('Student Code: ${student.studentCode}');
+
+                              if (student.user.id == 0) {
+                                throw Exception('Cannot add student: User ID is 0. Please check the API response.');
+                              }
+
                               final semestersProvider = Provider.of<SemestersProvider>(
                                 context,
                                 listen: false
                               );
 
+                              // Store context references before async operations
+                              final navigator = Navigator.of(context);
+                              final scaffoldMessenger = ScaffoldMessenger.of(context);
+                              final successMessage = AppLocalizations.of(context)!.studentAddedSuccessfully;
+
                               await semestersProvider.addStudentToSemester(
                                 widget.semester.id.toString(),
-                                student.id.toString(),
+                                student.user.id.toString(),
                               );
 
-                              Navigator.pop(context);
+                              // Refresh the semester data to update the student list
+                              await semestersProvider.fetchSemesters();
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(AppLocalizations.of(context)!.studentAddedSuccessfully),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
+                              navigator.pop();
+
+                              if (mounted) {
+                                scaffoldMessenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(successMessage),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                );
+
+                                // Trigger a rebuild of the widget to show updated data
+                                setState(() {});
+                              }
                             } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Failed to add student: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to add student: $e'),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                );
+                              }
                             }
                           },
                         );
@@ -644,26 +773,50 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                   listen: false
                 );
 
+                // Store context references before async operations
+                final navigator = Navigator.of(context);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                final successMessage = AppLocalizations.of(context)!.studentRemovedSuccessfully;
+
                 await semestersProvider.removeStudentFromSemester(
                   widget.semester.id.toString(),
-                  student.id.toString(),
+                  student.user.id.toString(),
                 );
 
-                Navigator.pop(context);
+                // Refresh the semester data to update the student list
+                await semestersProvider.fetchSemesters();
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(AppLocalizations.of(context)!.studentRemovedSuccessfully),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                navigator.pop();
+
+                if (mounted) {
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: Text(successMessage),
+                      backgroundColor: Colors.green,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+
+                  // Trigger a rebuild of the widget to show updated data
+                  setState(() {});
+                }
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to remove student: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                if (mounted) {
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to remove student: $e'),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+                }
               }
             },
             child: Text(
@@ -703,32 +856,18 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
               ),
               readOnly: true,
               onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
+                final dateTime = await _selectDateAndTime(
+                  context,
                   initialDate: now,
                   firstDate: firstDate,
                   lastDate: lastDate,
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: AppTheme.primaryColor,
-                          onPrimary: Colors.white,
-                          surface: Colors.white,
-                          onSurface: Colors.black,
-                        ),
-                        dialogBackgroundColor: Colors.white,
-                      ),
-                      child: child!,
-                    );
-                  },
                 );
-                if (date != null) {
+                if (dateTime != null) {
                   setState(() {
-                    startDate = date;
-                    _startDateController.text = DateFormat('MMM d, y').format(date);
+                    startDate = dateTime;
+                    _startDateController.text = _formatDateTimeWithAmPm(dateTime);
                     // Clear end date if it's before new start date
-                    if (endDate != null && endDate!.isBefore(date)) {
+                    if (endDate != null && endDate!.isBefore(dateTime)) {
                       endDate = null;
                       _endDateController.text = '';
                     }
@@ -756,30 +895,16 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                     ? suggestedEndDate
                     : lastDate;
 
-                final date = await showDatePicker(
-                  context: context,
+                final dateTime = await _selectDateAndTime(
+                  context,
                   initialDate: initialEndDate,
                   firstDate: startDate!,
                   lastDate: lastDate,
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: AppTheme.primaryColor,
-                          onPrimary: Colors.white,
-                          surface: Colors.white,
-                          onSurface: Colors.black,
-                        ),
-                        dialogBackgroundColor: Colors.white,
-                      ),
-                      child: child!,
-                    );
-                  },
                 );
-                if (date != null) {
+                if (dateTime != null) {
                   setState(() {
-                    endDate = date;
-                    _endDateController.text = DateFormat('MMM d, y').format(date);
+                    endDate = dateTime;
+                    _endDateController.text = _formatDateTimeWithAmPm(dateTime);
                   });
                 }
               },
@@ -851,13 +976,80 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
     _endDateController.text = '';
   }
 
+  // Helper method to select date and time
+  Future<DateTime?> _selectDateAndTime(BuildContext context, {
+    required DateTime initialDate,
+    required DateTime firstDate,
+    required DateTime lastDate,
+  }) async {
+    // First, select the date
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (date == null) return null;
+
+    // Then, select the time
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initialDate),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (time == null) return null;
+
+    // Combine date and time
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+  }
+
+  // Helper method to format date and time with AM/PM
+  String _formatDateTimeWithAmPm(DateTime dateTime) {
+    return DateFormat('MMM d, y - h:mm a').format(dateTime);
+  }
+
   void _showEditWeekDialog(Week week) {
     final weekNoController = TextEditingController(text: week.weekNo.toString());
     final startDateController = TextEditingController(
-      text: DateFormat('MMM d, y').format(week.startDate),
+      text: _formatDateTimeWithAmPm(week.startDate),
     );
     final endDateController = TextEditingController(
-      text: DateFormat('MMM d, y').format(week.endDate),
+      text: _formatDateTimeWithAmPm(week.endDate),
     );
     DateTime? startDate = week.startDate;
     DateTime? endDate = week.endDate;
@@ -882,30 +1074,17 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
               ),
               readOnly: true,
               onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
+                final dateTime = await _selectDateAndTime(
+                  context,
                   initialDate: startDate!,
                   firstDate: DateTime(2020),
                   lastDate: DateTime(2030),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: AppTheme.primaryColor,
-                          onPrimary: Colors.white,
-                          surface: Colors.white,
-                          onSurface: Colors.black,
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
                 );
-                if (date != null) {
+                if (dateTime != null) {
                   setState(() {
-                    startDate = date;
-                    startDateController.text = DateFormat('MMM d, y').format(date);
-                    if (endDate != null && endDate!.isBefore(date)) {
+                    startDate = dateTime;
+                    startDateController.text = _formatDateTimeWithAmPm(dateTime);
+                    if (endDate != null && endDate!.isBefore(dateTime)) {
                       endDate = null;
                       endDateController.text = '';
                     }
@@ -928,29 +1107,16 @@ class _SemesterDetailPageState extends State<SemesterDetailPage> with SingleTick
                   return;
                 }
 
-                final date = await showDatePicker(
-                  context: context,
+                final dateTime = await _selectDateAndTime(
+                  context,
                   initialDate: endDate ?? startDate!.add(Duration(days: 1)),
                   firstDate: startDate!.add(Duration(days: 1)),
                   lastDate: DateTime(2030),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: AppTheme.primaryColor,
-                          onPrimary: Colors.white,
-                          surface: Colors.white,
-                          onSurface: Colors.black,
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
                 );
-                if (date != null) {
+                if (dateTime != null) {
                   setState(() {
-                    endDate = date;
-                    endDateController.text = DateFormat('MMM d, y').format(date);
+                    endDate = dateTime;
+                    endDateController.text = _formatDateTimeWithAmPm(dateTime);
                   });
                 }
               },

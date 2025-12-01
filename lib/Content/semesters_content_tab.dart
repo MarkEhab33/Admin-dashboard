@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../provider/semester_templates_provider.dart';
 import '../Theme.dart';
 import '../l10n/app_localizations.dart';
@@ -72,13 +73,7 @@ class _SemestersContentTabState extends State<SemestersContentTab> {
                             onPressed: () => semestersProvider.removeSemester(index),
                           ),
                           onTap: () {
-                            semestersProvider.setSelectedSemester(semesters[index]);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SemesterTemplateScreen(),
-                              ),
-                            );
+                            context.go('/semester-template/${semesters[index].id}');
                           },
                         ),
                       ),

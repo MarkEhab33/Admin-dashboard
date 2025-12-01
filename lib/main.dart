@@ -16,6 +16,7 @@ import 'package:admin_dashboard/provider/admin_auth_provider.dart';
 import 'package:admin_dashboard/l10n/app_localizations.dart';
 import 'package:admin_dashboard/screens/splash_screen.dart';
 import 'package:admin_dashboard/screens/admin_login_screen.dart';
+import 'package:admin_dashboard/router/app_router.dart';
 
 
 import 'package:flutter/material.dart';
@@ -51,7 +52,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<LocaleProvider>(
       builder: (context, localeProvider, child) {
-        return MaterialApp(
+        return MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'لوحة تحكم أريبسالين',
           locale: localeProvider.locale,
@@ -93,7 +94,7 @@ class MyApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: DashboardScreen(),
+          routerConfig: AppRouter.router,
         );
       },
     );

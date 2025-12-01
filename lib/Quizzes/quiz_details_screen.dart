@@ -4,6 +4,7 @@ import 'package:admin_dashboard/Quizzes/simple_student_selection_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:go_router/go_router.dart';
 import '../Models/question.dart';
 import '../Models/simple_student.dart';
 import '../Theme.dart';
@@ -196,16 +197,15 @@ class _QuizDetailsScreenState extends State<QuizDetailsScreen> {
                   label: Text(AppLocalizations.of(context)!.viewSubmissions),
                   style: AppTheme.primaryButtonStyle,
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => QuizAnswersListScreen(
-                          quizId: quiz.id,
-                          quizName: quiz.name,
-                          semesterId: widget.semesterId,
-                        ),
-                      ),
+                    final uri = Uri(
+                      path: '/quiz/${quiz.id}/answers',
+                      queryParameters: {
+                        'quizName': quiz.name,
+                        if (widget.semesterId != null) 'semesterId': widget.semesterId.toString(),
+                      },
                     );
+
+                    context.go(uri.toString());
                   },
                 ),
               ),

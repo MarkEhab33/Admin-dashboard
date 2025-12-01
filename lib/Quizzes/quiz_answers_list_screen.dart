@@ -5,7 +5,9 @@ import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/coptic_text_field.dart';
+import '../l10n/app_localizations.dart';
 
 class QuizAnswersListScreen extends StatefulWidget {
   final int quizId;
@@ -25,12 +27,14 @@ class QuizAnswersListScreen extends StatefulWidget {
 class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final Map<int, TextEditingController> _gradeControllers = {};
+  final TextEditingController _searchController = TextEditingController();
 
   // Filter parameters
   int? _selectedLessonId;
   int? _selectedSubjectId;
   int? _selectedWeekId;
   String _gradingFilter = 'all'; // 'all', 'graded', 'not_graded'
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -45,6 +49,7 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     // Dispose all controllers
     _gradeControllers.forEach((_, controller) => controller.dispose());
     super.dispose();
@@ -81,6 +86,8 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
             ),
             const SizedBox(height: 16),
             _buildSummaryStats(),
+            const SizedBox(height: 16),
+            _buildSearchBar(),
             const SizedBox(height: 16),
             _buildFilterOptions(),
             const SizedBox(height: 16),
@@ -189,6 +196,61 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
     );
   }
 
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value.toLowerCase();
+          });
+        },
+        decoration: InputDecoration(
+          hintText: AppLocalizations.of(context)!.searchByStudentName,
+          prefixIcon: Icon(
+            Icons.search,
+            color: AppTheme.primaryColor,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: Colors.grey[600],
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.grey[50],
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildQuizAnswersList() {
     return Consumer<QuizAnswerProvider>(
@@ -243,12 +305,54 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
           filteredAnswers = filteredAnswers.where((answer) => answer.grade == null).toList();
         }
 
+        // Apply search filtering by student name
+        if (_searchQuery.isNotEmpty) {
+          filteredAnswers = filteredAnswers.where((answer) {
+            return answer.studentName.toLowerCase().contains(_searchQuery);
+          }).toList();
+        }
+
         if (filteredAnswers.isEmpty) {
+          String emptyMessage;
+          if (_searchQuery.isNotEmpty) {
+            emptyMessage = 'No submissions found for "${_searchQuery}"';
+          } else if (_gradingFilter == 'graded') {
+            emptyMessage = 'No graded submissions found';
+          } else if (_gradingFilter == 'not_graded') {
+            emptyMessage = 'No ungraded submissions found';
+          } else {
+            emptyMessage = 'No submissions found';
+          }
+
           return Expanded(
             child: Center(
-              child: Text(
-                'No ${_gradingFilter == "graded" ? "graded" : "ungraded"} submissions found',
-                style: AppTheme.bodyLarge
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _searchQuery.isNotEmpty ? Icons.search_off : Icons.assignment_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    emptyMessage,
+                    style: AppTheme.bodyLarge.copyWith(color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (_searchQuery.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                      child: Text('Clear search'),
+                    ),
+                  ],
+                ],
               ),
             ),
           );
@@ -266,6 +370,59 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
   Widget _buildQuizAnswersListView(List<QuizAnswerSummaryItem> answers) {
     return Column(
       children: [
+        // Search results indicator
+        if (_searchQuery.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.search,
+                  size: 16,
+                  color: AppTheme.primaryColor,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Showing ${answers.length} result${answers.length != 1 ? 's' : ''} for "$_searchQuery"',
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Clear',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         _buildTableHeader(),
         const SizedBox(height: 8),
         Expanded(
@@ -364,15 +521,14 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
       elevation: 1,
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QuizGradingScreen(
-                quizAnswerId: answer.id,
-                quizId: widget.quizId,
-              ),
-            ),
+          final uri = Uri(
+            path: '/quiz-answer/${answer.id}',
+            queryParameters: {
+              'quizId': widget.quizId.toString(),
+            },
           );
+
+          context.go(uri.toString());
         },
         borderRadius: BorderRadius.circular(8),
         child: Container(
@@ -514,6 +670,25 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
                   ],
                 ),
               ),
+
+              // Actions (Delete Button)
+              Container(
+                width: 40,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: Colors.red[600],
+                    size: 20,
+                  ),
+                  onPressed: () => _showDeleteConfirmationDialog(answer),
+                  tooltip: AppLocalizations.of(context)!.deleteQuizAnswer,
+                  padding: EdgeInsets.all(8),
+                  constraints: BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -549,6 +724,171 @@ class _QuizAnswersListScreenState extends State<QuizAnswersListScreen> with Sing
         });
       },
     );
+  }
+
+  void _showDeleteConfirmationDialog(QuizAnswerSummaryItem answer) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            AppLocalizations.of(context)!.deleteQuizAnswerTitle,
+            style: AppTheme.headingMedium.copyWith(color: Colors.red[700]),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.deleteQuizAnswerConfirmation,
+                style: AppTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Student: ${answer.studentName}',
+                      style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Code: ${answer.studentCode}',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Quiz: ${answer.quizName}',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (answer.grade != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Grade: ${answer.grade}/${answer.finalGrade}',
+                        style: AppTheme.bodyMedium.copyWith(
+                          color: AppTheme.textSecondaryColor,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                AppLocalizations.of(context)!.actionCannotBeUndone,
+                style: AppTheme.bodyMedium.copyWith(
+                  color: Colors.red[600],
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                AppLocalizations.of(context)!.cancel,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => _deleteQuizAnswer(answer),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(AppLocalizations.of(context)!.delete),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteQuizAnswer(QuizAnswerSummaryItem answer) async {
+    try {
+      // Store context references before async operations
+      final navigator = Navigator.of(context);
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      final successMessage = AppLocalizations.of(context)!.quizAnswerDeletedSuccessfully;
+      final errorMessage = AppLocalizations.of(context)!.errorDeletingQuizAnswer;
+
+      // Close the confirmation dialog
+      navigator.pop();
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                const SizedBox(width: 16),
+                Text('Deleting quiz answer...'),
+              ],
+            ),
+          );
+        },
+      );
+
+      // Delete the quiz answer
+      await Provider.of<QuizAnswerProvider>(context, listen: false)
+          .deleteQuizAnswer(answer.id);
+
+      // Close loading dialog
+      if (mounted) {
+        navigator.pop();
+
+        // Show success message
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(successMessage),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+
+        // Refresh the list
+        _loadQuizAnswers();
+      }
+    } catch (e) {
+      if (mounted) {
+        // Close loading dialog if it's still open
+        Navigator.of(context).pop();
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.errorDeletingQuizAnswer}: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
   }
 }
 

@@ -4,12 +4,14 @@ import 'package:admin_dashboard/Theme.dart';
 import 'package:admin_dashboard/provider/quiz_answer_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:html' as html;
 import 'dart:ui_web' as ui_web;
 
 import '../Models/question.dart';
 import '../Models/quiz_answer_details.dart';
 import '../widgets/coptic_text_field.dart';
+import '../l10n/app_localizations.dart';
 
 class QuizGradingScreen extends StatefulWidget {
   final int quizAnswerId;
@@ -56,6 +58,21 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
         title: Text('Quiz Submission'),
         backgroundColor: AppTheme.primaryColor,
         elevation: 0,
+        actions: [
+          Consumer<QuizAnswerProvider>(
+            builder: (context, provider, _) {
+              final quizAnswer = provider.currentQuizAnswer;
+              if (quizAnswer != null) {
+                return IconButton(
+                  icon: Icon(Icons.delete_outline),
+                  onPressed: () => _showDeleteConfirmationDialog(quizAnswer),
+                  tooltip: AppLocalizations.of(context)!.deleteQuizAnswer,
+                );
+              }
+              return SizedBox.shrink();
+            },
+          ),
+        ],
       ),
       body: Consumer<QuizAnswerProvider>(
         builder: (context, provider, _) {
@@ -942,5 +959,174 @@ class _QuizGradingScreenState extends State<QuizGradingScreen> {
     );
 
     return HtmlElementView(viewType: viewType);
+  }
+
+  void _showDeleteConfirmationDialog(QuizAnswerDetails quizAnswer) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            AppLocalizations.of(context)!.deleteQuizAnswerTitle,
+            style: AppTheme.headingMedium.copyWith(color: Colors.red[700]),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.deleteQuizAnswerConfirmation,
+                style: AppTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Student: ${quizAnswer.studentName}',
+                      style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Code: ${quizAnswer.studentCode}',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Quiz: ${quizAnswer.quizName}',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (quizAnswer.grade != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Grade: ${quizAnswer.grade}/${quizAnswer.finalGrade}',
+                        style: AppTheme.bodyMedium.copyWith(
+                          color: AppTheme.textSecondaryColor,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                AppLocalizations.of(context)!.actionCannotBeUndone,
+                style: AppTheme.bodyMedium.copyWith(
+                  color: Colors.red[600],
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                AppLocalizations.of(context)!.cancel,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => _deleteQuizAnswer(quizAnswer),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(AppLocalizations.of(context)!.delete),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteQuizAnswer(QuizAnswerDetails quizAnswer) async {
+    try {
+      // Store context references before async operations
+      final navigator = Navigator.of(context);
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      final successMessage = AppLocalizations.of(context)!.quizAnswerDeletedSuccessfully;
+
+      // Close the confirmation dialog
+      navigator.pop();
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                const SizedBox(width: 16),
+                Text('Deleting quiz answer...'),
+              ],
+            ),
+          );
+        },
+      );
+
+      // Delete the quiz answer
+      await Provider.of<QuizAnswerProvider>(context, listen: false)
+          .deleteQuizAnswer(quizAnswer.id);
+
+      // Close loading dialog and navigate back
+      if (mounted) {
+        navigator.pop(); // Close loading dialog
+
+        // Navigate back to quiz answers list or previous screen
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          // Fallback navigation
+          context.go('/quizzes');
+        }
+
+        // Show success message
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(successMessage),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        // Close loading dialog if it's still open
+        Navigator.of(context).pop();
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.errorDeletingQuizAnswer}: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
   }
 }

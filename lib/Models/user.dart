@@ -22,7 +22,7 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    print('Processing user JSON: $json'); // Debug print
+
 
     return User(
       id: json['id'] ?? 0,

@@ -90,6 +90,53 @@ class QuizAnswerProvider with ChangeNotifier {
 
   // Fetch a specific quiz answer by ID with combined question and answer data
 
+  // Delete a quiz answer by ID
+  Future<void> deleteQuizAnswer(int id) async {
+    try {
+      _isLoading = true;
+      _error = '';
+      notifyListeners();
+
+      print('Deleting quiz answer ID: $id');
+      final response = await http.delete(
+        Uri.parse('${Globals.baseUrl}/quiz-answers/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('Delete response status: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Quiz answer deleted successfully: ${data['message']}');
+
+        // Remove the deleted answer from local lists if they exist
+        if (_quizAnswersList != null) {
+          _quizAnswersList!.answers.removeWhere((answer) => answer.id == id);
+        }
+
+        // Clear current quiz answer if it's the one being deleted
+        if (_currentQuizAnswer?.id == id) {
+          _currentQuizAnswer = null;
+        }
+
+        _error = '';
+      } else {
+        final errorData = json.decode(response.body);
+        _error = errorData['message'] ?? 'Failed to delete quiz answer';
+        print('Error deleting quiz answer: $_error');
+        throw Exception(_error);
+      }
+    } catch (e) {
+      _error = 'Exception deleting quiz answer: $e';
+      print('Exception: $_error');
+      throw Exception(_error);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // Grade a quiz answer
   Future<void> gradeQuizAnswer(int id, int grade) async {
     try {

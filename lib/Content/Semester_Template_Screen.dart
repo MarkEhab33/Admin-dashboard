@@ -1,6 +1,7 @@
 import 'package:admin_dashboard/Models/Subject_Template.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../provider/semester_templates_provider.dart';
 import '../Theme.dart';
 import '../l10n/app_localizations.dart';
@@ -239,12 +240,7 @@ class SemesterTemplateScreen extends StatelessWidget {
         children: [
           InkWell(
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SubjectDetailsScreen(subject: subject),
-                ),
-              );
+              context.go('/subject/${subject.subjectId}');
             },
             borderRadius: BorderRadius.circular(16),
             child: Container(
