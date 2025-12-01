@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../Models/semester_template.dart';
 import '../provider/semester_templates_provider.dart';
 import '../provider/semesters_provider.dart';
@@ -407,12 +408,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
   Widget _buildSemesterRow(dynamic semester) {
     return InkWell(  // Added InkWell for tap effect
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SemesterDetailPage(semester: semester),
-          ),
-        );
+        context.go('/semester/${semester.id}');
       },
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -492,12 +488,7 @@ class _ContentManagementTabState extends State<ContentManagementTab> {
                   color: AppTheme.primaryColor,
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SemesterDetailPage(semester: semester),
-                    ),
-                  );
+                  context.go('/semester/${semester.id}');
                 },
                 style: IconButton.styleFrom(
                   backgroundColor: AppTheme.surfaceColor,

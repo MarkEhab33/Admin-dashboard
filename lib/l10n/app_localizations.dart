@@ -208,6 +208,8 @@ abstract class AppLocalizations {
   String get addStudentToSemester;
   String get searchStudents;
   String get noStudentsFoundInSearch;
+  String get trySearchingWithDifferentTerm;
+  String get allMatchingStudentsAlreadyEnrolled;
   String get studentAddedSuccessfully;
   String get removeStudentTitle;
   String get removeStudentConfirmation;
@@ -318,6 +320,16 @@ abstract class AppLocalizations {
   String get subjectContainsContent;
   String get deleteContentFirst;
   String get errorDeletingSubject;
+
+  // Quiz Answer Delete
+  String get deleteQuizAnswer;
+  String get deleteQuizAnswerTitle;
+  String get deleteQuizAnswerConfirmation;
+  String get quizAnswerDeletedSuccessfully;
+  String get errorDeletingQuizAnswer;
+
+  // Search
+  String get searchByStudentName;
 
   String get addNewSemesterTemplate;
   String get addSemester;
@@ -864,6 +876,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noStudentsFoundInSearch => 'لم يتم العثور على طلاب';
 
   @override
+  String get trySearchingWithDifferentTerm => 'جرب البحث بمصطلح مختلف';
+
+  @override
+  String get allMatchingStudentsAlreadyEnrolled => 'جميع الطلاب المطابقين مسجلون بالفعل في هذا الفصل الدراسي';
+
+  @override
   String get studentAddedSuccessfully => 'تم إضافة الطالب بنجاح';
 
   @override
@@ -1174,6 +1192,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorDeletingSubject => 'خطأ في حذف المادة';
+
+  // Quiz Answer Delete
+  @override
+  String get deleteQuizAnswer => 'حذف إجابة الاختبار';
+
+  @override
+  String get deleteQuizAnswerTitle => 'حذف إجابة الاختبار';
+
+  @override
+  String get deleteQuizAnswerConfirmation => 'هل أنت متأكد من أنك تريد حذف إجابة هذا الطالب؟ لا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get quizAnswerDeletedSuccessfully => 'تم حذف إجابة الاختبار بنجاح';
+
+  @override
+  String get errorDeletingQuizAnswer => 'خطأ في حذف إجابة الاختبار';
 
   @override
   String get addNewSemesterTemplate => 'إضافة قالب فصل دراسي جديد';
@@ -1608,6 +1642,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get invalidNumber => 'رقم غير صحيح';
+
+  @override
+  String get searchByStudentName => 'البحث باسم الطالب';
 }
 
 class AppLocalizationsEn extends AppLocalizations {
@@ -2010,6 +2047,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noStudentsFoundInSearch => 'No students found';
 
   @override
+  String get trySearchingWithDifferentTerm => 'Try searching with a different term';
+
+  @override
+  String get allMatchingStudentsAlreadyEnrolled => 'All matching students are already enrolled in this semester';
+
+  @override
   String get studentAddedSuccessfully => 'Student added successfully';
 
   @override
@@ -2320,6 +2363,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorDeletingSubject => 'Error deleting subject';
+
+  // Quiz Answer Delete
+  @override
+  String get deleteQuizAnswer => 'Delete Quiz Answer';
+
+  @override
+  String get deleteQuizAnswerTitle => 'Delete Quiz Answer';
+
+  @override
+  String get deleteQuizAnswerConfirmation => 'Are you sure you want to delete this student\'s quiz answer? This action cannot be undone.';
+
+  @override
+  String get quizAnswerDeletedSuccessfully => 'Quiz answer deleted successfully';
+
+  @override
+  String get errorDeletingQuizAnswer => 'Error deleting quiz answer';
 
   @override
   String get addNewSemesterTemplate => 'Add New Semester Template';
@@ -2756,4 +2815,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidNumber => 'Invalid number';
+
+  @override
+  String get searchByStudentName => 'Search by student name';
 }

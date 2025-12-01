@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'Theme.dart';
 import 'l10n/app_localizations.dart';
 
@@ -269,8 +270,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         onTap: () {
-          // Update the provider state
-          provider.setIndex(index);
+          // Map index to route
+          final routes = [
+            '/students',           // 0
+            '/student-requests',   // 1
+            '/content-management', // 2
+            '/quizzes',           // 3
+            '/semesters',         // 4
+            '/announcements',     // 5
+            '/settings',          // 6
+          ];
+
+          if (index < routes.length) {
+            context.go(routes[index]);
+          }
 
           // Close drawer if on small screen
           if (MediaQuery.of(context).size.width <= 1200) {

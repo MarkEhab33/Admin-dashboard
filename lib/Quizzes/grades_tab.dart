@@ -6,6 +6,7 @@ import 'package:admin_dashboard/provider/quiz_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/coptic_text_field.dart';
 
@@ -270,20 +271,14 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
                                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                   ),
                                   onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => QuizGradingScreen(
-                                          quizAnswerId: answer.id,
-                                          quizId: quizAnswersList.quizId
-                                        ),
-                                      ),
-                                    ).then((_) {
-                                      // Refresh the list when returning from details screen
-                                      if (selectedQuizId != null) {
-                                        _loadQuizAnswers();
-                                      }
-                                    });
+                                    final uri = Uri(
+                                      path: '/quiz-answer/${answer.id}',
+                                      queryParameters: {
+                                        'quizId': quizAnswersList.quizId.toString(),
+                                      },
+                                    );
+
+                                    context.go(uri.toString());
                                   },
                                 ),
                               ),
@@ -416,19 +411,14 @@ class _GradesTabState extends State<GradesTab> with SingleTickerProviderStateMix
           ),
         ),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QuizGradingScreen(
-                quizAnswerId: answer.id,
-                 quizId: selectedQuizId!,
-              ),
-            ),
-          ).then((_) {
-            if (selectedQuizId != null) {
-              _loadQuizAnswers();
-            }
-          });
+          final uri = Uri(
+            path: '/quiz-answer/${answer.id}',
+            queryParameters: {
+              'quizId': selectedQuizId!.toString(),
+            },
+          );
+
+          context.go(uri.toString());
         },
       ),
     );

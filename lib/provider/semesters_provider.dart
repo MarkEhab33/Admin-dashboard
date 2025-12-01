@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:admin_dashboard/Models/student.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../Constants/globals.dart';
 import '../Models/Subject_Template.dart';
 import '../Models/semester.dart';
@@ -60,14 +61,26 @@ class SemestersProvider with ChangeNotifier {
 
   Future<void> addStudentToSemester(String semesterId, String studentId) async {
     try {
+      print('Adding student to semester - studentId: $studentId, semesterId: $semesterId');
+
+      // Validate that studentId is not 0
+      final userIdInt = int.parse(studentId);
+      if (userIdInt == 0) {
+        throw Exception('Invalid user ID: Cannot add student with user ID 0');
+      }
+
+      final requestBody = {
+        'userId': userIdInt,
+        'semesterId': int.parse(semesterId),
+        'role': 'student'
+      };
+
+      print('Request body: $requestBody');
+
       final response = await http.put(
         Uri.parse('${Globals.baseUrl}/semester/add-user'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'userId': int.parse(studentId),
-          'semesterId': int.parse(semesterId),
-          'role': 'student'
-        }),
+        body: json.encode(requestBody),
       );
 
       if (response.statusCode != 200) {
@@ -126,8 +139,8 @@ class SemestersProvider with ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'weekNo': weekNo,
-          'startDate': startDate.toUtc().toIso8601String(),
-          'endDate': endDate.toUtc().toIso8601String(),
+          'startDate': DateFormat('yyyy-MM-dd').format(startDate),
+          'endDate': DateFormat('yyyy-MM-dd').format(endDate),
         }),
       );
 
@@ -285,8 +298,8 @@ class SemestersProvider with ChangeNotifier {
           'semesterTemplateId': semesterTemplateId,
           'year': year,
           'name': name,
-          'startDate': startDate.toUtc().toIso8601String(),
-          'endDate': endDate.toUtc().toIso8601String(),
+          'startDate': DateFormat('yyyy-MM-dd').format(startDate),
+          'endDate': DateFormat('yyyy-MM-dd').format(endDate),
         }),
       );
 
@@ -361,8 +374,8 @@ class SemestersProvider with ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'weekNo': weekNo,
-          'startDate': startDate.toUtc().toIso8601String(),
-          'endDate': endDate.toUtc().toIso8601String(),
+          'startDate': DateFormat('yyyy-MM-dd').format(startDate),
+          'endDate': DateFormat('yyyy-MM-dd').format(endDate),
         }),
       );
 

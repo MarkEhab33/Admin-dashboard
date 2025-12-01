@@ -52,6 +52,36 @@ class Student {
     Map<String, dynamic> userData = json['user'] as Map<String, dynamic>? ?? {};
     print('User data: $userData'); // Debug print
 
+    // If user data doesn't have an ID, try to use the student's userId field
+    if (userData['id'] == null || userData['id'] == 0) {
+      // Check multiple possible field names for user ID
+      int? foundUserId;
+
+      if (json['userId'] != null) {
+        foundUserId = json['userId'];
+        print('Using userId from student data: ${json['userId']}');
+      } else if (json['user_id'] != null) {
+        foundUserId = json['user_id'];
+        print('Using user_id from student data: ${json['user_id']}');
+      } else if (json['userID'] != null) {
+        foundUserId = json['userID'];
+        print('Using userID from student data: ${json['userID']}');
+      } else if (json['User'] != null && json['User']['id'] != null) {
+        foundUserId = json['User']['id'];
+        print('Using User.id from student data: ${json['User']['id']}');
+      } else {
+        print('Warning: No valid user ID found in student data');
+        print('Available fields: ${json.keys.toList()}');
+        if (userData.isNotEmpty) {
+          print('User data fields: ${userData.keys.toList()}');
+        }
+      }
+
+      if (foundUserId != null) {
+        userData['id'] = foundUserId;
+      }
+    }
+
     return Student(
       id: rawId ?? 0, // Provide default value if null
       studentCode: json['studentCode']?.toString() ?? '',

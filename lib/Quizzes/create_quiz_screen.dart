@@ -39,9 +39,9 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
   final _typeController = TextEditingController();
   final _attemptsController = TextEditingController();
   final _timeLimitController = TextEditingController();
-  final _easyQuestionsController = TextEditingController(text: '3'); // Default easy questions
-  final _mediumQuestionsController = TextEditingController(text: '4'); // Default medium questions
-  final _hardQuestionsController = TextEditingController(text: '2'); // Default hard questions
+  final _easyQuestionsController = TextEditingController(text: '1'); // Default easy questions
+  final _mediumQuestionsController = TextEditingController(text: '1'); // Default medium questions
+  final _hardQuestionsController = TextEditingController(text: '1'); // Default hard questions
 
   int? selectedSubjectId;
   int? selectedLessonId;
@@ -67,11 +67,11 @@ class _CreateQuizScreenState extends State<CreateQuizScreen> {
     // Set default values for new quizzes
     if (widget.quizToEdit == null) {
       _typeController.text = 'Week';  // Changed from 'Quiz' to 'Week' to match dropdown options
-      _attemptsController.text = '1';
+      _attemptsController.text = '2';
       _timeLimitController.text = '30';
-      _easyQuestionsController.text = '3';
-      _mediumQuestionsController.text = '4';
-      _hardQuestionsController.text = '2';
+      _easyQuestionsController.text = '1';
+      _mediumQuestionsController.text = '1';
+      _hardQuestionsController.text = '1';
     }
   }
 
