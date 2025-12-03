@@ -4,8 +4,8 @@ class Globals {
   static bool get isWeb => identical(0, 0.0); // Simple web detection
 
   // Configuration constants
-  // static const String _baseUrl = "https://aripsalin.elkedeseen.com";
-  static const String _baseUrl = "http://localhost:8080";
+  static const String _baseUrl = "https://aripsalin.elkedeseen.com";
+  // static const String _baseUrl = "http://localhost:8080";
 
   // Base URL configuration
   static String get baseUrl {
